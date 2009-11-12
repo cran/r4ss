@@ -7,7 +7,7 @@ function (minLength=10, maxLength=65, silent = FALSE)
 # selfit   March 31, 2009.
 # This function comes with no warranty or guarantee of accuracy
 #
-# Purpose: Provide GUI for the plot function, lines.sel
+# Purpose: Provide GUI for the plot function, sel.line
 # Written: Tommy Garrison, UW
 # Returns: plots double normal or double logistic selectivity
 # General: parameterization matched Stock Synthesis v.3
@@ -51,15 +51,15 @@ function (minLength=10, maxLength=65, silent = FALSE)
 
         fit <- get("selfit.tmp", envir = selfit.env)
 
-        lapply(fit, function(x) lines.sel(seq(minL, maxL, by=2), model = x$model, sp = x$sp, min.dist = x$min.dist, max.dist = x$max.dist))
+        lapply(fit, function(x) sel.line(seq(minL, maxL, by=2), model = x$model, sp = x$sp, min.dist = x$min.dist, max.dist = x$max.dist))
 
         if (k == "Double_Logistic") {
-            lines.sel(x = seq(minL, maxL, by=2), model = k,
+            sel.line(x = seq(minL, maxL, by=2), model = k,
                 sp = c(p1,p2,p3,p4,p5,p6,p7,p8),
                 min.dist = minL, max.dist = maxL)
         }
         if (k == "Double_Normal") {
-            lines.sel(x = seq(minL, maxL, by=2), model = k,
+            sel.line(x = seq(minL, maxL, by=2), model = k,
                 sp = c(p1,p2,p3,p4,p5,p6),
                 min.dist = minL, max.dist = maxL)
         }

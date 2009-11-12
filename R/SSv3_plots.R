@@ -25,7 +25,7 @@ function(
 #
 ################################################################################
 
-  codedate <- "October 29, 2009"
+  codedate <- "November 14, 2009"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=F)
@@ -246,7 +246,7 @@ function(
     plotdir <- NULL
   }
   if(nplots>0 & !new){
-    print("Adding plots to existing plot window. Plot history not erased.",quote=F)
+    if(verbose) print("Adding plots to existing plot window. Plot history not erased.",quote=F)
   }
   if(nprints>0){
     if(dir=="default") dir <- inputs$dir
@@ -1197,7 +1197,7 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
       recdev <- parameters[substring(parameters$Label,1,12) %in% c("Main_RecrDev"),]
       recdevFore <- parameters[substring(parameters$Label,1,8)=="ForeRecr",]
       recdevLate <- parameters[substring(parameters$Label,1,12)=="Late_RecrDev",]
-      if(max(recdev$Value)==0){
+      if(nrow(recdev)==0 || max(recdev$Value)==0){
 	if(verbose) print("Skipped plot 9: Rec devs and asymptotic error check - no rec devs estimated",quote=F)
       }else{
 	if(nrow(recdev)>0){
@@ -1448,29 +1448,28 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
   } # end if 11 in plot or print
 
   ### Plot 12: spawner-recruit curve ###
-  if(12 %in% c(plot, print))
-    {
-      recruit <- recruit[recruit$era=="Main",]
-      ymax <- max(recruit$pred_recr)
-      x <- recruit$spawn_bio
-      xmax <- max(x)
-      xlab <- "Spawning biomass (mt)"
-      ylab <- "Recruitment (1,000s)"
-      recruitfun <- function(){
-	plot(x[order(x)],recruit$with_env[order(x)],xlab=xlab,ylab=ylab,type="l",col="blue",ylim=c(0,ymax),xlim=c(0,xmax))
-	abline(h=0,col="grey")
-#	lines(x[order(x)],recruit$adjusted[order(x)],col="green")
-	lines(x,recruit$adjusted,col="green")
-	lines(x[order(x)],recruit$exp_recr[order(x)],lwd=2,col="black")
-	points(x,recruit$pred_recr,col="red")}
-      if(12 %in% plot) recruitfun()
-      if(12 %in% print){
-	png(file=paste(plotdir,"12_srcurve.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-	recruitfun()
-	dev.off()}
-      if(verbose) print("Finished plot 12: Spawner-recruit curve",quote=F)
-      flush.console()
-    } # end if 12 in plot or print
+  if(12 %in% c(plot, print)){
+    recruit <- recruit[recruit$era %in% c("Main","Fixed","Late"),]
+    ymax <- max(recruit$pred_recr)
+    x <- recruit$spawn_bio
+    xmax <- max(x)
+    xlab <- "Spawning biomass (mt)"
+    ylab <- "Recruitment (1,000s)"
+    recruitfun <- function(){
+      plot(x[order(x)],recruit$with_env[order(x)],xlab=xlab,ylab=ylab,type="l",col="blue",ylim=c(0,ymax),xlim=c(0,xmax))
+      abline(h=0,col="grey")
+      #	lines(x[order(x)],recruit$adjusted[order(x)],col="green")
+      lines(x,recruit$adjusted,col="green")
+      lines(x[order(x)],recruit$exp_recr[order(x)],lwd=2,col="black")
+      points(x,recruit$pred_recr,col="red")}
+    if(12 %in% plot) recruitfun()
+    if(12 %in% print){
+      png(file=paste(plotdir,"12_srcurve.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+      recruitfun()
+      dev.off()}
+    if(verbose) print("Finished plot 12: Spawner-recruit curve",quote=F)
+    flush.console()
+  } # end if 12 in plot or print
 
 
   ### Plot 13: CPUE plots ###
@@ -2442,6 +2441,7 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
 
   # plot 20: conditional age at length plot with fits, sample size, etc.
   if(20 %in% c(plot,print)){
+if(3==4){
     SSv3_plot_comps(datonly=F,kind="cond",bub=T,verbose=verbose,fleets=fleets,
 		    aalbin=aalbin,aalyear=aalyear,
 		    samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
@@ -2450,19 +2450,22 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
 		    maxneff=maxneff,cex.main=cex.main,...)
 
     if(verbose) print("Finished plot 20a: conditional age at length with fits",quote=F)
-
+  }
     # more plot 20: Andre's new conditional age-at-length plots    
-    Lens <-sort(unique(condbase$Lbin_lo))
-    Yrs <- sort(unique(condbase$Yr))
-    par(mfrow=c(2,2))
-    for (Gender in 1:2){
-      for (Yr in Yrs){
-        y <- condbase[condbase$Yr==Yr & condbase$Gender==Gender,]
-        Size <- NULL; Size2 <- NULL
-        Obs <- NULL; Obs2 <- NULL
-        Pred <- NULL;  Pred2 <- NULL
-        Upp <- NULL; Low <- NULL; Upp2 <- NULL; Low2 <- NULL
-        for (Ilen in Lens){
+    if(nrow(condbase)==0){
+      if(verbose) print("Skipped plot 20b: mean age and std. dev. in conditional AAL: no data of this type",quote=F)
+    }else{
+      Lens <-sort(unique(condbase$Lbin_lo))
+      Yrs <- sort(unique(condbase$Yr))
+      par(mfrow=c(2,2))
+      for (Gender in 1:2){
+        for (Yr in Yrs){
+          y <- condbase[condbase$Yr==Yr & condbase$Gender==Gender,]
+          Size <- NULL; Size2 <- NULL
+          Obs <- NULL; Obs2 <- NULL
+          Pred <- NULL;  Pred2 <- NULL
+          Upp <- NULL; Low <- NULL; Upp2 <- NULL; Low2 <- NULL
+          for (Ilen in Lens){
             z <- y[y$Lbin_lo == Ilen & y$Lbin_hi == Ilen,]
             if (length(z[,1]) > 0){
               weightsPred <- z$Exp/sum(z$Exp)
@@ -2492,31 +2495,31 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
               } 
             } 
           }
-        if (length(Obs) > 0){
-          ymax <- max(Pred,Obs,Upp)*1.1 
-          plot(Size,Obs,xlab="Size (cm)",ylab="Age (yr)",pch=16,xlim=c(min(Lens),max(Lens)),ylim=c(0,ymax),yaxs="i")
-          lines(Size,Pred)
-          lines(Size,Low,lty=3)
-          lines(Size,Upp,lty=3)
-          title(paste("Year = ",Yr,"; Gender = ",Gender))
-          
-          ymax <- max(Obs2,Pred2)*1.1
-          plot(Size,Obs2,xlab="Size (cm)",ylab="Stdev (Age) (yr)",pch=16,xlim=c(min(Lens),max(Lens)),ylim=c(0,ymax),yaxs="i")
-          lines(Size,Pred2)
-          lines(Size2,Low2,lty=3)
-          lines(Size2,Upp2,lty=3)
-        } 
-      } # end loop over years
-    } # end loop over genders
-    if(verbose) print("Finished plot 20b: mean age and std. dev. in conditional AAL",quote=F)
-    if(verbose) print("  This is a new plot, currently in beta mode.",quote=F)
-    if(verbose) print("  Left plots are mean AAL by size-class (obs. and pred.)",quote=F)
-    if(verbose) print("  with 90% CIs based on adding 1.64 SE of mean to the data",quote=F)
-    if(verbose) print("  Right plots in each pair are SE of mean AAL (obs. and pred.)",quote=F)
-    if(verbose) print("  with 90% CIs based on the chi-square distribution.",quote=F)
-    flush.console()
+          if (length(Obs) > 0){
+            ymax <- max(Pred,Obs,Upp)*1.1 
+            plot(Size,Obs,xlab="Size (cm)",ylab="Age (yr)",pch=16,xlim=c(min(Lens),max(Lens)),ylim=c(0,ymax),yaxs="i")
+            lines(Size,Pred)
+            lines(Size,Low,lty=3)
+            lines(Size,Upp,lty=3)
+            title(paste("Year = ",Yr,"; Gender = ",Gender))
+            
+            ymax <- max(Obs2,Pred2)*1.1
+            plot(Size,Obs2,xlab="Size (cm)",ylab="Stdev (Age) (yr)",pch=16,xlim=c(min(Lens),max(Lens)),ylim=c(0,ymax),yaxs="i")
+            lines(Size,Pred2)
+            lines(Size2,Low2,lty=3)
+            lines(Size2,Upp2,lty=3)
+          } 
+        } # end loop over years
+      } # end loop over genders
+      if(verbose) print("Finished plot 20b: mean age and std. dev. in conditional AAL",quote=F)
+      if(verbose) print("  This is a new plot, currently in beta mode.",quote=F)
+      if(verbose) print("  Left plots are mean AAL by size-class (obs. and pred.)",quote=F)
+      if(verbose) print("  with 90% CIs based on adding 1.64 SE of mean to the data",quote=F)
+      if(verbose) print("  Right plots in each pair are SE of mean AAL (obs. and pred.)",quote=F)
+      if(verbose) print("  with 90% CIs based on the chi-square distribution.",quote=F)
+      flush.console()
+    }
   } # end if 20 in plot or print
-
 
   # Plot 21: length at age data
   if(21 %in% c(plot, print))
@@ -2601,59 +2604,57 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
   par(mfcol=c(rows,cols),mar=c(5,5,4,2)+.1,oma=rep(0,4))
 
   # Yield curve
-  if(22 %in% c(plot, print))
-    {
-      if(!is.null(equil_yield[1,1])){
-	yieldfunc <- function(){
-	  plot(equil_yield$Depletion,equil_yield$Catch,xlab="Relative depletion",ylab="Equilibrium yield (mt)",
-	       type="l",lwd=2,col="blue")
-	  abline(h=0,col="grey")
-	  abline(v=0,col="grey")}
-	if(22 %in% plot){yieldfunc()}
-	if(22 %in% print){
-	  png(file=paste(plotdir,"22_yield.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-	  yieldfunc()
-	  dev.off()}
-	if(verbose) print("Finished plot 22: yield curve",quote=F)
-      }
+  if(22 %in% c(plot, print)){
+    if(!is.null(equil_yield[1,1])){
+      yieldfunc <- function(){
+        plot(equil_yield$Depletion,equil_yield$Catch,xlab="Relative depletion",ylab="Equilibrium yield (mt)",
+             type="l",lwd=2,col="blue")
+        abline(h=0,col="grey")
+        abline(v=0,col="grey")}
+      if(22 %in% plot){yieldfunc()}
+      if(22 %in% print){
+        png(file=paste(plotdir,"22_yield.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+        yieldfunc()
+        dev.off()}
+      if(verbose) print("Finished plot 22: yield curve",quote=F)
+    }
 
-      if(nareas==1)
-	{
-	  ls <- nrow(ts)
-	  sprodfunc <- function(){
-	    totcatchmat <- as.matrix(ts[,substr(names(ts),1,nchar("enc(B)"))=="enc(B)"])
-	    ts$totcatch <- 0
-	    ts$totcatch[3:ls] <- rowSums(totcatchmat)[3:ls]
-	    ts$sprod <- NA
-	    ts$sprod[3:(ls-1)] <- ts$Bio_all[4:ls]-ts$Bio_all[3:(ls-1)]+ts$totcatch[3:(ls-1)]
-	    sprodgood <- !is.na(ts$sprod)
-	    Bio_all_good <- ts$Bio_all[sprodgood]
-	    sprod_good <- ts$sprod[sprodgood]
-	    xlim <- c(0,max(Bio_all_good,na.rm=T))
-	    ylim <- c(min(0,sprod_good,na.rm=T),max(sprod_good,na.rm=T))
-	    plot(Bio_all_good,sprod_good,ylim=ylim,xlim=xlim,xlab="Total biomass (mt)",ylab="Surplus production (mt)",type="l",col="black")
+    if(nareas==1){
+      ls <- nrow(ts)
+      sprodfunc <- function(){
+        totcatchmat <- as.matrix(ts[,substr(names(ts),1,nchar("enc(B)"))=="enc(B)"])
+        ts$totcatch <- 0
+        ts$totcatch[3:ls] <- rowSums(totcatchmat)[3:ls]
+        ts$sprod <- NA
+        ts$sprod[3:(ls-1)] <- ts$Bio_all[4:ls]-ts$Bio_all[3:(ls-1)]+ts$totcatch[3:(ls-1)]
+        sprodgood <- !is.na(ts$sprod)
+        Bio_all_good <- ts$Bio_all[sprodgood]
+        sprod_good <- ts$sprod[sprodgood]
+        xlim <- c(0,max(Bio_all_good,na.rm=T))
+        ylim <- c(min(0,sprod_good,na.rm=T),max(sprod_good,na.rm=T))
+        plot(Bio_all_good,sprod_good,ylim=ylim,xlim=xlim,xlab="Total biomass (mt)",ylab="Surplus production (mt)",type="l",col="black")
 
-	    # make arrows
-	    old_warn <- options()$warn	# previous setting
-	    options(warn=-1)		# turn off "zero-length arrow" warning
-	    s <- seq(length(sprod_good)-1)
-	    arrows(Bio_all_good[s],sprod_good[s],Bio_all_good[s+1],sprod_good[s+1],length=0.06,angle=20,col="black",lwd=1.2)
-	    options(warn=old_warn)	#returning to old value
+        # make arrows
+        old_warn <- options()$warn	# previous setting
+        options(warn=-1)		# turn off "zero-length arrow" warning
+        s <- seq(length(sprod_good)-1)
+        arrows(Bio_all_good[s],sprod_good[s],Bio_all_good[s+1],sprod_good[s+1],length=0.06,angle=20,col="black",lwd=1.2)
+        options(warn=old_warn)	#returning to old value
 
-	    abline(h=0,col="grey")
-	    abline(v=0,col="grey")
-	    points(Bio_all_good[1],sprod_good[1],col="blue",pch=19)
+        abline(h=0,col="grey")
+        abline(v=0,col="grey")
+        points(Bio_all_good[1],sprod_good[1],col="blue",pch=19)
 
-	  } # end sprodfunc
-	  if(22 %in% plot){sprodfunc()}
-	  if(22 %in% print){
-	    png(file=paste(plotdir,"22_surplus_prod.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-	    sprodfunc()
-	    dev.off()}
-	  if(verbose) print("Finished plot 22: Surplus production",quote=F)
-	}
-      if(nareas>1) print("Surplus production plot not implemented for multi-area models",quote=F)
-    } # close plot section 22
+      } # end sprodfunc
+      if(22 %in% plot){sprodfunc()}
+      if(22 %in% print){
+        png(file=paste(plotdir,"22_surplus_prod.png",sep=""),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+        sprodfunc()
+        dev.off()}
+      if(verbose) print("Finished plot 22: Surplus production",quote=F)
+    }
+    if(nareas>1) print("Surplus production plot not implemented for multi-area models",quote=F)
+  } # close plot section 22
 
   ### Plot 23: CPUE data-only plots ###
   if(23 %in% c(plot, print)){

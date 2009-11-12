@@ -1,12 +1,12 @@
-\name{lines.sel}
-\alias{lines.sel}
+\name{sel.line}
+\alias{sel.line}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ a function for drawing selecitivity curves }
 \description{
   This function is primarily inteded for use by the selfit function.
 }
 \usage{
-lines.sel(x, model, sp, min.dist, max.dist, ...)
+sel.line(x, model, sp, min.dist, max.dist)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,7 +15,6 @@ lines.sel(x, model, sp, min.dist, max.dist, ...)
   \item{sp}{ vector of parameters }
   \item{min.dist}{ minimum value for selectivity }
   \item{max.dist}{  maximum value for selectivity  }
-  \item{\dots}{ other inputs (not implemented?) }
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~
@@ -33,9 +32,16 @@ lines.sel(x, model, sp, min.dist, max.dist, ...)
 
 %  % ~Make other sections like Warning with \section{Warning }{....} ~
 % }
-% \seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
-% \examples{
-% }
+\seealso{ \code{\link{selfit}} }
+\examples{
+\dontrun{
+plot(0, xlim = c(0, 50), ylim = c(0, 1),
+xlab = 'Length', ylab = 'Selectivity', type = 'n',
+xaxs = 'i', yaxs = 'i') 
+sel.line(model = 'Double_Normal', min.dist = 10, max.dist = 50,
+sp = c(25, -0.5, 3, 3, -5, 0))
+}
+}
 % % Add one or more standard keywords, see file 'KEYWORDS' in the
 % % R documentation directory.
 \keyword{ dplot }

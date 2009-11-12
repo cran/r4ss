@@ -23,7 +23,7 @@ function(
 #
 ################################################################################
 
-codedate <- "October 13, 2009"
+codedate <- "November 12, 2009"
 
 if(verbose){
   print(paste("R function updated:",codedate),quote=F)
@@ -326,7 +326,11 @@ if(comp){   # skip this stuff if no CompReport.sso file
   latagebase <- compdbase[compdbase$Kind=="L@A" & compdbase$N > 0,]
   lendbase$effN <- as.numeric(lendbase$effN)
   agedbase$effN <- as.numeric(agedbase$effN)
-  agebins <- sort(unique(agedbase$Bin[!is.na(agedbase$Bin)]))
+  if(nrow(agedbase)>0){
+    agebins <- sort(unique(agedbase$Bin[!is.na(agedbase$Bin)]))
+  }else{
+    agebins <- NA
+  }
   nagebins <- length(agebins)
 }else{
   lbins <- NA
@@ -777,6 +781,17 @@ if(comp){
    }
  }
 
+ # catch at age
+ catage <- matchfun2("CATCH_AT_AGE",1,"BIOLOGY",-1)
+ catage <- catage[,apply(catage,2,emptytest)<1]
+ names(catage) <- catage[1,]
+ catage <- catage[-1,]
+ for(icol in (1:ncol(catage))[substr(names(catage),1,2)!="XX" & names(catage)!="Era"]){
+   catage[,icol] <- as.numeric(catage[,icol])
+ }
+ returndat$catage <- catage
+
+ # adding stuff to list which gets returned by function
  returndat$composition_database <- compdbase
 
  returndat$derived_quants <- der
