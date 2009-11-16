@@ -8,10 +8,10 @@ A function to insert a vector of recruitment deviations into the control
 file for simulation studies. This can also be achieved by using the .par
 file, but Ian Taylor prefers this approach for no good reason.}
 \usage{
-SS_recdevs(fyr = NA, lyr = NA, ctl = NULL, recdevs = NULL, rescale = T,
-dir = "working_directory", ctlfile = "control.ss_new",
-newctlfile = "control_modified.ss", verbose = T, writectl = T,
-returnctl = F, newmaxbias = NULL)
+SS_recdevs(fyr = NA, lyr = NA, ctl = NULL, recdevs = NULL,
+rescale = T, dir = "working_directory",
+ctlfile = "control.ss_new", newctlfile = "control_modified.ss",
+verbose = T, writectl = T, returnctl = F, newmaxbias = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

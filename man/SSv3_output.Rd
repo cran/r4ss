@@ -3,14 +3,20 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ A function to create a list object for the output from Stock Synthesis}
 \description{
-  Reads the Report.sso and (optionally) the covar.sso files produced by Stock Synthesis and formats the important content of these files into a "list" in the R workspace. A few statistics unavailable elsewhere are taken from the .par and .cor files. Summary information and statistics can be returned as text to R GUI console or just contained within the list produced by this function.
+  Reads the Report.sso and (optionally) the covar.sso files produced by
+  Stock Synthesis and formats the important content of these files into
+  a "list" in the R workspace. A few statistics unavailable elsewhere
+  are taken from the .par and .cor files. Summary information and
+  statistics can be returned to the R console or just contained within
+  the list produced by this function.
 }
 \usage{
 SSv3_output(dir = "C:/myfiles/mymodels/myrun/", model = "ss3",
-repfile = "Report.sso", compfile = "CompReport.sso", covarfile =
-"covar.sso", ncols = 200, forecast = T, warn = T, covar = T, checkcor =
-T, cormax = 0.95, cormin = 0.01, printhighcor = 10, printlowcor = 10,
-verbose = T, printstats = T, hidewarn = F, NoCompOK = F)
+repfile = "Report.sso", compfile = "CompReport.sso",
+covarfile = "covar.sso", ncols = 200, forecast = T, warn = T,
+covar = T, checkcor = T, cormax = 0.95, cormin = 0.01,
+printhighcor = 10, printlowcor = 10, verbose = T,
+printstats = T, hidewarn = F, NoCompOK = F)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

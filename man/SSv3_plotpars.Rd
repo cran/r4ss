@@ -6,12 +6,14 @@
   Make multi-figure plots of prior, posterior, and estimated asymptotic parameter distributions. MCMC not required to make function work.
 }
 \usage{
-SSv3_plotpars(dir = "c:/path/", repfile = "Report.sso", postfile =
-"posteriors.sso", showpost = T, showprior = T, showmle = T, showinit =
-T, showrecdev = T, priorinit = T, priorfinal = T, showlegend = T,
-fitrange = F, xaxs="i", verbose = T, nrows = 3, ncols = 3, new = T, pdf = F,
-pwidth = 7, pheight = 7, punits="in", ptsize = 12, returntable = F,
-strings = c(), burn = 0, thin = 1, ctlfile = "control.ss_new")
+SSv3_plotpars(dir = "c:/path/", repfile = "Report.sso",
+postfile = "posteriors.sso", showpost = T, showprior = T,
+showmle = T, showinit = T, showrecdev = T, priorinit = T,
+priorfinal = T, showlegend = T, fitrange = F, xaxs="i",
+verbose = T, nrows = 3, ncols = 3, new = T, pdf = F,
+pwidth = 7, pheight = 7, punits="in", ptsize = 12,
+returntable = F, strings = c(), burn = 0, thin = 1,
+ctlfile = "control.ss_new")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

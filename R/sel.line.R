@@ -1,9 +1,9 @@
-lines.sel <-
-function(x, model, sp, min.dist, max.dist, ...) {
+sel.line <-
+function(x, model, sp, min.dist, max.dist) {
 
 ################################################################################
 #
-# lines.sel        March 31, 2009.
+# sel.line        March 31, 2009.
 # This function comes with no warranty or guarantee of accuracy
 #
 # Purpose: Plot selectivity function for Stock Synthesis.
@@ -84,7 +84,7 @@ function(x, model, sp, min.dist, max.dist, ...) {
 	if(model == "Double_Normal") col <- "blue"
 	if(model == "Double_Logistic") col <- "red"
 
-	curve(sel, add=T, from=c(min.dist, max.dist), type='l', lwd=1, col=col)
+	curve(sel, add=TRUE, from=c(min.dist, max.dist), type='l', lwd=1, col=col)
 
-} # end lines.sel function
+} # end sel.line function
 

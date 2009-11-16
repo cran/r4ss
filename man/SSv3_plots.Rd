@@ -9,17 +9,18 @@
 \usage{
 SSv3_plots(replist = "ReportObject", plot = 1:24, print = 0, pdf = F,
 printfolder = "", dir = "default", fleets = "all", areas = "all",
-fleetnames = "default", fleetcols = "default", fleetlty = 1, fleetpch =
-1, lwd = 1, areacols = "default", areanames = "default", verbose = T,
-uncertainty = T, forecastplot = F, datplot = F, Natageplot = T,
-samplesizeplots = T, compresidplots = T, sprtarg = 0.4, btarg = 0.4,
-minbthresh = 0.25, pntscalar = 2.6, minnbubble = 8, aalyear = -1, aalbin
-= -1, aalmaxbinrange = 0, aalresids = F, maxneff = 5000, cohortlines =
-c(), smooth = T, showsampsize = T, showeffN = T, showlegend = T, pwidth
-= 7, pheight = 7, punits = "in", ptsize = 12, res = 300, cex.main = 1,
-selexlines = 1:5, rows = 1, cols = 1, maxrows = 6, maxcols = 6,
-maxrows2 = 2, maxcols2 = 4, tagrows = 3, tagcols = 3, fixdims = T,
-new = T, ...)
+fleetnames = "default", fleetcols = "default", fleetlty = 1,
+fleetpch = 1, lwd = 1, areacols = "default", areanames = "default",
+verbose = T, uncertainty = T, forecastplot = F, datplot = F,
+Natageplot = T, samplesizeplots = T, compresidplots = T, sprtarg = 0.4,
+btarg = 0.4, minbthresh = 0.25, pntscalar = 2.6, minnbubble = 8,
+aalyear = -1, aalbin = -1, aalmaxbinrange = 0, aalresids = F,
+maxneff = 5000, cohortlines = c(), smooth = T, showsampsize = T,
+showeffN = T, showlegend = T, pwidth = 7, pheight = 7, punits = "in",
+ptsize = 12, res = 300, cex.main = 1, selexlines = 1:5,
+rows = 1, cols = 1, maxrows = 6, maxcols = 6,
+maxrows2 = 2, maxcols2 = 4, tagrows = 3, tagcols = 3,
+fixdims = T, new = T, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -43,7 +44,7 @@ new = T, ...)
     saved. By default the working directory is used with no subfolder. Default="".}
   \item{dir}{ The directory in which any PNG files requested by \code{print} are created. By default it will be the same directory that the report file was read from by the \code{SSv3_output} function. Default="default".}
   \item{fleets}{ Either the string "all", or a vector of numerical
-    values, like c(1,3), listing fleets/surveys for which plots should
+    values, like c(1,3), listing fleets or surveys for which plots should
     be made. By default, plots will be made for all fleets and surveys. Default="all".}
   \item{areas}{ Either the string "all", or a vector of numerical
     values, like c(1,3), listing areas for which plots should be made in
@@ -258,7 +259,7 @@ new = T, ...)
     \item Production
     \itemize{
       \item Yield curve
-      \item Surplus production vs. biomass ([http://article.pubs.nrc-cnrc.gc.ca/RPAS/rpv?hm=HInit&calyLang=eng&journal=cjfas&volume=65&afpf=f08-170.pdf Walters, Hilborn, and Christensen, 2008])
+      \item Surplus production vs. biomass (Walters, et al. 2008)
     }
     \item CPUE data-only plots
     \item Tagging-related plots
@@ -274,15 +275,22 @@ new = T, ...)
   Plots returned to R GUI, to single PDF file, or to multiple PNG files
   depending on the inputs chosen.
 }
-% \references{ }
+\references{ Walters, Hilborn, and  Christensen, 2008, Surplus
+    production dynamics in declining and recovering fish populations.
+    Can. J. Fish. Aquat. Sci. 65: 2536-2551 }
 \author{
-  Ian Stewart, Ian Taylor, Andr\'e Punt, and other contributors
+  Ian Stewart, Ian Taylor, Andre Punt, and other contributors
 }
 % \note{ }
 % \seealso{ %~~objects to See Also as \code{\link{help}}, ~~~
 % }
-% \examples{
-% }
+\examples{
+\dontrun{
+SSv3_plots(replist = myreplist)
+SSv3_plots(replist = myreplist, pdf=T, pwidth=8, pheight=8, rows=2,
+    cols=2)
+}
+}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ dplot }

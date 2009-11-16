@@ -42,7 +42,7 @@ verbose = T)
 %  % ~Make other sections like Warning with \section{Warning }{....} ~
 % }
 \seealso{
-  \code{\link{SS_parlines}},\code{\link{SS_profile}}
+  \code{\link{SS_parlines}}, \code{\link{SS_profile}}
 }
 \examples{
 \dontrun{

@@ -1,10 +1,10 @@
 Package: r4ss
 Type: Package
 Title: R code for Stock Synthesis
-Version: 1.0
-Date: 2009-11-07
-Author: Ian Taylor, Ian Stewart, Tommy Garrison, Andre Punt, and other
-        contributors
+Version: 1.01
+Date: 2009-11-12
+Author: Ian Taylor, Ian Stewart, Tommy Garrison, Andre Punt, John
+        Wallace, and other contributors
 Maintainer: Ian Taylor <Ian.Taylor@noaa.gov>
 Depends: R (>= 2.8.0), tcltk
 Description: Functions for reading output, plotting, exploring and
@@ -12,6 +12,7 @@ Description: Functions for reading output, plotting, exploring and
         fisheries stock assessment modeling platform.
 License: MIT License
 LazyLoad: yes
-Packaged: 2009-11-09 22:39:36 UTC; ian
+URL: http://www.r-project.org, http://code.google.com/p/r4ss/
+Packaged: 2009-11-15 21:14:31 UTC; ian
 Repository: CRAN
-Date/Publication: 2009-11-10 10:15:21
+Date/Publication: 2009-11-16 07:44:58

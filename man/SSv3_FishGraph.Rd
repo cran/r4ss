@@ -4,10 +4,13 @@
 \title{ A function for converting Stock Synthesis output to the format
   used by FishGraph }
 \description{
-  Only skeleton of a function right now, needs work.
+  Only skeleton of a function right now, needs work. Intended as a
+  translator to convert the output from object created by
+  \code{\link{SSv3_output}} to the format used by Michael Prager's FishGraph.
 }
 \usage{
-SSv3_FishGraph(replist, title = "SSv3 output", species = "some kind of fish")
+SSv3_FishGraph(replist, title = "SSv3 output",
+species = "some kind of fish")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -25,8 +28,8 @@ SSv3_FishGraph(replist, title = "SSv3 output", species = "some kind of fish")
 %   \item{comp2 }{Description of 'comp2'}
 %   ...
 % }
-% \references{ ~put references to the literature/web site here ~ }
-% \author{ ~~who you are~~ }
+\references{ Michael Prager's website with FishGraph downloads: http://www.sefsc.noaa.gov/mprager/rinter.html }
+\author{ Ian Taylor }
 % \note{ ~~further notes~~ 
 
 %  % ~Make other sections like Warning with \section{Warning }{....} ~

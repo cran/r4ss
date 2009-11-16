@@ -6,27 +6,28 @@
   Iteratively changes the control file using SS_changepars.
 }
 \usage{
-SS_profile(dir = "C:/myfiles/mymodels/myrun/", masterctlfile =
-"control.ss_new", newctlfile = "control_modified.ss", linenum = NULL,
-string = NULL, profilevec = NULL, command = "SS3 -nox", model = "ss3",
-saveoutput = T, verbose = T)
+SS_profile(dir = "C:/myfiles/mymodels/myrun/",
+masterctlfile = "control.ss_new", newctlfile = "control_modified.ss",
+linenum = NULL, string = NULL, profilevec = NULL,
+command = "SS3 -nox", model = "ss3", saveoutput = T, verbose = T)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dir}{ Directory where input files and executable are located.}
-  \item{masterctlfile}{ Source control file. Default="control.ss_new"}
+  \item{masterctlfile}{ Source control file. Default = "control.ss_new"}
   \item{newctlfile}{ Destination for new control files (must match entry
-    in starter file). Default="control_modified.ss".}
+    in starter file). Default = "control_modified.ss".}
   \item{linenum}{ Optional line number of parameter to be changed.
-    Default=NULL. }
+    Default = NULL. }
   \item{string}{ Optional string partially matching name of parameter
-    to be changed. Default=NULL.} 
-  \item{profilevec}{ Vector of values to profile over.  Default=NULL.} 
-  \item{command}{ Call to executable. Default="SS3 -nox".} 
-  \item{model}{ Name of executable. Default="ss3".} 
-  \item{saveoutput}{ Copy output .SSO files to unique names. Default=T.}
+    to be changed. Default = NULL.} 
+  \item{profilevec}{ Vector of values to profile over.  Default = NULL.} 
+  \item{command}{ Call to executable. Default = "SS3 -nox".} 
+  \item{model}{ Name of executable. Default = "ss3".} 
+  \item{saveoutput}{ Copy output .SSO files to unique names.
+    Default = T.}
   \item{verbose}{ Controls amount of info output to command line.
-    Default=T.} 
+    Default = T.} 
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~
