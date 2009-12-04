@@ -6,7 +6,7 @@
   A simple function which takes as input the full path and filename of a
   control file for input to Stock Synthesis. Ideally, a Control.SS_New
   file will be used, so that it represents what SS thinks the inputs
-  are, and not what the user thinks the inputs are. 
+  are, and not what the user thinks the inputs are.
 
   It returns a table which should contain one line for each
   parameter in the model. Currently, only the first 7 values are
@@ -19,14 +19,17 @@
 }
 \usage{
   SS_parlines(ctlfile = "C:/myfiles/mymodels/myrun/control.ss_new",
-  verbose = T, active = F) 
+  dir=NULL, verbose = T, active = F)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ctlfile}{ File name of control file including path. }
-  \item{verbose}{ T/F switch for amount of detail produced by funciton. }
+  \item{dir}{ Alternative input of path, where file is assumed to be
+  "control.ss_new". Default=NULL.}
+  \item{verbose}{ T/F switch for amount of detail produced by function.
+  Default=T.}
   \item{active}{ Should only active parameters (those with positive
-  phase) be output. }
+  phase) be output? Default=F. }
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~
@@ -40,7 +43,7 @@
 % }
 % \references{ ~put references to the literature/web site here ~ }
 \author{ Ian Taylor }
-% \note{ ~~further notes~~ 
+% \note{ ~~further notes~~
 
 %  % ~Make other sections like Warning with \section{Warning }{....} ~
 % }

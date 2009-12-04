@@ -1,7 +1,7 @@
 SS_parlines <-
 function(
   ctlfile="C:/myfiles/mymodels/myrun/control.ss_new",
-  verbose=T, active=F)
+  dir=NULL, verbose=T, active=F)
 {
 
 ################################################################################
@@ -18,11 +18,12 @@ function(
 ################################################################################
 
   # read control file
+  if(!is.null(dir)) ctlfile <- paste(dir,'control.ss_new',sep='/')
   ncols = 30
   ctl <- read.table(file=ctlfile,col.names=1:ncols,fill=T,
     quote="",colClasses="character",comment.char="", blank.lines.skip=F)
   nrows <- nrow(ctl)
-  print(nrows)
+  #print(nrows)
   ctl_num <- matrix(NA,nrows,ncols) # copy of ctl converted to numerical values or NA
   num_cnt <- rep(NA,nrows)          # count of number of numerical values in each row
   num_cnt7 <- rep(NA,nrows)         # count of number of numerical values in first 7 values of each row
