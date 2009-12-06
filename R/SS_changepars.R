@@ -9,7 +9,7 @@ function(
 {
 ################################################################################
 #
-# SS_changepars May 22, 2008.
+# SS_changepars November 19, 2008.
 # This function comes with no warranty or guarantee of accuracy
 #
 # Purpose: To change one or more parameter values in the Control file for SSv3
@@ -69,7 +69,6 @@ function(
     cmntvec <- c(cmntvec, cmnt)
     vecstrings <- strsplit(splitline[1]," +")[[1]]
     vec <- as.numeric(vecstrings[vecstrings!=""])
-    print(vec)
     if(max(is.na(vec))==1) return(paste("There's a problem with a non-numeric value in line",linenums[i]))
     oldvals[i] <- vec[3]
     if(!is.null(newvals)) vec[3] <- newvals[i]
@@ -90,10 +89,6 @@ function(
   if(verbose) print(paste('wrote new file to',newctlfile),quote=F)
   # output table of changes
   if(is.null(newvals)) newvals <- NA
-  print(oldvals)
-  print(newvals)
-  print(oldphase)
-  print(newphase)
   if(verbose) return(data.frame(oldvals, newvals, oldphase, newphase, comment=cmntvec))
 
 } # end function

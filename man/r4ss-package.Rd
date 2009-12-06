@@ -16,8 +16,8 @@ parameterizations, and various other tasks.
 \tabular{ll}{
 Package: \tab r4ss\cr
 Type: \tab Package\cr
-Version: \tab 1.01\cr
-Date: \tab 2009-11-06\cr
+Version: \tab 1.02\cr
+Date: \tab 2009-12-04\cr
 License: \tab MIT license\cr
 LazyLoad: \tab yes\cr
 URL: \tab http://www.r-project.org\cr \tab http://code.google.com/p/r4ss/\cr
