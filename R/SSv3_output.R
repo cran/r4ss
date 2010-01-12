@@ -17,13 +17,13 @@ function(
 #          and other contributors to http://code.google.com/p/r4ss/
 # Returns: a list containing elements of Report.sso and/or covar.sso,
 #          formatted as R objects, and optional summary statistics to R console
-# General: Updated for Stock Synthesis version 3.03A; R version 2.8.1
+# General: Updated for Stock Synthesis version 3.04B and 3.1_test; R version 2.8.1
 # Notes:   See users guide for documentation: http://code.google.com/p/r4ss/wiki/Documentation
 # Required packages: none
 #
 ################################################################################
 
-codedate <- "December 4, 2009"
+codedate <- "January 12, 2010"
 
 if(verbose){
   print(paste("R function updated:",codedate),quote=F)
@@ -84,9 +84,9 @@ rephead <- readLines(con=repfile,n=3)
 
 # warn if SS version used to create rep file is too old or too new for this code
 SS_version <- rephead[1]
-SS_versionshort <- toupper(substr(SS_version,1,9))
-if(!(SS_versionshort %in% paste("SS-V3.0",c("4B"),sep=""))){
-  print(paste("! Warning, this function tested on SS-V3.04b. You are using",substr(SS_version,1,9)),quote=F)
+SS_versionshort <- toupper(substr(SS_version,1,8))
+if(!(SS_versionshort %in% c("SS-V3.04","SS-V3.1-"))){
+  print(paste("! Warning, this function tested on SS-V3.04B. You are using",substr(SS_version,1,9)),quote=F)
 }else{
   if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=F)
 }
@@ -330,16 +330,16 @@ if(comp){   # skip this stuff if no CompReport.sso file
   compdbase <- rawcompdbase[2:(nrow(rawcompdbase)-2),] # subtract header line and last 2 lines
   compdbase <- compdbase[compdbase$Obs!="",]
   compdbase$Like[compdbase$Like=="_"] <- NA
-  for(i in (1:ncol(compdbase))[!(names(compdbase) %in% c("effN","Kind"))]) compdbase[,i] <- as.numeric(compdbase[,i])
+  for(i in (1:ncol(compdbase))[!(names(compdbase) %in% c("Kind"))]) compdbase[,i] <- as.numeric(compdbase[,i])
 
-  # not sure why these subsets are here, considering that they're not passed into output
-  lendbase   <- compdbase[compdbase$Kind=="LEN"  & compdbase$N > 0,]
-  sizedbase  <- compdbase[compdbase$Kind=="SIZE" & compdbase$N > 0,]
+  ## # not sure why these subsets are here, considering that they're not passed into output
+  ## lendbase   <- compdbase[compdbase$Kind=="LEN"  & compdbase$N > 0,]
+  ## sizedbase  <- compdbase[compdbase$Kind=="SIZE" & compdbase$N > 0,]
   agedbase   <- compdbase[compdbase$Kind=="AGE"  & compdbase$N > 0,]
-  latagebase <- compdbase[compdbase$Kind=="L@A"  & compdbase$N > 0,]
-  lendbase$effN <- as.numeric(lendbase$effN)
-  sizedbase$effN <- as.numeric(sizedbase$effN)
-  agedbase$effN <- as.numeric(agedbase$effN)
+  ## latagebase <- compdbase[compdbase$Kind=="L@A"  & compdbase$N > 0,]
+  ## lendbase$effN <- as.numeric(lendbase$effN)
+  ## sizedbase$effN <- as.numeric(sizedbase$effN)
+  ## agedbase$effN <- as.numeric(agedbase$effN)
   if(nrow(agedbase)>0){
     agebins <- sort(unique(agedbase$Bin[!is.na(agedbase$Bin)]))
   }else{
@@ -354,8 +354,8 @@ if(comp){   # skip this stuff if no CompReport.sso file
   agebins <- NA
   nagebins <- NA
   compdbase <- NA
-  agedbase <- NA
-  latagebase <- NA
+  ## agedbase <- NA
+  ## latagebase <- NA
   Lbin_method <- 2
 }
 
@@ -512,7 +512,7 @@ lenntune <- rawlenntune[,c(1,2,4,5,6,8,9)]
 lenntune <- lenntune[lenntune$N > 0,]
 stats$Length_comp_Eff_N_tuning_check <- lenntune
 
-rawagentune <- matchfun2("LEN_SELEX",-(nfleets+1),"LEN_SELEX",-1,cols=1:10)
+rawagentune <- matchfun2("FIT_SIZE_COMPS",-(nfleets+1),"FIT_SIZE_COMPS",-1,cols=1:10)
 names(rawagentune) <- rawagentune[1,]
 rawagentune <- rawagentune[2:length(rawagentune[,1]),]
 rawagentune[,1] <- rawagentune[,10]
@@ -668,6 +668,7 @@ returndat$sizeselex <- selex
    rawdisc <- rawdisc[,rawdisc[1,]!=""]
    names(rawdisc) <- rawdisc[1,]
    discard <- rawdisc[-1,]
+   for(icol in 2:ncol(discard)) discard[,icol] <- as.numeric(discard[,icol])
  }else{
    discard <- NA
  }
@@ -716,11 +717,7 @@ returndat$sizeselex <- selex
  returndat$managementratiolabels <- managementratiolabels
 
 # Spawner-recruit curve
- if(SS_versionshort %in% c("SS-V3.04-","SS-V3.04A", "SS-V3.04B")){
-   rawsr <- matchfun2("SPAWN_RECRUIT",11,"INDEX_2",-1,cols=1:9)
- }else{
-   rawsr <- matchfun2("SPAWN_RECRUIT",7,"N_est",-1,cols=1:9)
- }
+ rawsr <- matchfun2("SPAWN_RECRUIT",11,"INDEX_2",-1,cols=1:9)
  names(rawsr) <- rawsr[1,]
  rawsr[rawsr=="_"] <- NA
  rawsr <- rawsr[-(1:2),] # remove header rows
@@ -743,11 +740,7 @@ returndat$sizeselex <- selex
  returndat$cpue <- cpue
 
 # Numbers at age
- if(SS_versionshort %in% c("SS-V3.04-","SS-V3.04A","SS-V3.04B")){
-   rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(11+accuage),substr1=FALSE)
- }else{
-   rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"CATCH_AT_AGE",-1,cols=1:(11+accuage),substr1=FALSE)
- }
+ rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(11+accuage),substr1=FALSE)
  if(length(rawnatage)>1){
    names(rawnatage) <- rawnatage[1,]
    rawnatage <- rawnatage[-1,]
@@ -856,4 +849,3 @@ if(comp){
  invisible(returndat)
 
 } # end function
-
