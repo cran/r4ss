@@ -27,7 +27,7 @@ function(
 #
 ################################################################################
 
-  codedate <- "January 20, 2010"
+  codedate <- "February 2, 2010"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=F)
@@ -298,7 +298,7 @@ function(
     pdf(file=pdffile,width=pwidth,height=pheight)
     if(verbose) print(paste("PDF file with plots will be: ",pdffile,sep=""),quote=F)
   }
-  par(mfcol=c(rows,cols))
+  if(new) par(mfcol=c(rows,cols)) # make multi-panel plot if requested
 
   if(pdf){
     mar0 <- par()$mar # current margins
@@ -1474,13 +1474,14 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
 	uiw <- std*qt(0.975,DF_discard) # quantile of t-distribution
 	liw[(ob-liw)<0] <- ob[(ob-liw)<0] # no negative limits
 	xlim <- c((min(yr)-3),(max(yr)+3))
-	if(discard_type=="as_biomass"){
-	  title <- paste("Total discard for",fleetname)
-	  ylab <- "Total discards"
-	}
-	if(discard_type=="as_fraction"){
+	if(grepl("as_fraction",nsp$discard_type)){
+          # discards as a fraction
 	  title <- paste("Discard fraction for",fleetname)
 	  ylab <- "Discard fraction"
+	}else{
+          # discards in same units as catch, or in numbers (should distinguish in the future)
+	  title <- paste("Total discard for",fleetname)
+	  ylab <- "Total discards"
 	}
 	dfracfunc <- function(){
           plotCI(x=yr,y=ob,z=0,uiw=uiw,liw=liw,ylab=ylab,xlab=lab[3],main=title,ylo=0,yhi=1,col="red",sfrac=0.001,lty=1,xlim=xlim,ymax=max(usedisc$Exp,na.rm=T))
@@ -2088,7 +2089,7 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
 	    }
 	}
       # restore default single panel settings
-      par(mfcol=c(rows,cols),mar=c(5,5,4,2)+.1,oma=rep(0,4))
+      par(mfcol=c(rows,cols),mar=c(5,4,4,2)+.1,oma=rep(0,4))
 
       # return information on what was plotted
       return(list(npages=npages, npanels=npanels, ipage=ipage))
@@ -2667,26 +2668,26 @@ if(nseasons == 1){ # temporarily disable multi-season plotting of time-varying g
 
   # plot 20: conditional age at length plot with fits, sample size, etc.
   if(20 %in% c(plot,print)){
-if(3==4){ # temporarily turning off plot
+  if(aalresids==T){
     SSv3_plot_comps(datonly=F,kind="cond",bub=T,verbose=verbose,fleets=fleets,
 		    aalbin=aalbin,aalyear=aalyear,
 		    samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
 		    maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,
 		    png=(20%in%print),GUI=(20%in%plot),smooth=smooth,plotdir=plotdir,
 		    maxneff=maxneff,cex.main=cex.main,...)
-
     if(verbose) print("Finished plot 20a: conditional age at length with fits",quote=F)
-} # end temporarily turning off plot
-    # more plot 20: Andre's new conditional age-at-length plots
+    }
+  # more plot 20: Andre's new conditional age-at-length plots
     if(nrow(condbase)==0){
       if(verbose) print("Skipped plot 20b: mean age and std. dev. in conditional AAL: no data of this type",quote=F)
     }else{
       Lens <-sort(unique(condbase$Lbin_lo))
       Yrs <- sort(unique(condbase$Yr))
-      par(mfrow=c(2,2))
-      for (Gender in 1:2){
+      par(mfrow=c(3,2))
+      for(fleets in 1:nfleets){
+      for (Gender in 1:nsexes){
 	for (Yr in Yrs){
-	  y <- condbase[condbase$Yr==Yr & condbase$Gender==Gender,]
+         y <- condbase[condbase$Yr==Yr & condbase$Gender==Gender & condbase$Fleet==fleets,]
 	  Size <- NULL; Size2 <- NULL
 	  Obs <- NULL; Obs2 <- NULL
 	  Pred <- NULL;	 Pred2 <- NULL
@@ -2737,6 +2738,7 @@ if(3==4){ # temporarily turning off plot
 	  }
 	} # end loop over years
       } # end loop over genders
+     } # end fleet loop
       if(verbose) print("Finished plot 20b: mean age and std. dev. in conditional AAL",quote=F)
       if(verbose) print("  This is a new plot, currently in beta mode.",quote=F)
       if(verbose) print("  Left plots are mean AAL by size-class (obs. and pred.)",quote=F)
@@ -2764,8 +2766,10 @@ if(3==4){ # temporarily turning off plot
   } # end if 21 in plot or print
 
 
-  # restore default single panel settings
-  par(mfcol=c(rows,cols),mar=c(5,5,4,2)+.1,oma=rep(0,4))
+  # restore default single panel settings if needed
+  # conditional because if adding to existing plot may mess up layout
+  if(!unique(par()$mfcol == c(rows,cols))) par(mfcol=c(rows,cols))
+  if(!unique(par()$mar == c(5,4,4,2)+.1)) par(mar=c(5,4,4,2)+.1, oma=rep(0,4))
 
   # Yield curve
   if(22 %in% c(plot, print)){

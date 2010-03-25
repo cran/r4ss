@@ -17,13 +17,13 @@ function(
 #          and other contributors to http://code.google.com/p/r4ss/
 # Returns: a list containing elements of Report.sso and/or covar.sso,
 #          formatted as R objects, and optional summary statistics to R console
-# General: Updated for Stock Synthesis version 3.04B and 3.1_test; R version 2.8.1
+# General: Updated for Stock Synthesis version 3.10; R version 2.8.1
 # Notes:   See users guide for documentation: http://code.google.com/p/r4ss/wiki/Documentation
 # Required packages: none
 #
 ################################################################################
 
-codedate <- "January 20, 2010"
+codedate <- "February 25, 2010"
 
 if(verbose){
   print(paste("R function updated:",codedate),quote=F)
@@ -85,7 +85,7 @@ rephead <- readLines(con=repfile,n=10)
 # warn if SS version used to create rep file is too old or too new for this code
 SS_version <- rephead[1]
 SS_versionshort <- toupper(substr(SS_version,1,8))
-if(!(SS_versionshort %in% c("SS-V3.04","SS-V3.1-"))){
+if(!(SS_versionshort %in% c("SS-V3.04","SS-V3.1-","SS-V3.10"))){
   print(paste("! Warning, this function tested on SS-V3.1. You are using",substr(SS_version,1,9)),quote=F)
 }else{
   if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=F)
@@ -377,11 +377,13 @@ seasfracs <- (0:(nseasons-1))/nseasons
 endcode <- "SIZEFREQ_TRANSLATION" #(this section heading not present in all models)
 if(is.na(matchfun(endcode))) endcode <- "MOVEMENT"
 morph_indexing <- matchfun2("MORPH_INDEXING",1,endcode,-1,cols=1:9)
-#return(morph_indexing)
 names(morph_indexing) <- morph_indexing[1,]
 morph_indexing <- morph_indexing[-1,]
 for(i in 1:ncol(morph_indexing)) morph_indexing[,i] <- as.numeric(morph_indexing[,i])
 ngpatterns <- max(morph_indexing$Gpattern)
+
+mainmorphs <- morph_indexing$Index[morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
+if(length(mainmorphs)==0) print("!Error with morph indexing in SSv3_output function.",quote=F)
 
 # forecast
 if(forecast){
@@ -428,6 +430,7 @@ for(i in (1:ncol(allpars))[!(names(allpars)%in%c("Label","Status"))]) allpars[,i
 if(!is.na(parfile)){ parline <- read.table(parfile,fill=T,comment.char="",nrows=1)
 }else{ parline <- matrix(NA,1,16) }
 stats$N_estimated_parameters <- parline[1,6]
+
 
 pars <- rawpars[!(rawpars$Phase %in% c("_","")),]
 pars[pars=="_"] <- NA
@@ -484,7 +487,7 @@ if(nrow(SelAgeAdj)>2){
 
 # gradient
 if(covar & !is.na(corfile)) stats$log_det_hessian <- read.table(corfile,nrows=1)[1,10]
-stats$maximum_gradient_component <- parline[1,16]
+stats$maximum_gradient_component <- as.numeric(matchfun2("Convergence_Level",0,"Convergence_Level",0,cols=2))
 
 # sigma_R
 srhead <- matchfun2("SPAWN_RECRUIT",0,"SPAWN_RECRUIT",10,cols=1:6)
@@ -530,6 +533,7 @@ returndat$nfleets     <- nfleets
 returndat$nfishfleets <- nfishfleets
 returndat$nsexes      <- nsexes
 returndat$ngpatterns  <- ngpatterns
+returndat$mainmorphs  <- mainmorphs
 returndat$lbins       <- lbins
 returndat$Lbin_method <- Lbin_method
 returndat$nlbins      <- nlbins
@@ -572,18 +576,21 @@ returndat$endgrowth <- growdat
 
 # Time-varying growth
  rawgrow <- matchfun2("MEAN_SIZE_TIMESERIES",1,"mean_size_Jan_1_for_gender",-1,cols=1:(4+accuage+1))
+ growthvaries <- FALSE
  if(length(rawgrow)>1){
    names(rawgrow) <- rawgrow[1,]
    growdat <- rawgrow[-1,]
    for(i in 1:ncol(growdat)) growdat[,i] <- as.numeric(growdat[,i])
    growdat <- growdat[growdat$Beg==1 & growdat$Yr < endyr,]
    if(nseasons > 1) growdat <- growdat[growdat$Seas==1,]
+   if(length(unique(growdat$Yr))>1) growthvaries <- TRUE
    returndat$growthseries <- growdat
+   returndat$growthvaries <- growthvaries
  }
 
 # Length selex and retention
  if(!forecast) selex <- selex[selex$year <= endyr,]
-returndat$sizeselex <- selex
+ returndat$sizeselex <- selex
 
 # Age based selex
  rawageselex <- matchfun2("AGE_SELEX",4,"ENVIRONMENTAL_DATA",-1)
