@@ -23,7 +23,7 @@ function(
 #
 ################################################################################
 
-codedate <- "February 25, 2010"
+codedate <- "April 16, 2010"
 
 if(verbose){
   print(paste("R function updated:",codedate),quote=F)
@@ -85,8 +85,8 @@ rephead <- readLines(con=repfile,n=10)
 # warn if SS version used to create rep file is too old or too new for this code
 SS_version <- rephead[1]
 SS_versionshort <- toupper(substr(SS_version,1,8))
-if(!(SS_versionshort %in% c("SS-V3.04","SS-V3.1-","SS-V3.10"))){
-  print(paste("! Warning, this function tested on SS-V3.1. You are using",substr(SS_version,1,9)),quote=F)
+if(!(SS_versionshort %in% c("SS-V3.10"))){
+  print(paste("! Warning, this function tested on SS-V3.10. You are using",substr(SS_version,1,9)),quote=F)
 }else{
   if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=F)
 }
@@ -97,7 +97,7 @@ findtime <- function(lines){
   if(length(time)<2) return() else return(time[2])
 }
 repfiletime <- findtime(rephead)
-print(paste("Report file time:",repfiletime),quote=F)
+if(verbose) print(paste("Report file time:",repfiletime),quote=F)
 
 corfile <- NA
 if(covar){
@@ -624,7 +624,7 @@ returndat$endgrowth <- growdat
    if(nsexes==1) tsspaw_bio <- tsspaw_bio/2
    depletionseries <- tsspaw_bio/tsspaw_bio[1]
    stats$SBzero <- tsspaw_bio[1]
-   if(nsexes==1) stats$SBzero <- stats$SBzero/2
+  # if(nsexes==1) stats$SBzero <- stats$SBzero/2
    stats$current_depletion <- depletionseries[length(depletionseries)]
 
  # total landings

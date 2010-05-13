@@ -19,12 +19,9 @@ DoProjectPlots(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",
   \item{Titles}{ Titles for plots when using multiple filenames. Default="". }
   \item{ncols}{ Number of columns to read in output file (fileN). Deafult=200. }
   \item{Plots}{ List to get specific plots (currently 1 through 8).
-    If there are multiple files, supply a list of vectors, e.g.
-    list(c(1,5),c(2:5)). Default=list(1:25).
-  }
+    Default=list(1:25). If there are multiple files, supply a list of vectors, e.g. list(c(1,5),c(2:5)) }
   \item{Options}{ List to get specific strategies in the trajectory
-    plots. If there are multiple files, supply a list of vectors,
-    e.g. list(c(1,5),c(2:5)). Default=list(c(1:9)). }
+    plots. Default=list(c(1:9)).If there are multiple files, supply a list of vectors, e.g. list(c(1,5),c(2:5)) }
   \item{LegLoc}{ Location for the legend (for plots with a legend).
     Default="bottomright". }
   \item{yearmax}{ Maximum year to show in the plots. Set negative to show all years.
