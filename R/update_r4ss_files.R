@@ -13,11 +13,11 @@ update_r4ss_files <- function(trunk=T,branches=F){
       source(paste(webdir,filenames[i],sep="/"))
     }
   }
-  if(trunk) getfilenames("http://r4ss.googlecode.com/svn/trunk/")
+  if(trunk){
+    getfilenames("http://r4ss.googlecode.com/svn/trunk/")
+  }
   if(branches){
-      getfilenames("http://r4ss.googlecode.com/svn/branches/input_file_objects")
-      getfilenames("http://r4ss.googlecode.com/svn/branches/individual_plot_functions")
-      getfilenames("http://r4ss.googlecode.com/svn/branches/simulations")
+    getfilenames("http://r4ss.googlecode.com/svn/branches/input_file_objects")
   }
 
   print("update complete.",quote=F)

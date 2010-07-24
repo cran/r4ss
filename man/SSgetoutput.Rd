@@ -5,7 +5,7 @@
   Get output from multiple Stock Synthesis models.
 }
 \description{
-  Apply the function \code{\link{SSv3_output}} multiple times and save
+  Apply the function \code{\link{SS_output}} multiple times and save
   output as individual objects or a list of lists.
 }
 \usage{
@@ -36,7 +36,7 @@ FALSE, listlists = TRUE)
     Print various messages to the command line as the function runs? Default=TRUE.
   }
   \item{ncols}{
-    Maximum number of columns in Report.sso (same input as for \code{\link{SSv3_output}}).
+    Maximum number of columns in Report.sso (same input as for \code{\link{SS_output}}).
     Default=210.
   }
   \item{global}{
@@ -73,7 +73,7 @@ FALSE, listlists = TRUE)
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  \code{\link{SSv3_output}}
+  \code{\link{SS_output}}
   \code{\link{SSrunsims}}
   \code{\link{SSsummarize}}
 }
