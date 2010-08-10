@@ -3,7 +3,7 @@ SS_plots <-
     replist=ReportObject, plot=1:24, print=0, pdf=FALSE, printfolder="", dir="default", fleets="all", areas="all",
     fleetnames="default", fleetcols="default", fleetlty=1, fleetpch=1, lwd=1, areacols="default", areanames="default",
     verbose=TRUE, uncertainty=TRUE, forecastplot=FALSE, datplot=FALSE, Natageplot=TRUE, samplesizeplots=TRUE, compresidplots=TRUE,
-    sprtarg=0.4, btarg=0.4, minbthresh=0.25, pntscalar=2.6, minnbubble=8, aalyear=-1, aalbin=-1, aalmaxbinrange=0,
+    sprtarg=0.4, btarg=0.4, minbthresh=0.25, pntscalar=2.6, minnbubble=8, aalyear=-1, aalbin=-1, 
     aalresids=FALSE, maxneff=5000, cohortlines=c(), smooth=TRUE, showsampsize=TRUE, showeffN=TRUE, showlegend=TRUE,
     pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1,selexlines=1:5,
     rows=1, cols=1, maxrows=6, maxcols=6, maxrows2=2, maxcols2=4, tagrows=3, tagcols=3, fixdims=TRUE, new=TRUE,
@@ -28,7 +28,7 @@ SS_plots <-
   #
   ################################################################################
 
-  codedate <- "June 14, 2010"
+  codedate <- "August 5, 2010"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=FALSE)
@@ -162,7 +162,7 @@ SS_plots <-
   # Length selex and retention
   if(length(intersect(c(3,4), c(plot,print)))>0)
   {
-    SSplotSelex(replist=replist, selexlines=selexlines,
+    SSplotSelex(replist=replist, selexlines=selexlines, fleets=fleets,
                 plot=(3 %in% plot), print=(3 %in% print),
                 cex.main=cex.main)
     if(verbose) print("Finished plots 3 and 4: selectivity plots",quote=FALSE)
@@ -213,16 +213,6 @@ SS_plots <-
     if(verbose) print("Finished plot 5: Basic time series",quote=FALSE)
   } # end if 6 in plot or print
 
-  # Plot 7: recruitment
-  if(7 %in% c(plot, print)){
-    SSplotRecdevs(replist=replist,
-                  plot=(7 %in% plot),
-                  print=(7 %in% print),
-                  forecastplot=forecastplot,
-                  uncertainty=uncertainty)
-  } # end if 7 in plot or print
-
-
   ### Plot 8: discard fractions (if present) ###
   if(8 %in% c(plot, print)){
     SSplotDiscard(replist=replist,
@@ -250,6 +240,22 @@ SS_plots <-
               sprtarg=0.4, btarg=0.4)
   } # end if 11 in plot or print
 
+  ### Plot 7: recruitment (moved to near S-R curve, but needs renumbering) ###
+  if(7 %in% c(plot, print)){
+    SSplotRecdevs(replist=replist,
+                  plot=(7 %in% plot),
+                  print=(7 %in% print),
+                  forecastplot=forecastplot,
+                  uncertainty=uncertainty)
+  } # end if 7 in plot or print
+
+  ### Plot 25: estimating recruitment bias adjustment (probably needs renumbering) ###
+  if(25 %in% c(plot, print) & uncertainty){
+    SS_fitbiasramp(replist=replist,
+                   png=(25 %in% print),
+                   twoplots=FALSE)
+  } # end if 25 in plot or print                   
+
   ### Plot 12: spawner-recruit curve ###
   if(12 %in% c(plot, print)){
     SSplotSpawnrecruit(replist=replist,
@@ -258,7 +264,6 @@ SS_plots <-
                        virg=TRUE,  # add point on curve at equilibrium values (B0,R0)
                        init=FALSE) # add point on curve at initial values (B1,R1)
   } # end if 12 in plot or print
-
 
   ### Plot 13: CPUE plots ###
   if(13 %in% c(plot, print))
@@ -389,14 +394,35 @@ SS_plots <-
   if(20 %in% c(plot,print)){
     if(aalresids==TRUE){
       SSplotComps(replist=replist,subplot=3,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+                  samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                  maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
+                  print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
+                  maxneff=maxneff,cex.main=cex.main,...)
+    }
+
+    # conditional age at length for a given year
+    if(length(intersect(aalyear, unique(yeg$timeseries$Yr)))>0){
+      SSplotComps(replist=replist,subplot=4:5,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                   aalbin=aalbin,aalyear=aalyear,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
                   maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
                   print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                   maxneff=maxneff,cex.main=cex.main,...)
-      if(verbose) print("Finished plot 20a: conditional age at length with fits",quote=FALSE)
     }
-    # more plot 20: Andre's new conditional age-at-length plots
+    # conditional age at length for a given length bin
+    if(length(intersect(aalbin, unique(yeg$lbins)))>0){
+      SSplotComps(replist=replist,subplot=6,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+                  aalbin=aalbin,
+                  samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                  maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
+                  print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
+                  maxneff=maxneff,cex.main=cex.main,...)
+    }
+    if(verbose) print("Finished plot 20a: conditional age at length with fits",quote=FALSE)
+  } #end if 20 in plot or print
+  
+  if(21 %in% c(plot,print)){
+    # plot 21: Andre's new conditional age-at-length plots
     SSplotComps(replist=replist,subplot=8,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                 aalbin=aalbin,aalyear=aalyear,
                 samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
@@ -404,30 +430,30 @@ SS_plots <-
                 print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
     if(verbose){
-      print("Finished plot 20b: mean age and std. dev. in conditional AAL",quote=FALSE)
+      print("Finished plot 21: mean age and std. dev. in conditional AAL",quote=FALSE)
       print("  This is a new plot, currently in beta mode.",quote=FALSE)
       print("  Left plots are mean AAL by size-class (obs. and pred.)",quote=FALSE)
       print("  with 90% CIs based on adding 1.64 SE of mean to the data",quote=FALSE)
       print("  Right plots in each pair are SE of mean AAL (obs. and pred.)",quote=FALSE)
       print("  with 90% CIs based on the chi-square distribution.",quote=FALSE)
     }
-  } # end if 20 in plot or print
+  } # end if 21 in plot or print
 
-  # plot 21: mean length at age and mean weight at age
-  if(21 %in% c(plot,print)){
+  # plot 22: mean length at age and mean weight at age
+  if(22 %in% c(plot,print)){
     SSplotComps(replist=replist,datonly=FALSE,kind="L@A",bub=TRUE,verbose=verbose,fleets=fleets,
                 samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
-                print=(21%in%print),plot=(21%in%plot),smooth=smooth,plotdir=plotdir,
+                print=(22%in%print),plot=(22%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
     SSplotComps(replist=replist,datonly=FALSE,kind="W@A",bub=TRUE,verbose=verbose,fleets=fleets,
                 samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
-                print=(21%in%print),plot=(21%in%plot),smooth=smooth,plotdir=plotdir,
+                print=(22%in%print),plot=(22%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
-    if(verbose) print("Finished plot 21: mean length at age and mean weight at age",quote=FALSE)
+    if(verbose) print("Finished plot 22: mean length at age and mean weight at age",quote=FALSE)
     flush.console()
-  } # end if 21 in plot or print
+  } # end if 22 in plot or print
 
 
   # restore default single panel settings if needed
@@ -436,12 +462,12 @@ SS_plots <-
   if(FALSE %in% (par()$mar == c(5,4,4,2)+.1)) par(mar=c(5,4,4,2)+.1, oma=rep(0,4))
 
   # Yield curve
-  if(22 %in% c(plot, print)){
+  if(23 %in% c(plot, print)){
     SSplotYield(replist=replist,
                 cex.main=cex.main,
-                plot=(22 %in% plot),
-                print=(22 %in% print))
-  } # close plot section 22
+                plot=(23 %in% plot),
+                print=(23 %in% print))
+  } # close plot section 23
 
   ### Plot 24: Tag plots ###
   if(24 %in% c(plot, print)){
