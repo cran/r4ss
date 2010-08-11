@@ -1,5 +1,5 @@
 SS_fitbiasramp <-
-function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
+function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
          transform=FALSE, png=FALSE, pdf=FALSE, oldctl=NULL, newctl=NULL,
          pwidth=7, pheight=7, punits="in", ptsize=12, res=300){
   ##################
@@ -8,7 +8,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
   # by Ian Taylor
   # June 28, 2010
   #
-  # Usage: run function with input that is an object from SSoutput
+  # Usage: run function with input that is an object from SS_output
   #        from http://code.google.com/p/r4ss/
   #
   ##################
@@ -17,11 +17,11 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
   #  method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN")
 
   if(!is.list(replist) | !(substr(replist$SS_version,1,8) %in% c("SS-V3.04","SS-V3.1-","SS-V3.10"))){
-    print("!error: this function needs an input object created by SSoutput from a SSv3.10 model")
+    print("!error: this function needs an input object created by SS_output from a SSv3.10 model")
     return()
   }
   if(replist$inputs$covar==FALSE){
-    print("!error, you need to have covar=TRUE in the input to the SSoutput function",quote=FALSE)
+    print("!error, you need to have covar=TRUE in the input to the SS_output function",quote=FALSE)
     return()
   }
   parameters <- replist$parameters
@@ -99,9 +99,15 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
     # get info on recruitment devs from the model output
     parmat <- replist$parameters
     rowrange <- (grep("SR_autocorr",parmat$Label)+1):(grep("InitF",parmat$Label)[1]-1)
+    yr <- parmat$Label[rowrange]
+    yr <- strsplit(yr,"RecrDev_")
+    yr2 <- matrix(NA,length(yr),2)
+    yr2 <- rep(NA,length(yr))
+    for(i in 1:length(yr)) yr2[i] <- as.numeric(yr[[i]][2])
+    yr2[is.na(yr2)] <- min(yr2,na.rm=T) - sum(is.na(yr2)):1
     val <- parmat$Value[rowrange]
     std <- parmat$Parm_StDev[rowrange]
-    return(data.frame(val=val,std=std))
+    return(data.frame(yr=yr2,val=val,std=std))
   }
 
   optimfun <- function(yr,std,startvalues){
@@ -143,12 +149,12 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
   }
 
   recdevs <- getrecdevs(replist)
-  Yr <- recruit$year[!is.na(recdevs$std)]
   recdevs <- recdevs[!is.na(recdevs$std),]
-
+  yr <- recdevs$yr
   val <- recdevs$val
   std <- recdevs$std
 
+  
   if(max(val)==0 | length(val)==0){
     if(verbose) print("no rec devs estimated in this model",quote=FALSE)
     return()
@@ -165,23 +171,26 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
                    units=punits,res=res,pointsize=ptsize)
     if(pdf!=FALSE) pdf(file=pdf,width=pwidth,height=pheight,
                    pointsize=ptsize)
-    par(mfrow=c(2,1),mar=c(2,5,1,1),oma=c(3,0,0,0))
-    plot(Yr,Yr,type='n',xlab="Year",
-         ylab='Recruitment deviation',ylim=ylim)
-    abline(h=0,col="grey")
-    arrows(Yr,recdev_lo,Yr,recdev_hi,length=0.03,code=3,angle=90,lwd=1.2)
-    points(Yr,val,pch=16)
+    if(twoplots){
+      par(mfrow=c(2,1),mar=c(2,5,1,1),oma=c(3,0,0,0))
+      plot(yr,yr,type='n',xlab="Year",
+           ylab='Recruitment deviation',ylim=ylim)
+      abline(h=0,col="grey")
+      arrows(yr,recdev_lo,yr,recdev_hi,length=0.03,code=3,angle=90,lwd=1.2)
+      points(yr,val,pch=16)
+    }
   }
 
-  print('estimating...',quote=FALSE)
-  newbias <- optimfun(yr=Yr,std=std,startvalues=startvalues)
+  print('estimating alternative recruitment bias adjustment fraction...',quote=FALSE)
+  newbias <- optimfun(yr=yr,std=std,startvalues=startvalues)
 
   yvals <- 1-(std/sigma_R_in)^2
-  plot(Yr,yvals,xlab="Year",
-       ylab=expression(1 - italic(SE(hat(R[i]))^2 / sigma[R])^2),
+  plot(yr,yvals,xlab="Year",
+       ylab='',
        ylim=range(0,1,1.3),type="b",yaxs='i')
   abline(h=0,col="grey")
   abline(h=1,col="grey")
+  mtext(side=2,line=2.5,expression(1 - italic(SE(hat(r[y]))^2 / sigma[R])^2))
 
   #names
   names <- c(
@@ -192,7 +201,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS",
   "#_max_bias_adj_in_MPD (1.0 to mimic pre-2009 models)")
 
   # bias correction (2nd axis, scaled by ymax)
-  lines(biasadjfun(Yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
+  lines(biasadjfun(yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
   lines(recruit$year,recruit$biasadj,col=2,lwd=3,lty=2)
   legend('topleft',col=c(2,4),lwd=3,lty=2:1,inset=.01,cex=.9,bg=rgb(1,1,1,.8),box.col=NA,
          leg=c('bias adjust in model','estimated alternative'))

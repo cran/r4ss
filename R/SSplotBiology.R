@@ -42,7 +42,7 @@ SSplotBiology <-
   if(plotdir=="default") plotdir <- replist$inputs$dir
   # check dimensions
   if(length(mainmorphs)>nsexes){
-    print("!Error with morph indexing in SSplotbiology function.",quote=FALSE)
+    print("!Error with morph indexing in SSplotBiology function.",quote=FALSE)
     print(" Code is not set up to handle multiple growth patterns or birth seasons.",quote=FALSE)
   }
   xlab <- labels[1]
@@ -170,9 +170,9 @@ SSplotBiology <-
       lines(xm,growdatM$Len_Mid,col=col2,lwd=2)
       lines(xm,growdatM$high,col=col2,lwd=1,lty="dashed")
       lines(xm,growdatM$low,col=col2,lwd=1,lty="dashed")
-      grid()
       legend(legendloc,bty="n", c("Females","Males"), lty=1, col = c(col1,col2))
     }
+    grid()
   }
   if(plot & 5 %in% subplots) gfunc5()
   if(print & 5 %in% subplots){
