@@ -22,7 +22,7 @@ SS_output <-
   #
   ################################################################################
 
-  codedate <- "June 14, 2010"
+  codedate <- "September 20, 2010"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=FALSE)
@@ -84,7 +84,7 @@ SS_output <-
   # warn if SS version used to create rep file is too old or too new for this code
   SS_version <- rephead[1]
   SS_versionshort <- toupper(substr(SS_version,1,8))
-  if(!(SS_versionshort %in% c("SS-V3.10"))){
+  if(!(SS_versionshort %in% c("SS-V3.10","SS-V3.11"))){
     print(paste("! Warning, this function tested on SS-V3.10. You are using",substr(SS_version,1,9)),quote=FALSE)
   }else{
     if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=FALSE)
@@ -212,10 +212,12 @@ SS_output <-
         if(verbose) print(paste("Got warning file. There", textblock, "in", warnname),quote=FALSE)
       }else{
         print("warning.sso file is missing the string 'N warnings'!",quote=FALSE)
+        nwarn <- NA
       }
     }
   }else{
     if(verbose) print("You skipped the warnings file",quote=FALSE)
+    nwarn <- NA
   }
   if(verbose) print("Finished reading files",quote=FALSE)
   flush.console()
@@ -348,7 +350,12 @@ SS_output <-
   for(i in 1:ncol(morph_indexing)) morph_indexing[,i] <- as.numeric(morph_indexing[,i])
   ngpatterns <- max(morph_indexing$Gpattern)
 
-  mainmorphs <- morph_indexing$Index[morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
+  # set mainmorphs as those morphs with the earliest birth season
+  # and the largest fraction of the submorphs (should equal middle morph when using sub-morphs)
+  temp <- morph_indexing[morph_indexing$Bseas==min(morph_indexing$Bseas) &
+                                        morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
+  mainmorphs <- min(temp$Index[temp$Gender==1])
+  if(nsexes==2) mainmorphs <- c(mainmorphs, min(temp$Index[temp$Gender==2]))
   if(length(mainmorphs)==0) print("!Error with morph indexing in SS_output function.",quote=FALSE)
 
   # forecast
@@ -371,6 +378,7 @@ SS_output <-
   tempfiles <- matchfun2("Data_File",0,"Control_File",0,cols=1:2)
   stats$Files_used <- paste(c(tempfiles[1,],tempfiles[2,]),collapse=" ")
 
+  stats$Nwarnings <- nwarn
   stats$warnings <- warn
 
   # likelihoods
@@ -410,6 +418,8 @@ SS_output <-
   pars$checkdiff3 <- abs(pars$Value-(pars$Max-(pars$Max-pars$Min)/2))
   pars$Afterbound[pars$checkdiff < 0.001 | pars$checkdiff2 < 0.001 | pars$checkdiff2 < 0.001] <- "CHECK"
   pars$Afterbound[!pars$Afterbound %in% "CHECK"] <- "OK"
+
+  stats$table_of_phases <- table(pars$Phase)
   pars <- pars[pars$Phase %in% 0:100,]
   stats$estimated_non_rec_devparameters <- pars[,c(2,3,5:15)]
 
@@ -519,7 +529,7 @@ SS_output <-
   MGparmAdj <- matchfun2("MGparm_By_Year_after_adjustments",2,"selparm(Size)_By_Year_after_adjustments",-1)
   if(nrow(MGparmAdj)>2){
     MGparmAdj <- MGparmAdj[,MGparmAdj[1,]!=""]
-    names(MGparmAdj) <- c("Yr",parameters$Label[1:grep("CohortGrowDev",parameters$Label)])
+    names(MGparmAdj) <- c("Yr",parameters$Label[1:(ncol(MGparmAdj)-1)])
   }else{
     MGparmAdj <- NA
   }
@@ -546,6 +556,13 @@ SS_output <-
     SelAgeAdj <- NA
   }
 
+  # recruitment distribution
+  recruitment_dist <- matchfun2("RECRUITMENT_DIST",1,"MORPH_INDEXING",-1)[,1:6]
+  names(recruitment_dist) <- recruitment_dist[1,]
+  recruitment_dist <- recruitment_dist[-1,]
+  for(i in 1:6) recruitment_dist[,i] <- as.numeric(recruitment_dist[,i])
+  
+  
   # gradient
   if(covar & !is.na(corfile)) stats$log_det_hessian <- read.table(corfile,nrows=1)[1,10]
   stats$maximum_gradient_component <- as.numeric(matchfun2("Convergence_Level",0,"Convergence_Level",0,cols=2))
@@ -613,7 +630,8 @@ SS_output <-
   returndat$MGparmAdj   <- MGparmAdj
   returndat$SelSizeAdj  <- SelSizeAdj
   returndat$SelAgeAdj   <- SelAgeAdj
-
+  returndat$recruitment_dist <- recruitment_dist
+  
   # Static growth
   begin <- matchfun("N_Used_morphs",rawrep[,6])+1
   rawbio <- rawrep[begin:(begin+nlbinspop),1:8]
@@ -706,7 +724,7 @@ SS_output <-
   depletionseries <- tsspaw_bio/tsspaw_bio[1]
   stats$SBzero <- tsspaw_bio[1]
   # if(nsexes==1) stats$SBzero <- stats$SBzero/2
-  stats$current_depletion <- depletionseries[length(depletionseries)]
+  stats$current_depletion <- depletionseries[length(depletionseries)] # doesn't work for spatial models
 
   # total landings
   ls <- nrow(ts)-1
@@ -802,6 +820,7 @@ SS_output <-
   flush.console()
 
   returndat$managementratiolabels <- managementratiolabels
+  returndat$B_ratio_denominator <- as.numeric(strsplit(managementratiolabels$Label[3],"%")[[1]][1])/100
 
   # Spawner-recruit curve
   rawsr <- matchfun2("SPAWN_RECRUIT",11,"INDEX_2",-1,cols=1:9)
@@ -831,6 +850,26 @@ SS_output <-
   }
   returndat$cpue <- cpue
 
+# temporary split in the code to work with 3.11 and 3.10
+if(SS_versionshort==c("SS-V3.11")){
+  # Numbers at age
+  rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(12+accuage),substr1=FALSE)
+  if(length(rawnatage)>1){
+    names(rawnatage) <- rawnatage[1,]
+    rawnatage <- rawnatage[-1,]
+    for(i in (1:ncol(rawnatage))[!(names(rawnatage) %in% c("Beg/Mid","Era"))]) rawnatage[,i] = as.numeric(rawnatage[,i])
+    returndat$natage <- rawnatage
+  }
+
+  # Numbers at length
+  rawnatlen <- matchfun2("NUMBERS_AT_LENGTH",1,"CATCH_AT_AGE",-1,cols=1:(11+nlbinspop),substr1=FALSE)
+  if(length(rawnatlen)>1){
+    names(rawnatlen) <- rawnatlen[1,]
+    rawnatlen <- rawnatlen[-1,]
+    for(i in (1:ncol(rawnatlen))[!(names(rawnatlen) %in% c("Beg/Mid","Era"))]) rawnatlen[,i] = as.numeric(rawnatlen[,i])
+    returndat$natlen <- rawnatlen
+  }
+}else{
   # Numbers at age
   rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(11+accuage),substr1=FALSE)
   if(length(rawnatage)>1){
@@ -848,6 +887,7 @@ SS_output <-
     for(i in (1:ncol(rawnatlen))[names(rawnatlen)!="Era"]) rawnatlen[,i] = as.numeric(rawnatlen[,i])
     returndat$natlen <- rawnatlen
   }
+}
   
   # Movement
   movement <- matchfun2("MOVEMENT",1,"EXPLOITATION",-1,cols=1:(7+accuage),substr1=FALSE)
@@ -874,7 +914,7 @@ SS_output <-
   rawAAK <- matchfun2("AGE_AGE_KEY",1,"SELEX_database",-1,cols=1:(accuage+2))
   if(length(rawAAK)>1){
     starts <- grep("KEY:",rawAAK[,1])
-    N_ageerror_defs <- length(starts)
+    returndat$N_ageerror_defs <- N_ageerror_defs <- length(starts)
     if(N_ageerror_defs > 0)
     {
       nrowsAAK <- nrow(rawAAK)/nsexes - 3
@@ -896,14 +936,19 @@ SS_output <-
 
   # catch at age
   catage <- matchfun2("CATCH_AT_AGE",1,"BIOLOGY",-1)
-  catage <- catage[,apply(catage,2,emptytest)<1]
-  names(catage) <- catage[1,]
-  catage <- catage[-1,]
-  for(icol in (1:ncol(catage))[substr(names(catage),1,2)!="XX" & names(catage)!="Era"]){
-    catage[,icol] <- as.numeric(catage[,icol])
+  if(catage[[1]][1]=="absent"){
+    catage <- NA
+    print("! Warning: no catch-at-age numbers because 'detailed age-structured reports' turned off in starter file.",quote=F)
+  }else{
+    catage <- catage[,apply(catage,2,emptytest)<1]
+    names(catage) <- catage[1,]
+    catage <- catage[-1,]
+    for(icol in (1:ncol(catage))[substr(names(catage),1,2)!="XX" & names(catage)!="Era"]){
+      catage[,icol] <- as.numeric(catage[,icol])
+    }
   }
   returndat$catage <- catage
-
+  
   # adding stuff to list which gets returned by function
   if(comp){
     returndat$lendbase      <- lendbase

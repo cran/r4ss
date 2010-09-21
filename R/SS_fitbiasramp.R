@@ -6,7 +6,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   # function to estimate bias adjustment ramp
   # for Stock Synthesis v3.10b
   # by Ian Taylor
-  # June 28, 2010
+  # September 7, 2010
   #
   # Usage: run function with input that is an object from SS_output
   #        from http://code.google.com/p/r4ss/
@@ -16,7 +16,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   # note, method is choices that go into optim:
   #  method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN")
 
-  if(!is.list(replist) | !(substr(replist$SS_version,1,8) %in% c("SS-V3.04","SS-V3.1-","SS-V3.10"))){
+  if(!is.list(replist) | !(substr(replist$SS_version,1,8) %in% c("SS-V3.04","SS-V3.1-","SS-V3.10","SS-V3.11"))){
     print("!error: this function needs an input object created by SS_output from a SSv3.10 model")
     return()
   }
@@ -101,9 +101,17 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
     rowrange <- (grep("SR_autocorr",parmat$Label)+1):(grep("InitF",parmat$Label)[1]-1)
     yr <- parmat$Label[rowrange]
     yr <- strsplit(yr,"_")
-    yr2 <- matrix(NA,length(yr),2)
     yr2 <- rep(NA,length(yr))
-    for(i in 1:length(yr)) yr2[i] <- as.numeric(yr[[i]][length(yr[[i]])])
+    for(i in 1:length(yr)){
+      if(yr[[i]][2]!="InitAge") yr2[i] <- as.numeric(yr[[i]][length(yr[[i]])])
+    }
+    # if label is something like "Main_InitAge_19" then the year
+    # is the minimum of the years from the normal RecrDev labels
+    minyr2 <- min(yr2) 
+    for(i in (1:length(yr))[is.na(yr2)]){
+      if(yr[[i]][2]=="InitAge") yr2[i] <- minyr2 - as.numeric(yr[[i]][length(yr[[i]])])
+    }
+    
     yr2[is.na(yr2)] <- min(yr2,na.rm=T) - sum(is.na(yr2)):1
     val <- parmat$Value[rowrange]
     std <- parmat$Parm_StDev[rowrange]
