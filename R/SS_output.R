@@ -22,7 +22,7 @@ SS_output <-
   #
   ################################################################################
 
-  codedate <- "September 20, 2010"
+  codedate <- "November 1, 2010"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=FALSE)
@@ -85,7 +85,7 @@ SS_output <-
   SS_version <- rephead[1]
   SS_versionshort <- toupper(substr(SS_version,1,8))
   if(!(SS_versionshort %in% c("SS-V3.10","SS-V3.11"))){
-    print(paste("! Warning, this function tested on SS-V3.10. You are using",substr(SS_version,1,9)),quote=FALSE)
+    print(paste("! Warning, this function tested on SS-V3.11b. You are using",substr(SS_version,1,9)),quote=FALSE)
   }else{
     if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=FALSE)
   }
@@ -762,9 +762,13 @@ SS_output <-
 
   ## discard fractions ###
 
-  # degrees of freedom for T-distribution
+  # degrees of freedom for T-distribution (or indicator 0, -1, -2 for other distributions)
   DF_discard <- rawrep[matchfun("DISCARD_OUTPUT"),3]
-  DF_discard <- as.numeric(strsplit(DF_discard,"=_")[[1]][2])
+  if(length(grep("T_distribution",DF_discard))>0)
+    DF_discard <- as.numeric(strsplit(DF_discard,"=_")[[1]][2])
+  if(length(grep("_normal_with_Std_in_as_CV",DF_discard))>0)     DF_discard <- 0
+  if(length(grep("_normal_with_Std_in_as_stddev",DF_discard))>0) DF_discard <- -1
+  if(length(grep("_lognormal",DF_discard))>0)                    DF_discard <- -2
 
   rawdisc <- matchfun2("DISCARD_OUTPUT",1,"MEAN_BODY_WT_OUTPUT",-1)
   discard_type <- rawdisc[1,1]
@@ -896,6 +900,67 @@ if(SS_versionshort==c("SS-V3.11")){
   for(i in 1:ncol(movement)) movement[,i] <- as.numeric(movement[,i])
   returndat$movement <- movement
 
+  # reporting rates
+  tagreportrates <- matchfun2("Reporting_Rates_by_Fishery",1,
+                              "See_composition_data_output_for_tag_recapture_details",-1,
+                              cols=1:3)
+  if(tagreportrates[[1]][1]!="absent"){
+    names(tagreportrates) <- tagreportrates[1,]
+    tagreportrates <- tagreportrates[-1,]
+    for(i in 1:ncol(tagreportrates)) tagreportrates[,i] <- as.numeric(tagreportrates[,i])
+    returndat$tagreportrates <- tagreportrates
+  }else{
+    returndat$tagreportrates <- NA
+  }
+  
+  # tag recapture table
+  tagrecap <- matchfun2("TAG_Recapture",1,
+                        "Tags_Alive",-1,
+                        cols=1:10)
+  if(tagrecap[[1]][1]!="absent"){
+    tagfirstperiod <- tagrecap[1,1]
+    tagaccumperiod <- tagrecap[2,1]
+    names(tagrecap) <- tagrecap[4,]
+    tagrecap <- tagrecap[-(1:4),]
+    for(i in 1:ncol(tagrecap)) tagrecap[,i] <- as.numeric(tagrecap[,i])
+    returndat$tagrecap <- tagrecap
+    returndat$tagfirstperiod 
+    returndat$tagaccumperiod 
+  }else{
+    returndat$tagrecap <- NA
+    returndat$tagfirstperiod <- NA
+    returndat$tagaccumperiod <- NA
+  }
+
+  # tags alive
+  tagsalive <- matchfun2("Tags_Alive",1,
+                        "Total_recaptures",-1,
+                        cols=1:ncols)
+  if(tagsalive[[1]][1]!="absent"){
+    tagcols <- max((1:ncols)[apply(tagsalive,2,function(x){any(x!="")})])
+    tagsalive <- tagsalive[,1:tagcols]
+    names(tagsalive) <- c("TG",paste("period",0:(tagcols-2),sep=""))
+    for(i in 1:ncol(tagsalive)) tagsalive[,i] <- as.numeric(tagsalive[,i])
+    returndat$tagsalive <- tagsalive
+  }else{
+    returndat$tagsalive <- NA
+  }
+
+  # total recaptures
+  tagtotrecap <- matchfun2("Total_recaptures",1,
+                           "Reporting_Rates_by_Fishery",-1,
+                           cols=1:ncols)
+  if(tagtotrecap[[1]][1]!="absent"){
+    tagcols <- max((1:ncols)[apply(tagtotrecap,2,function(x){any(x!="")})])
+    tagtotrecap <- tagtotrecap[,1:tagcols]
+    names(tagtotrecap) <- c("TG",paste("period",0:(tagcols-2),sep=""))
+    for(i in 1:ncol(tagtotrecap)) tagtotrecap[,i] <- as.numeric(tagtotrecap[,i])
+    returndat$tagtotrecap <- tagtotrecap
+  }else{
+    returndat$tagtotrecap <- NA
+  }
+  
+  
   # age-length matrix
   rawALK <- matchfun2("AGE_LENGTH_KEY",4,"AGE_AGE_KEY",-1,cols=1:(accuage+2))
   if(length(rawALK)>1){
@@ -976,6 +1041,42 @@ if(SS_versionshort==c("SS-V3.11")){
   }
   returndat <- c(returndat,stats)
 
+  # process annual recruit devs
+  recdevEarly   <- parameters[substring(parameters$Label,1,13)=="Early_RecrDev",]
+  early_initage <- parameters[substring(parameters$Label,1,13)=="Early_InitAge",]
+  main_initage  <- parameters[substring(parameters$Label,1,12)=="Main_InitAge",]
+  recdev        <- parameters[substring(parameters$Label,1,12)=="Main_RecrDev",]
+  recdevFore    <- parameters[substring(parameters$Label,1, 8)=="ForeRecr",]
+  recdevLate    <- parameters[substring(parameters$Label,1,12)=="Late_RecrDev",]
+
+  if(nrow(recdev)>0){
+    recdev$Yr        <- as.numeric(substring(recdev$Label,14))
+  }
+  if(nrow(recdevEarly)>0){
+    recdevEarly$Yr   <- as.numeric(substring(recdevEarly$Label,15))
+  }
+  if(nrow(early_initage)>0){
+    early_initage$Yr <- startyr - as.numeric(substring(early_initage$Label,15))
+    recdevEarly <- rbind(early_initage,recdevEarly)
+  }
+  if(nrow(main_initage)>0){
+    main_initage$Yr  <- startyr - as.numeric(substring(main_initage$Label,14))
+    recdev <- rbind(main_initage,recdev)
+  }
+  if(nrow(recdevFore)>0)
+    recdevFore$Yr <- as.numeric(substring(recdevFore$Label,10))
+  if(nrow(recdevLate)>0)
+    recdevLate$Yr <- as.numeric(substring(recdevLate$Label,14))
+  if(nrow(recdevFore)>0 & nrow(recdevLate)>0)
+    recdevFore <- rbind(recdevLate,recdevFore)
+
+  Yr <- c(recdevEarly$Yr,recdev$Yr,recdevFore$Yr)
+
+  recruitpars <- rbind(recdevEarly, recdev, recdevFore)
+  returndat$recruitpars <- recruitpars
+  # process adjustments to recruit devs
+  RecrDistpars <- parameters[substring(parameters$Label,1,8)=="RecrDist",]
+  returndat$RecrDistpars <- RecrDistpars
 
   # print list of statistics
   if(printstats){
