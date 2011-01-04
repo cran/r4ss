@@ -14,19 +14,25 @@ SSplotSelex <-
            cex.main=1, plotdir = "default",
            verbose = TRUE)
 {
-  nsexes     <- replist$nsexes
-  nfleets    <- replist$nfleets
-  lbinspop   <- replist$lbinspop
-  nlbinspop  <- replist$nlbinspop
-  sizeselex  <- replist$sizeselex
-  ageselex   <- replist$ageselex
-  accuage    <- replist$accuage
-  endyr      <- replist$endyr
-  FleetNames <- replist$FleetNames
-  growdat    <- replist$endgrowth
-  mainmorphs <- replist$mainmorphs
-  nareas     <- replist$nareas
-  ngpatterns <- replist$ngpatterns
+  nsexes       <- replist$nsexes
+  nseasons     <- replist$nseasons
+  nfleets      <- replist$nfleets
+  lbinspop     <- replist$lbinspop
+  nlbinspop    <- replist$nlbinspop
+  sizeselex    <- replist$sizeselex
+  ageselex     <- replist$ageselex
+  accuage      <- replist$accuage
+  endyr        <- replist$endyr
+  FleetNames   <- replist$FleetNames
+  growdat      <- replist$endgrowth
+  mainmorphs   <- replist$mainmorphs
+  nareas       <- replist$nareas
+  ngpatterns   <- replist$ngpatterns
+  
+  # subsetting for season 1 only. This could be replaced
+  #   by info on the growth within the season when each fleet operates.
+  growdat <- growdat[growdat$Seas==1,]
+  if(nseasons>1) cat("Warning: plots showing growth curve with selectivity are using season 1 growth,\nwhich may not match the timing of the fishery.\n")
   
   pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
   if(plotdir=="default") plotdir <- replist$inputs$dir
@@ -62,7 +68,7 @@ SSplotSelex <-
       plotret <- intret[intret$Fleet==i,]
 
       # test for time-varying length selectivity
-      time <- any(apply(intret[-nrow(plotselex),-(1:5)], 2, function(x){any(x!=x[1])}))      
+      time <- any(apply(plotselex[-nrow(plotselex),-(1:5)], 2, function(x){any(x!=x[1])}))      
       if(time)
       {
         x <- lbinspop
@@ -79,19 +85,19 @@ SSplotSelex <-
         if(print)
         {
           if(1 %in% subplot){
-            pngfun(file=paste(plotdir,"03_timevarylenselsurf_flt",i,"sex",m,".png",sep=""))
+            pngfun(file=paste(plotdir,"sel1_len_timevary_surf_flt",i,"sex",m,".png",sep=""))
             persp(x,y,z,col="white",xlab=labels[1],ylab=labels[3],zlab=labels[4],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
             dev.off()
           }
           if(2 %in% subplot){
-            pngfun(file=paste(plotdir,"03_timevarylenselcontour_flt",i,"sex",m,".png",sep=""))
+            pngfun(file=paste(plotdir,"sel2_len_timevary_contour_flt",i,"sex",m,".png",sep=""))
             contour(x,y,z,nlevels=5,xlab=labels[1],ylab=labels[3],main=main,cex.main=cex.main,col=ians_blues,lwd=2)
             dev.off()
           }
         }
       }
       # test for time-varying length retention
-      time2 <- any(apply(intret[-nrow(intret),-(1:5)],2,function(x){any(x!=x[1])}))      
+      time2 <- any(apply(plotret[-nrow(plotret),-(1:5)],2,function(x){any(x!=x[1])}))
       if(time2)
       {
         x <- lbinspop
@@ -99,7 +105,7 @@ SSplotSelex <-
         z <- intret[intret$Fleet==i,-(1:5)]
         z <- matrix(as.numeric(as.matrix(z)),ncol=ncol(z))
         z <- t(z)
-        main <- paste(sextitle1,"varying selectivity for ", FleetNames[i],sep="")
+        main <- paste(sextitle1,"varying retention for ", FleetNames[i],sep="")
         if(plot)
         {
           if(3 %in% subplot) persp(x,y,z,col="white",xlab=labels[1],ylab=labels[3],zlab=labels[5],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
@@ -108,12 +114,12 @@ SSplotSelex <-
         if(print)
         {
           if(3 %in% subplot){
-            pngfun(file=paste(plotdir,"03_timevaryretsurf_flt",i,"sex",m,".png",sep=""))
+            pngfun(file=paste(plotdir,"sel3_timevary_ret_surf_flt",i,"sex",m,".png",sep=""))
             persp(x,y,z,col="white",xlab=labels[1],ylab=labels[3],zlab=labels[5],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
             dev.off()
           }
           if(4 %in% subplot){
-            pngfun(file=paste(plotdir,"03_timevaryretcontour_flt",i,"sex",m,".png",sep=""))
+            pngfun(file=paste(plotdir,"sel4_timevary_ret_contour_flt",i,"sex",m,".png",sep=""))
             contour(x,y,z,nlevels=5,xlab=labels[1],ylab=labels[3],main=main,cex.main=cex.main,col=ians_blues,lwd=2)
             dev.off()
           }
@@ -121,7 +127,7 @@ SSplotSelex <-
       }
       plotselex <- plotselex[plotselex$year==endyr,-(1:5)]
 
-      plotret <- plotret[nrow(plotret),-(1:5)]
+      plotret <- plotret[nrow(plotret),-(1:5)] # final year only
       ylab <- labels[4]
       bins <- as.numeric(names(plotselex))
       vals <- as.numeric(paste(plotselex))
@@ -173,7 +179,7 @@ SSplotSelex <-
         if(5 %in% subplot){
           if(plot) selfunc()
           if(print){
-            pngfun(file=paste(plotdir,"04_lenselex_flt",i,"sex",m,".png",sep=""))
+            pngfun(file=paste(plotdir,"sel5_len_flt",i,"sex",m,".png",sep=""))
             selfunc()
             dev.off()
           }
@@ -213,12 +219,12 @@ SSplotSelex <-
             if(7 %in% subplot) contour(x,y,z,nlevels=5,xlab=labels[2],main=main,cex.main=cex.main,col=ians_blues,lwd=2)}
           if(print){
             if(6 %in% subplot){
-              pngfun(file=paste(plotdir,"03_timevaryageselsurf_flt",i,"sex",m,".png",sep=""))
+              pngfun(file=paste(plotdir,"sel6_timevary_surf_flt",i,"sex",m,".png",sep=""))
               persp(x,y,z,col="white",xlab=labels[2],ylab=labels[3],zlab=ylab,expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
               dev.off()
             }
             if(7 %in% subplot){
-              pngfun(file=paste(plotdir,"03_timevaryageselcontour_flt",i,"sex",m,".png",sep=""))
+              pngfun(file=paste(plotdir,"sel7_timevary_contour_flt",i,"sex",m,".png",sep=""))
               contour(x,y,z,nlevels=5,xlab=labels[2],main=main,cex.main=cex.main,col=ians_blues,lwd=2)
               dev.off()
             }
@@ -235,7 +241,7 @@ SSplotSelex <-
             if(plot) endselfunc()
             if(print)
             {
-              pngfun(file=paste(plotdir,"04_ageselex_flt",i,"sex",m,".png",sep=""))
+              pngfun(file=paste(plotdir,"sel8_age_flt",i,"sex",m,".png",sep=""))
               endselfunc()
               dev.off()
             }
@@ -258,7 +264,7 @@ SSplotSelex <-
             if(plot) endselfunc2()
             if(print)
             {
-              pngfun(file=paste(plotdir,"04_ageselex_flt",i,"sex",m,".png",sep=""))
+              pngfun(file=paste(plotdir,"sel9_age_flt",i,"sex",m,".png",sep=""))
               endselfunc2()
               dev.off()
             }
@@ -330,7 +336,7 @@ SSplotSelex <-
           }
           if(print){
             if(10 %in% subplot){
-              pngfun(file=paste(plotdir,"03_agelenselexcontour_flt",i,"sex",m,".png",sep=""))
+              pngfun(file=paste(plotdir,"sel10_agelen_contour_flt",i,"sex",m,".png",sep=""))
               agelenselcontour()
               dev.off()
             }

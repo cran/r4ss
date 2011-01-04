@@ -1,8 +1,8 @@
 Package: r4ss
 Type: Package
 Title: R code for Stock Synthesis
-Version: 1.12
-Date: 2010-11-01
+Version: 1.13
+Date: 2011-01-04
 Author: Ian Taylor, Ian Stewart, Tommy Garrison, Andre Punt, John
         Wallace, and other contributors
 Maintainer: Ian Taylor <Ian.Taylor@noaa.gov>
@@ -13,6 +13,6 @@ Description: Functions for reading output, plotting, exploring and
 License: MIT License
 LazyLoad: yes
 URL: http://code.google.com/p/r4ss/
-Packaged: 2010-11-01 19:24:07 UTC; itaylor
+Packaged: 2011-01-05 01:45:25 UTC; itaylor
 Repository: CRAN
-Date/Publication: 2010-11-03 07:42:42
+Date/Publication: 2011-01-05 06:45:45

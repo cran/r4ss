@@ -10,7 +10,7 @@ SS_output <-
   # SS_output
   # This function comes with no warranty or guarantee of accuracy
   #
-  # Purpose: To import content from Stock SYnthesis model run.
+  # Purpose: To import content from Stock Synthesis model run.
   # Written: Ian Stewart, NWFSC. Ian.Stewart-at-noaa.gov
   #          Ian Taylor, NWFSC/UW. Ian.Taylor-at-noaa.gov
   #          and other contributors to http://code.google.com/p/r4ss/
@@ -22,11 +22,11 @@ SS_output <-
   #
   ################################################################################
 
-  codedate <- "November 1, 2010"
+  codedate <- "December 17, 2010"
 
   if(verbose){
-    print(paste("R function updated:",codedate),quote=FALSE)
-    print("Check for new code and report problems at http://code.google.com/p/r4ss/",quote=FALSE)
+    cat("R function updated:",codedate,"\n")
+    cat("Check for new code and report problems at http://code.google.com/p/r4ss/\n")
   }
 
   flush.console()
@@ -35,6 +35,8 @@ SS_output <-
   ## embedded functions: matchfun and matchfun2
   #################################################################################
 
+  emptytest <- function(x){ sum(!is.na(x) & x=="")/length(x) }
+
   matchfun <- function(string, obj=rawrep[,1], substr1=TRUE)
   {
     # return a line number from the report file (or other file)
@@ -42,8 +44,8 @@ SS_output <-
     match(string, if(substr1){substring(obj,1,nchar(string))}else{obj} )
   }
 
-  matchfun2 <- function(string1,adjust1,string2,adjust2,cols="all",matchcol1=1,matchcol2=1,
-    objmatch=rawrep,objsubset=rawrep,substr1=TRUE,substr2=TRUE)
+  matchfun2 <- function(string1,adjust1,string2,adjust2,cols="nonblank",matchcol1=1,matchcol2=1,
+    objmatch=rawrep,objsubset=rawrep,substr1=TRUE,substr2=TRUE,header=FALSE)
   {
     # return a subset of values from the report file (or other file)
     # subset is defined by character strings at the start and end, with integer
@@ -51,8 +53,19 @@ SS_output <-
     line1 <- match(string1,if(substr1){substring(objmatch[,matchcol1],1,nchar(string1))}else{objmatch[,matchcol1]})
     line2 <- match(string2,if(substr2){substring(objmatch[,matchcol2],1,nchar(string2))}else{objmatch[,matchcol2]})
     if(is.na(line1) | is.na(line2)) return("absent")
-    if(cols[1]!="all"){ out <- objsubset[(line1+adjust1):(line2+adjust2),cols]
-       }else{           out <- objsubset[(line1+adjust1):(line2+adjust2), ]}
+    
+    if(is.numeric(cols))    out <- objsubset[(line1+adjust1):(line2+adjust2),cols]
+    if(cols[1]=="all")      out <- objsubset[(line1+adjust1):(line2+adjust2),]
+    if(cols[1]=="nonblank"){
+      # returns only columns that contain at least one non-empty value
+      out <- objsubset[(line1+adjust1):(line2+adjust2),]
+      out <- out[,apply(out,2,emptytest) < 1]
+    }
+    if(header && nrow(out)>0){
+      out[1,out[1,]==""] <- "NoName"
+      names(out) <- out[1,]
+      out <- out[-1,]
+    }
     return(out)
   }
 
@@ -63,31 +76,36 @@ SS_output <-
 
   parfile <- paste(dir,model,".par",sep="")
   if(!file.exists(parfile)){
-    if(!hidewarn) print(paste("Some stats skipped because the .par file not found:",parfile),quote=FALSE)
+    if(!hidewarn) cat("Some stats skipped because the .par file not found:\n  ",parfile,"\n")
     parfile <- NA
   }
 
   # read three rows to get start time and version number from rep file
   if(file.exists(repfile)){
     if(file.info(repfile)$size>0){
-      if(verbose) print(paste("Getting header info from",repfile),quote=FALSE)
+      if(verbose) cat("Getting header info from:\n  ",repfile,"\n")
     }else{
-      print(paste("!Error: report file is empty:",repfile),quote=FALSE)
-      return()
+      stop("report file is empty: ",repfile)
     }
   }else{
-    print(paste("!Error: can't find report file,", repfile),quote=FALSE)
-    return()
+    stop("can't find report file: ",repfile)
   }
-  rephead <- readLines(con=repfile,n=10)
+  rephead <- readLines(con=repfile,n=15)
 
   # warn if SS version used to create rep file is too old or too new for this code
-  SS_version <- rephead[1]
+  # note: SS_versionCode is new with V3.20
+  # perhaps in teh future we will use it to replace SS_versionshort throughout r4ss?
+  SS_versionCode <- rephead[grep("#V",rephead)] 
+  SS_version <- rephead[grep("Stock_Synthesis",rephead)]
   SS_versionshort <- toupper(substr(SS_version,1,8))
-  if(!(SS_versionshort %in% c("SS-V3.10","SS-V3.11"))){
-    print(paste("! Warning, this function tested on SS-V3.11b. You are using",substr(SS_version,1,9)),quote=FALSE)
+  
+  if(!(SS_versionshort %in% c("SS-V3.20","SS-V3.11"))){
+    cat("! Warning, this function tested on SS-V3.11b and SS-V3.20a.\n",
+        "  you are using",substr(SS_version,1,9),"which may NOT work with this R code.\n")
   }else{
-    if(verbose) print(paste("You're using",SS_versionshort,"which should work with this R code."),quote=FALSE)
+    if(verbose)
+      cat("This function tested on SS-V3.11b and SS-V3.20a.\n",
+          "  You're using",SS_versionshort,"which SHOULD work with this R code.\n")
   }
 
   findtime <- function(lines){
@@ -96,7 +114,7 @@ SS_output <-
     if(length(time)<2) return() else return(time[2])
   }
   repfiletime <- findtime(rephead)
-  if(verbose) print(paste("Report file time:",repfiletime),quote=FALSE)
+  if(verbose) cat("Report file time:",repfiletime,"\n")
 
   corfile <- NA
   if(covar){
@@ -104,30 +122,30 @@ SS_output <-
     if(!is.na(parfile)){
       corfile <- sub(".par",".cor",parfile)
       if(!file.exists(corfile)){
-        print(paste("Some stats skipped because the .cor file not found:",corfile),quote=FALSE)
+        cat("Some stats skipped because the .cor file not found:",corfile,"\n")
         corfile <- NA
       }
     }
     # CoVar.sso file
     covarfile <- paste(dir,covarfile,sep="")
     if(!file.exists(covarfile)){
-      print("covar file not found. Change input to covar=FALSE, or modify 'covarfile' input.",quote=FALSE)
+      cat("covar file not found. Change input to covar=FALSE, or modify 'covarfile' input.\n")
       return()
     }
 
     # time check for CoVar file
-    covarhead <- readLines(con=covarfile,n=2)
+    covarhead <- readLines(con=covarfile,n=10)
+    covarskip <- grep("active-i",covarhead)-1
     covartime <- findtime(covarhead)
     # the conversion to R time class below may no longer be necessary as strings should match
     if(is.null(covartime) || is.null(repfiletime)){
-      print("problem comparing the file creation times:",quote=FALSE)
-      print(paste("  Report.sso:",repfiletime),quote=FALSE)
-      print(paste("  covar.sso:",covartime),quote=FALSE)
+      cat("problem comparing the file creation times:\n")
+      cat("  Report.sso:",repfiletime,"\n")
+      cat("  covar.sso:",covartime,"\n")
     }else{
       if( covartime != repfiletime){
-        print(paste("!Error: ",shortrepfile,"and",covarfile,"were from different model runs. Change input to covar=FALSE"),quote=FALSE)
-        print(paste("covar time:",covartime),quote=FALSE)
-        return()
+        cat("covar time:",covartime,"\n")
+        stop(shortrepfile," and ",covarfile," were from different model runs. Change input to covar=FALSE")
       }
     }
   }
@@ -135,43 +153,43 @@ SS_output <-
   # time check for CompReport file
   compfile <- paste(dir,compfile,sep="")
   if(file.exists(compfile)){
-    comphead <- readLines(con=compfile,n=2)
+    comphead <- readLines(con=compfile,n=20)
+    compskip <- grep("Composition_Database",comphead)
     comptime <- findtime(comphead)
     if(is.null(comptime) || is.null(repfiletime)){
-      print("problem comparing the file creation times:",quote=FALSE)
-      print(paste("  Report.sso:",repfiletime),quote=FALSE)
-      print(paste("  CompReport.sso:",comptime),quote=FALSE)
+      cat("problem comparing the file creation times:\n")
+      cat("  Report.sso:",repfiletime,"\n")
+      cat("  CompReport.sso:",comptime,"\n")
     }else{
       if(comptime != repfiletime){
-        print(paste(shortrepfile,"and",compfile,"were from different model runs."),quote=FALSE)
-        print(paste("CompReport time:",comptime),quote=FALSE)
-        return()
+        cat("CompReport time:",comptime,"\n")
+        stop(shortrepfile," and ",compfile," were from different model runs.")
       }
     }
     comp <- TRUE
   }else{
-    print(paste("Missing ",compfile,". Change the compfile input or rerun model to get the file.",sep=""),quote=FALSE)
+    cat("Missing ",compfile,". Change the compfile input or rerun model to get the file.\n",sep="")
     #return()
     if(NoCompOK) comp <- FALSE else return()
   }
 
   # read report file
-  if(verbose) print("Reading full report file",quote=FALSE)
+  if(verbose) cat("Reading full report file\n")
   flush.console()
   rawrep <- read.table(file=repfile,col.names=1:ncols,fill=TRUE,quote="",colClasses="character",nrows=-1,comment.char="")
 
   # check empty columns
-  emptytest <- function(x){ sum(!is.na(x) & x=="")/length(x) }
   nonblanks <- apply(rawrep,2,emptytest) < 1
   maxnonblank = max(0,(1:ncols)[nonblanks==TRUE])
   if(maxnonblank==ncols){
-    print(      "! Warning, all columns are used and some data may have been missed,",quote=FALSE)
-    print(paste("  increase 'ncols' input above current value (ncols=",ncols,")",sep=""),quote=FALSE)
-    return(NULL)
+    stop("all columns are used and some data may been missed,\n",
+         "  increase 'ncols' input above current value (ncols=",ncols,")")
   }
-  if((maxnonblank+1)==ncols & verbose){ print("Got all columns.",quote=FALSE)}
-  if((maxnonblank+1)<ncols){ if(verbose) print(paste("Got all columns. To speed code, future reads of this model may use ncols=",maxnonblank+1,sep=""),quote=FALSE)}
-  if(verbose) print("Got Report file",quote=FALSE)
+  if(verbose){
+    if((maxnonblank+1)==ncols) cat("Got all columns.\n")
+    if((maxnonblank+1)<ncols) cat("Got all columns. To speed code, use ncols=",maxnonblank+1," in the future.\n",sep="")
+    cat("Got Report file\n")
+  }
   flush.console()
 
   # read forecast report file
@@ -179,29 +197,52 @@ SS_output <-
     forcastname <- paste(dir,"Forecast-report.sso",sep="")
     temp <- file.info(forcastname)$size
     if(is.na(temp) | temp==0){
-      print("!Error: the Forecase-report.sso file is empty.",quote=FALSE)
-      print("        Change input to 'forecast=FALSE' or rerun model with forecast turned on.",quote=FALSE)
-      return()
+      stop("Forecase-report.sso file is empty.\n",
+           "Change input to 'forecast=FALSE' or rerun model with forecast turned on.")
     }
     rawforcast1 <- read.table(file=forcastname,col.names=1:ncols,fill=TRUE,quote="",colClasses="character",nrows=-1)
     endyield <- matchfun("MSY_not_calculated",rawforcast1[,1])
     if(is.na(endyield)) yesMSY <- TRUE else yesMSY <- FALSE
     if(yesMSY) endyield <- matchfun("findFmsy",rawforcast1[,10])
     yieldraw <- rawforcast1[(matchfun("Btarget",rawforcast1[,10])):endyield,]
-    yielddat <- yieldraw[c(3:(as.numeric(length(yieldraw[,1])-1))),c(4,7)]
+    if(SS_versionshort=="SS-V3.20"){
+      yielddat <- yieldraw[c(3:(as.numeric(length(yieldraw[,1])-1))),c(5,8)]
+    }else{
+      yielddat <- yieldraw[c(3:(as.numeric(length(yieldraw[,1])-1))),c(4,7)]
+    }
     colnames(yielddat) <- c("Catch","Depletion")
     yielddat$Catch <- as.numeric(yielddat$Catch)
     yielddat$Depletion <- as.numeric(yielddat$Depletion)
     yielddat <- yielddat[order(yielddat$Depletion,decreasing = FALSE),]
-    if(verbose) print("Got forecast file",quote=FALSE)
-  }else{if(verbose) print("You skipped the forecast file",quote=FALSE)}
+    if(verbose) cat("Got forecast file\n")
+  }else{if(verbose) cat("You skipped the forecast file\n")}
   flush.console()
+
+  # check for use of temporary files
+  logfile <- dir(dir,pattern=".log")
+  logfile <- logfile[logfile != "fmin.log"]
+  if(length(logfile)==1 & file.info(paste(dir,logfile,sep='/'))$size>0){
+    logfile <- read.table(paste(dir,logfile,sep='/'))[,c(4,6)]
+    names(logfile) <- c("TempFile","Size")
+    maxtemp <- max(logfile$Size)
+    if(maxtemp==0){
+      if(verbose) cat("Got log file. There were NO temporary files were written in this run.\n")
+    }else{
+      if(verbose){
+        cat("!warning: temporary files were written in this run:\n")
+        print(logfile)
+      }
+    }
+  }else{
+    logfile <- NA
+    if(verbose) cat("Either no non-empty log file in directory or too many files matching pattern *.log\n")
+  }
 
   # read warnings file
   if(warn){
     warnname <- paste(dir,"warning.sso",sep="")
     if(!file.exists(warnname)){
-      print("warning.sso file not found",quote=FALSE)
+      cat("warning.sso file not found\n")
       warn <- NA
     }else{
       warn <- readLines(warnname,warn=FALSE)
@@ -209,42 +250,75 @@ SS_output <-
       if(length(warnstring)>0){
         nwarn <- as.numeric(strsplit(warnstring,"N warnings: ")[[1]][2])
         textblock <- c(paste("were", nwarn, "warnings"),paste("was", nwarn, "warning"))[1+(nwarn==1)]
-        if(verbose) print(paste("Got warning file. There", textblock, "in", warnname),quote=FALSE)
+        if(verbose) cat("Got warning file. There", textblock, "in", warnname,"\n")
       }else{
-        print("warning.sso file is missing the string 'N warnings'!",quote=FALSE)
+        cat("warning.sso file is missing the string 'N warnings'!\n")
         nwarn <- NA
       }
     }
   }else{
-    if(verbose) print("You skipped the warnings file",quote=FALSE)
+    if(verbose) cat("You skipped the warnings file\n")
     nwarn <- NA
   }
-  if(verbose) print("Finished reading files",quote=FALSE)
+  if(verbose) cat("Finished reading files\n")
   flush.console()
 
-  # Useful dimensions
-  rawselex <- matchfun2("LEN_SELEX",6,"AGE_SELEX",-1)
-  rawselex <- rawselex[,rawselex[1,]!=""]
-  names(rawselex)<- rawselex[1,]
-  selex <- rawselex[-1,]
-  for(icol in (1:ncol(selex))[!(names(selex) %in% c("Factor","label"))]) selex[,icol] <- as.numeric(selex[,icol])
-  nfleets <- length(unique(selex$Fleet))
-  nfishfleets <- max(selex$Fleet[selex$Factor=="Ret"])
-  nsexes <- length(unique(as.numeric(selex$gender)))
-  FleetNames <- matchfun2("FleetNames",1,"FleetNames",nfleets,cols=2)
-
-  # more dimensions
-  tempaccu <- as.character(rawrep[matchfun("Natural_Mortality")+1,-(1:5)])
-  accuage <- max(as.numeric(tempaccu[tempaccu!=""]))
-  ncpue <- sum(as.numeric(rawrep[matchfun("INDEX_1")+1+1:nfleets,11]))
+  # positions of timeseries section
   begin <- matchfun("TIME_SERIES")+2
   end  <- matchfun("SPR_series")-1
+
+  # selectivity read first because it was used to get fleet info
+  # this can be moved to join rest of selex stuff after SSv3.11 not supported any more
+  selex <- matchfun2("LEN_SELEX",6,"AGE_SELEX",-1,header=TRUE)
+  for(icol in (1:ncol(selex))[!(names(selex) %in% c("Factor","label"))]) selex[,icol] <- as.numeric(selex[,icol])
+
+  ### DEFINITIONS section (new in SSv3.20)
+  if(SS_versionshort=="SS-V3.20"){
+    rawdefs <- matchfun2("DEFINITIONS",1,"LIKELIHOOD",-1)
+    # get season stuff
+    nseasons <- as.numeric(rawdefs[1,2])
+    seasdurations <- as.numeric(rawdefs[3,1+1:nseasons])
+    seasfracs <- round(12*cumsum(seasdurations))/12
+    seasfracs <- seasfracs - seasdurations/2 # should be mid-point of each season as a fraction of the year
+    # get fleet info
+    defs <- rawdefs[-(1:3),apply(rawdefs[-(1:3),],2,emptytest)<1]
+    defs[defs==""] <- NA
+    lab <- defs$X1
+    fleet_ID    <- as.numeric(defs[grep("fleet_ID",lab),-1])
+    names(defs) <- c("Label",paste("Fleet",fleet_ID,sep=""))
+    FleetNames <- defs[grep("fleet_names",lab),-1]
+    fleet_area  <- as.numeric(defs[grep("fleet_area",lab),-1])
+    catch_units <- as.numeric(defs[grep("Catch_units",lab),-1])
+    catch_error <- as.numeric(defs[grep("Catch_error",lab),-1])
+    survey_units <- as.numeric(defs[grep("Survey_units",lab),-1])
+    survey_error <- as.numeric(defs[grep("Survey_error",lab),-1])
+    FishFleet   <- !is.na(catch_units)
+    nfleets <- length(FleetNames)
+    nfishfleets <- sum(FishFleet)
+  }else{
+    # models prior to SSv3.20
+    nfleets <- length(unique(selex$Fleet))
+    nfishfleets <- max(selex$Fleet[selex$Factor=="Ret"])
+    FleetNames <- matchfun2("FleetNames",1,"FleetNames",nfleets,cols=2)
+    ## fleet_area <- NA
+    ## catch_units <- NA
+    ## catch_error <- NA
+    ## survey_units <- NA
+    ## survey_error <- NA
+    ## FishFleet <- NA
+    nseasons <- max(as.numeric(rawrep[(begin+3):end,4]))
+    seasdurations <- 1/nseasons
+    seasfracs <- (0:(nseasons-1))/nseasons # only true of all equal in length
+  }
+  # more dimensions
+  nsexes <- length(unique(as.numeric(selex$gender)))
   nareas <- max(as.numeric(rawrep[begin:end,1]))
   startyr <- min(as.numeric(rawrep[begin:end,2]))+2  # this is the 'initial' year not including
   temptime <- rawrep[begin:end,2:3]
   endyr <- max(as.numeric(temptime[temptime[,2]=="TIME",1])) # this is the beginning of the last year of the normal timeseries
-  nseasons <- max(as.numeric(rawrep[(begin+3):end,4]))
-  seasfracs <- (0:(nseasons-1))/nseasons
+  tempaccu <- as.character(rawrep[matchfun("Natural_Mortality")+1,-(1:5)])
+  accuage <- max(as.numeric(tempaccu[tempaccu!=""]))
+  ncpue <- sum(as.numeric(rawrep[matchfun("INDEX_1")+1+1:nfleets,11]))
 
   # compositions
   if(comp){   # skip this stuff if no CompReport.sso file
@@ -259,13 +333,23 @@ SS_output <-
     nlbinspop <- length(lbinspop)
     Lbin_method <- as.numeric(allbins[matchfun("Method_for_Lbin_definition",allbins[,1]),2])
     # read composition database
-    rawcompdbase <- read.table(file=compfile, col.names=1:21, fill=TRUE, colClasses="character", skip=18, nrows=-1)
+    if(SS_versionshort=="SS-V3.20") col.names=1:22 else col.names=1:21
+    rawcompdbase <- read.table(file=compfile, col.names=col.names, fill=TRUE, colClasses="character", skip=compskip, nrows=-1)
     names(rawcompdbase) <- rawcompdbase[1,]
-    compdbase <- rawcompdbase[2:(nrow(rawcompdbase)-2),] # subtract header line and last 2 lines
+    names(rawcompdbase)[names(rawcompdbase)=="Used?"] <- "Used"
+    
+    compdbase <- rawcompdbase[2:(nrow(rawcompdbase)-3),] # subtract header line and last 2 lines
     compdbase <- compdbase[compdbase$Obs!="",]
-    compdbase$Like[compdbase$Like=="_"] <- NA
-    compdbase$effN[compdbase$effN=="_"] <- NA
-    for(i in (1:ncol(compdbase))[!(names(compdbase) %in% c("Kind"))]) compdbase[,i] <- as.numeric(compdbase[,i])
+    compdbase[compdbase=="_"] <- NA
+    compdbase$Used[is.na(compdbase$Used)] <- "yes"
+    if(!("SuprPer" %in% names(compdbase))) compdbase$SuprPer <- "No"
+    compdbase$SuprPer[is.na(compdbase$SuprPer)] <- "No"
+    
+    n <- sum(is.na(compdbase$N) & compdbase$Used!="skip")
+    if(n>0){
+      cat("Warning:",n,"rows from composition database have NA sample size\n  but are not part of a super-period. (Maybe input as N=0?)\n")
+    }
+    for(i in (1:ncol(compdbase))[!(names(compdbase) %in% c("Kind","SuprPer","Used"))]) compdbase[,i] <- as.numeric(compdbase[,i])
 
     # configure seasons
     if(nseasons>1) compdbase$YrSeasName <- paste(floor(compdbase$Yr),"s",compdbase$Seas,sep="") else compdbase$YrSeasName <- compdbase$Yr
@@ -283,11 +367,13 @@ SS_output <-
       notconditional <- !is.na(Lbin_range) & Lbin_range >  aalmaxbinrange
       conditional    <- !is.na(Lbin_range) & Lbin_range <= aalmaxbinrange
     }
-    lendbase         <- compdbase[compdbase$Kind=="LEN" & compdbase$N > 0,]
-    sizedbase        <- compdbase[compdbase$Kind=="SIZE" & compdbase$N > 0,]
-    agedbase         <- compdbase[compdbase$Kind=="AGE" & compdbase$N > 0 & notconditional,]
-    condbase         <- compdbase[compdbase$Kind=="AGE" & compdbase$N > 0 & conditional,]
-    ghostagedbase    <- compdbase[compdbase$Kind=="AGE" & compdbase$N < 0 & notconditional,]
+    lendbase         <- compdbase[compdbase$Kind=="LEN"  & (compdbase$SuprPer=="Sup" | (!is.na(compdbase$N) & compdbase$N > 0)),]
+    sizedbase        <- compdbase[compdbase$Kind=="SIZE" & (compdbase$SuprPer=="Sup" | (!is.na(compdbase$N) & compdbase$N > 0)),]
+    agedbase         <- compdbase[compdbase$Kind=="AGE"  & (compdbase$SuprPer=="Sup" | (!is.na(compdbase$N) & compdbase$N > 0)) & notconditional,]
+    condbase         <- compdbase[compdbase$Kind=="AGE"  & (compdbase$SuprPer=="Sup" | (!is.na(compdbase$N) & compdbase$N > 0)) & conditional,]
+    ghostagedbase    <- compdbase[compdbase$Kind=="AGE"  & compdbase$Used=="skip" & compdbase$SuprPer=="No" & notconditional,]
+    ghostcondbase    <- compdbase[compdbase$Kind=="AGE"  & compdbase$Used=="skip" & compdbase$SuprPer=="No" & conditional,]
+    ghostlendbase    <- compdbase[compdbase$Kind=="LEN"  & compdbase$Used=="skip" & compdbase$SuprPer=="No",]
     compdbase$Kind[compdbase$Kind=="L@A" & compdbase$Ageerr < 0] <- "W@A"
 
     if(is.null(compdbase$N)){
@@ -300,26 +386,27 @@ SS_output <-
     tagdbase1        <- compdbase[compdbase$Kind=="TAG1",]
     tagdbase2        <- compdbase[compdbase$Kind=="TAG2",]
     # consider range of bins for conditional age at length data
-
     if(verbose){
-        print(paste("CompReport file separated by this code as follows (rows = Ncomps*Nbins):"),quote=FALSE)
-        print(paste("  ",nrow(lendbase), "rows of length comp data,"),quote=FALSE)
-        print(paste("  ",nrow(sizedbase),"rows of generalized size comp data,"),quote=FALSE)
-        print(paste("  ",nrow(agedbase), "rows of age comp data,"),quote=FALSE)
-        print(paste("  ",nrow(condbase), "rows of conditional age-at-length data, and"),quote=FALSE)
-        print(paste("  ",nrow(ghostagedbase),"rows of ghost fleet age comp data"),quote=FALSE)
-        print(paste("  ",nrow(ladbase),  "rows of mean length at age data"),quote=FALSE)
-        print(paste("  ",nrow(wadbase),  "rows of mean weight at age data"),quote=FALSE)
-        print(paste("  ",nrow(tagdbase1),"rows of 'TAG1' comp data"),quote=FALSE)
-        print(paste("  ",nrow(tagdbase2),"rows of 'TAG2' comp data"),quote=FALSE)
+      cat("CompReport file separated by this code as follows (rows = Ncomps*Nbins):\n",
+          "  ",nrow(lendbase), "rows of length comp data,\n",
+          "  ",nrow(sizedbase),"rows of generalized size comp data,\n",
+          "  ",nrow(agedbase), "rows of age comp data,\n",
+          "  ",nrow(condbase), "rows of conditional age-at-length data,\n",
+          "  ",nrow(ghostagedbase),"rows of ghost fleet age comp data,\n",
+          "  ",nrow(ghostcondbase),"rows of ghost fleet conditional age-at-length data,\n",
+          "  ",nrow(ghostlendbase),"rows of ghost fleet length comp data,\n",
+          "  ",nrow(ladbase),  "rows of mean length at age data,\n",
+          "  ",nrow(wadbase),  "rows of mean weight at age data,\n",
+          "  ",nrow(tagdbase1),"rows of 'TAG1' comp data, and\n",
+          "  ",nrow(tagdbase2),"rows of 'TAG2' comp data.\n")
     }
     Lbin_ranges <- as.data.frame(table(agedbase$Lbin_range))
     names(Lbin_ranges)[1] <- "Lbin_hi-Lbin_lo"
     if(length(unique(agedbase$Lbin_range)) > 1){
-      print("Warning!: different ranges of Lbin_lo to Lbin_hi found in age comps.",quote=FALSE)
-      print(Lbin_ranges)
-      print("  consider increasing 'aalmaxbinrange' to designate",quote=FALSE)
-      print("  some of these data as conditional age-at-length",quote=FALSE)
+      cat("Warning!: different ranges of Lbin_lo to Lbin_hi found in age comps.\n")
+      cat(Lbin_ranges)
+      cat("  consider increasing 'aalmaxbinrange' to designate\n")
+      cat("  some of these data as conditional age-at-length\n")
     }
     # convert bin indices to true lengths
     if(nrow(agedbase)>0){
@@ -333,20 +420,18 @@ SS_output <-
     lbins <- NA
     nlbins <- NA
     temp <- rawrep[grep("NUMBERS_AT_LENGTH",rawrep[,1])+1,]
-    lbinspop <- as.numeric(temp[temp!=""][-(1:10)])
+    lbinspop <- as.numeric(temp[temp!=""][-(1:11)])
     nlbinspop <- length(lbinspop)
     agebins <- NA
     nagebins <- NA
     Lbin_method <- 2
   }
 
-
   # info on growth morphs
   endcode <- "SIZEFREQ_TRANSLATION" #(this section heading not present in all models)
   if(is.na(matchfun(endcode))) endcode <- "MOVEMENT"
-  morph_indexing <- matchfun2("MORPH_INDEXING",1,endcode,-1,cols=1:9)
-  names(morph_indexing) <- morph_indexing[1,]
-  morph_indexing <- morph_indexing[-1,]
+  if(SS_versionshort=="SS-V3.20") shift <- -2 else shift <- -1
+  morph_indexing <- matchfun2("MORPH_INDEXING",1,endcode,shift,cols=1:9,header=T)
   for(i in 1:ncol(morph_indexing)) morph_indexing[,i] <- as.numeric(morph_indexing[,i])
   ngpatterns <- max(morph_indexing$Gpattern)
 
@@ -356,7 +441,7 @@ SS_output <-
                                         morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
   mainmorphs <- min(temp$Index[temp$Gender==1])
   if(nsexes==2) mainmorphs <- c(mainmorphs, min(temp$Index[temp$Gender==2]))
-  if(length(mainmorphs)==0) print("!Error with morph indexing in SS_output function.",quote=FALSE)
+  if(length(mainmorphs)==0) cat("!Error with morph indexing in SS_output function.\n")
 
   # forecast
   if(forecast){
@@ -366,41 +451,40 @@ SS_output <-
   }else{
     nforecastyears <- NA
   }
-  if(verbose) print("Finished dimensioning",quote=FALSE)
+  if(verbose) cat("Finished dimensioning\n")
   flush.console()
 
   # stats list: items that are output to the GUI (if printstats==T) for a quick summary of results
   stats <- list()
   stats$SS_version <- SS_version
+  stats$SS_versionshort <- SS_versionshort
+  
   stats$Run_time <- paste(as.character(matchfun2("StartTime",0,"StartTime",0,cols=1:6)),collapse=" ")
 
   tempfiles  <- as.data.frame(rawrep[4:5,1:2],row.names = NULL)
   tempfiles <- matchfun2("Data_File",0,"Control_File",0,cols=1:2)
   stats$Files_used <- paste(c(tempfiles[1,],tempfiles[2,]),collapse=" ")
 
+  # check warnings
   stats$Nwarnings <- nwarn
+  if(length(warn)>20) warn <- c(warn[1:20],paste("Note:",length(warn)-20,"additional lines truncated. Look in warning.sso file to see full list."))
   stats$warnings <- warn
-
+  
   # likelihoods
-  rawlike <- matchfun2("LIKELIHOOD",2,"Fleet:",-2,cols=1:3)
+  rawlike <- matchfun2("LIKELIHOOD",2,"Fleet:",-2)
   like <- data.frame(signif(as.numeric(rawlike[,2]),digits=7))
   names(like) <- "values"
   rownames(like) <- rawlike[,1]
   like$lambdas <- rawlike[,3]
   stats$likelihoods_used <- like
-
-  like2 <- matchfun2("Fleet:",0,"Input_Variance_Adjustment",-1,cols=1:(2+nfleets))
-  names(like2) <- like2[1,]
-  stats$likelihoods_raw_by_fleet <- like2[2:length(like2[,1]),]
+  stats$likelihoods_raw_by_fleet <- matchfun2("Fleet:",0,"Input_Variance_Adjustment",-1,header=TRUE)
 
   # parameters
-  rawpars <- matchfun2("PARAMETERS",1,"DERIVED_QUANTITIES",-1,cols=1:16)
-  names(rawpars) <- rawpars[1,]
-  rawpars <- rawpars[-1,]
-  parameters <- rawpars
+  parameters <- matchfun2("PARAMETERS",1,"DERIVED_QUANTITIES",-1,header=TRUE)
   parameters[parameters=="_"] <- NA
   for(i in (1:ncol(parameters))[!(names(parameters)%in%c("Label","Status"))]) parameters[,i] = as.numeric(parameters[,i])
-
+  activepars <- parameters$Label[!is.na(parameters$Active_Cnt)]
+  
   if(!is.na(parfile)){
     parline <- read.table(parfile,fill=TRUE,comment.char="",nrows=1)
   }else{
@@ -409,9 +493,7 @@ SS_output <-
   }
   stats$N_estimated_parameters <- parline[1,6]
 
-  pars <- rawpars[!(rawpars$Phase %in% c("_","")),]
-  pars[pars=="_"] <- NA
-  for(i in (1:ncol(pars))[!(names(pars)%in%c("Label","Status"))]) pars[,i] = as.numeric(pars[,i])
+  pars <- parameters[!is.na(parameters$Phase) & parameters$Phase>0,]
   pars$Afterbound <- ""
   pars$checkdiff <- pars$Value - pars$Min
   pars$checkdiff2 <- pars$Max - pars$Value
@@ -421,55 +503,60 @@ SS_output <-
 
   stats$table_of_phases <- table(pars$Phase)
   pars <- pars[pars$Phase %in% 0:100,]
-  stats$estimated_non_rec_devparameters <- pars[,c(2,3,5:15)]
+  stats$estimated_non_rec_devparameters <- pars[,c(2,3,5:14,17)]
 
   # read covar.sso file
   if(covar){
-    CoVar <- read.table(covarfile,header=TRUE,colClasses=c(rep("numeric",4),rep("character",4),"numeric"),skip=3)
-    if(verbose) print("Got covar file.",quote=FALSE)
+    CoVar <- read.table(covarfile,header=TRUE,colClasses=c(rep("numeric",4),rep("character",4),"numeric"),skip=covarskip)
+    if(verbose) cat("Got covar file.\n")
     stdtable <- CoVar[CoVar$Par..j=="Std",c(7,9,5)]
     names(stdtable) = c("name","std","type")
     N_estimated_parameters2 <- sum(stdtable$type=="Par")
 
+    # this section was muddling Derived Quants with Parameters in early version of SSv3.20
+    # got work-around pending fix from Rick to use of "Par" vs. "Der" in covar file.
     if(is.na(stats$N_estimated_parameters)){
       stats$N_estimated_parameters <- N_estimated_parameters2
     }else{
       if(stats$N_estimated_parameters!=N_estimated_parameters2){
-        print("!warning:",quote=FALSE)
-        print(paste(" ",stats$N_estimated_parameters,"estimated parameters indicated by",parfile),quote=FALSE)
-        print(paste(" ",N_estimated_parameters2,"estimated parameters shown in",covarfile),quote=FALSE)
-        print(paste("  returning the second value,",N_estimated_parameters2),quote=FALSE)
-        stats$N_estimated_parameters <- N_estimated_parameters2
+        cat("!warning:\n")
+        cat(" ",stats$N_estimated_parameters,"estimated parameters indicated by",parfile,"\n")
+        cat(" ",N_estimated_parameters2,"estimated parameters shown in",covarfile,"\n")
+        cat("  returning the first value,",stats$N_estimated_parameters,"\n")
+        stats$N_estimated_parameters <- stats$N_estimated_parameters
       }
     }
     Nstd <- sum(stdtable$std>0)
 
-    if(Nstd<=1){
-      print(paste("Too few estimated quantities in covar file (n=",Nstd,"). Change input to covar=FALSE.",sep=""),quote=FALSE)
-      return()
-    }
+    if(Nstd<=1) stop("Too few estimated quantities in covar file (n=",Nstd,"). Change input to covar=FALSE.")
     if(checkcor==TRUE & stats$N_estimated_parameters > 1)
     {
-      corfilter <- CoVar[CoVar$all.i!=CoVar$all.j & CoVar$Par..i=="Par" & CoVar$Par..j=="Par" & !substr(CoVar$label.i,1,8)=="ForeRecr" & !substr(CoVar$label.j,1,8)=="ForeRecr",]
+      corfilter <- CoVar[CoVar$all.i!=CoVar$all.j &
+                         CoVar$Par..i=="Par" &
+                         CoVar$Par..j=="Par" &
+                         CoVar$label.i %in% activepars &
+                         CoVar$label.j %in% activepars &
+                         !substr(CoVar$label.i,1,8)=="ForeRecr" &
+                         !substr(CoVar$label.j,1,8)=="ForeRecr",]
       rangecor <- range(abs(corfilter$corr))
       corstats <- list()
       corstats$cormessage1 <- paste("Range of abs(parameter correlations) is",min(rangecor),"to",max(rangecor))
       # search for high or low correlations in covar file
-      highcor <- CoVar[CoVar$all.i!=CoVar$all.j & CoVar$Par..i=="Par" & CoVar$Par..j=="Par" & !substr(CoVar$label.i,1,8)=="ForeRecr" & !substr(CoVar$label.j,1,8)=="ForeRecr" & abs(CoVar$corr) >= cormax, names(CoVar)%in%c("label.i", "label.j", "corr")]
-      lowcorcandidates <- CoVar[CoVar$all.i!=CoVar$all.j & CoVar$Par..i=="Par" & CoVar$Par..j=="Par" & !substr(CoVar$label.i,1,8)=="ForeRecr" & !substr(CoVar$label.j,1,8)=="ForeRecr" & abs(CoVar$corr) <= cormin, names(CoVar)%in%c("label.i", "label.j", "corr")]
+      highcor <- corfilter[abs(corfilter$corr) >= cormax, names(CoVar)%in%c("label.i", "label.j", "corr")]
+      lowcorcandidates <- corfilter[abs(corfilter$corr) <= cormin, names(CoVar)%in%c("label.i", "label.j", "corr")]
       lowcortestlist <- data.frame(unique(c(lowcorcandidates$label.i,lowcorcandidates$label.j)))
       lowcortestlist$name <- as.character(lowcortestlist[,1])
       nlowcor <- 0
       lowcor <- 0
       if(nrow(lowcortestlist)>0)
       {
-       lowcortestlist$max <- NA
-       for(i in 1:length(lowcortestlist[,1]))
-       {
-        lowcortestlist$max[i] <- max(corfilter$corr[corfilter$label.i == lowcortestlist$name[i]],corfilter$corr[corfilter$label.j == lowcortestlist$name[i]])
-       }
-       lowcor <- lowcortestlist[abs(lowcortestlist$max) <= cormin,2:3]
-       nlowcor <- nrow(lowcor)
+        lowcortestlist$max <- NA
+        for(i in 1:length(lowcortestlist[,1]))
+        {
+          lowcortestlist$max[i] <- max(corfilter$corr[corfilter$label.i == lowcortestlist$name[i]],corfilter$corr[corfilter$label.j == lowcortestlist$name[i]])
+        }
+        lowcor <- lowcortestlist[abs(lowcortestlist$max) <= cormin,2:3]
+        nlowcor <- nrow(lowcor)
       }
       nhighcor <- nrow(highcor)
       if(printhighcor>0){
@@ -511,14 +598,12 @@ SS_output <-
       }else{
         corstats$cormessage11 <-"Uncorrelated parameters not reported. To report, change 'printlowcor' input to a positive value."
       }
-    }else{if(verbose) print("You skipped the correlation check",quote=FALSE)}
-  }else{if(verbose) print("You skipped the covar file",quote=FALSE)}
+    }else{if(verbose) cat("You skipped the correlation check\n")}
+  }else{if(verbose) cat("You skipped the covar file\n")}
   flush.console()
 
   # derived quantities
-  rawder <- matchfun2("DERIVED_QUANTITIES",4,"MGparm_By_Year_after_adjustments",-1,cols=1:3)
-  names(rawder) <- rawder[1,]
-  der <- rawder[-1,]
+  der <- matchfun2("DERIVED_QUANTITIES",4,"MGparm_By_Year_after_adjustments",-1,cols=1:3,header=TRUE)
   der[der=="_"] <- NA
   for(i in 2:3) der[,i] = as.numeric(der[,i])
 
@@ -557,11 +642,8 @@ SS_output <-
   }
 
   # recruitment distribution
-  recruitment_dist <- matchfun2("RECRUITMENT_DIST",1,"MORPH_INDEXING",-1)[,1:6]
-  names(recruitment_dist) <- recruitment_dist[1,]
-  recruitment_dist <- recruitment_dist[-1,]
+  recruitment_dist <- matchfun2("RECRUITMENT_DIST",1,"MORPH_INDEXING",-1,header=TRUE)
   for(i in 1:6) recruitment_dist[,i] <- as.numeric(recruitment_dist[,i])
-  
   
   # gradient
   if(covar & !is.na(corfile)) stats$log_det_hessian <- read.table(corfile,nrows=1)[1,10]
@@ -577,36 +659,39 @@ SS_output <-
   stats$sigma_R_in <- as.numeric(srhead[4,1])
   stats$rmse_table <- rmse_table
 
-  rawvartune <- matchfun2("INDEX_1",1,"INDEX_1",(nfleets+1),cols=1:21)
-  names(rawvartune) <- rawvartune[1,]
-  rawvartune <- rawvartune[2:length(rawvartune[,1]),]
-  rawvartune[,1] <- rawvartune[,21]
-  vartune <- rawvartune[,c(1,8,11,13,16,18)]
+  vartune <- matchfun2("INDEX_1",1,"INDEX_1",(nfleets+1),cols=1:21,header=TRUE)
   vartune <- vartune[vartune$N > 0,]
+  vartune[,1] <- vartune[,21]
+  vartune <- vartune[,c(1,8,11,13,16,18)]
   stats$index_variance_tuning_check <- vartune
 
-  rawlenntune <- matchfun2("FIT_AGE_COMPS",-(nfleets+1),"FIT_AGE_COMPS",-1,cols=1:10)
-  names(rawlenntune) <- rawlenntune[1,]
-  rawlenntune <- rawlenntune[2:length(rawlenntune[,1]),]
-  rawlenntune[,1] <- rawlenntune[,10]
-  lenntune <- rawlenntune[,c(1,2,4,5,6,8,9)]
-  lenntune <- lenntune[lenntune$N > 0,]
+  lenntune <- matchfun2("FIT_AGE_COMPS",-(nfleets+1),"FIT_AGE_COMPS",-1,cols=1:10,header=TRUE)
+  lenntune[,1] <- lenntune[,10]
+  lenntune <- lenntune[lenntune$N>0, c(1,2,4,5,6,8,9)]
   stats$Length_comp_Eff_N_tuning_check <- lenntune
 
-  rawagentune <- matchfun2("FIT_SIZE_COMPS",-(nfleets+1),"FIT_SIZE_COMPS",-1,cols=1:10)
-  names(rawagentune) <- rawagentune[1,]
-  rawagentune <- rawagentune[2:length(rawagentune[,1]),]
-  rawagentune[,1] <- rawagentune[,10]
-  agentune <- rawagentune[,c(1,2,4,5,6,8,9)]
-  agentune <- agentune[agentune$N > 0,]
+  agentune <- matchfun2("FIT_SIZE_COMPS",-(nfleets+1),"FIT_SIZE_COMPS",-1,cols=1:10,header=TRUE)
+  agentune[,1] <- agentune[,10]
+  agentune <- agentune[agentune$N>0, c(1,2,4,5,6,8,9)]
   stats$Age_comp_Eff_N_tuning_check <- agentune
 
-  if(verbose) print("Finished primary run statistics list",quote=FALSE)
+  if(verbose) cat("Finished primary run statistics list\n")
   flush.console()
 
   # data return object
   returndat <- list()
 
+  if(SS_versionshort=="SS-V3.20"){
+    returndat$definitions  <- defs
+    returndat$fleet_ID     <- fleet_ID
+    returndat$fleet_area   <- fleet_area
+    returndat$catch_units  <- catch_units
+    returndat$catch_error  <- catch_error
+    returndat$survey_units <- survey_units
+    returndat$survey_error <- survey_error
+    returndat$IsFishFleet  <- !is.na(catch_units)
+  }
+  
   returndat$nfleets     <- nfleets
   returndat$nfishfleets <- nfishfleets
   returndat$nsexes      <- nsexes
@@ -625,6 +710,7 @@ SS_output <-
   returndat$endyr       <- endyr
   returndat$nseasons    <- nseasons
   returndat$seasfracs   <- seasfracs
+  returndat$seasdurations  <- seasdurations
   returndat$nforecastyears <- nforecastyears
   returndat$morph_indexing <- morph_indexing
   returndat$MGparmAdj   <- MGparmAdj
@@ -633,7 +719,7 @@ SS_output <-
   returndat$recruitment_dist <- recruitment_dist
   
   # Static growth
-  begin <- matchfun("N_Used_morphs",rawrep[,6])+1
+  begin <- matchfun("N_Used_morphs",rawrep[,6])+1 # keyword "BIOLOGY" not unique enough
   rawbio <- rawrep[begin:(begin+nlbinspop),1:8]
   names(rawbio) <- rawbio[1,]
   biology <- rawbio[-1,]
@@ -664,14 +750,26 @@ SS_output <-
   returndat$FecPar1 <- parameters$Value[parameters$Label==FecPar1name]
   returndat$FecPar2 <- parameters$Value[parameters$Label==FecPar2name]
 
-  rawgrow <- matchfun2("Biology_at_age",1,"MEAN_BODY_WT(begin)",-1,cols=1:18)
-  names(rawgrow) <- rawgrow[1,]
-  growdat <- rawgrow[-1,]
+  ## Growth_Parameters <- matchfun2["Growth_Parameters",1,"Seas_Effects",-1]
+  ## returndat$Growth_Parameters <- Growth_Parameters
+  Seas_Effects <- matchfun2("Seas_Effects",1,"Biology_at_age_in_endyr",-1,header=TRUE)
+  if(Seas_Effects[[1]][1]!="absent"){
+    for(i in 1:ncol(Seas_Effects)) Seas_Effects[,i] <- as.numeric(Seas_Effects[,i])
+  }else{
+    Seas_Effects <- NA
+  }
+  returndat$Seas_Effects <- Seas_Effects
+  
+  growdat <- matchfun2("Biology_at_age",1,"MEAN_BODY_WT(begin)",-1,header=TRUE)
   for(i in 1:ncol(growdat)) growdat[,i] <- as.numeric(growdat[,i])
   nmorphs <- max(growdat$Morph)
   midmorphs <- c(c(0,nmorphs/nsexes)+ceiling(nmorphs/nsexes/2))
-  if(nseasons > 1){growdat <- growdat[growdat$Seas==1,]}
   returndat$endgrowth <- growdat
+
+  # mean body weight
+  mean_body_wt <- matchfun2("MEAN_BODY_WT(begin)",1,"MEAN_SIZE_TIMESERIES",-1,header=TRUE)
+  for(i in 1:ncol(mean_body_wt)) mean_body_wt[,i] <- as.numeric(mean_body_wt[,i])
+  returndat$mean_body_wt <- mean_body_wt
 
   # Time-varying growth
   rawgrow <- matchfun2("MEAN_SIZE_TIMESERIES",1,"mean_size_Jan_1_for_gender",-1,cols=1:(4+accuage+1))
@@ -692,19 +790,13 @@ SS_output <-
   returndat$sizeselex <- selex
 
   # Age based selex
-  rawageselex <- matchfun2("AGE_SELEX",4,"ENVIRONMENTAL_DATA",-1)
-  rawageselex <- rawageselex[,rawageselex[1,]!=""]
-  names(rawageselex)<- rawageselex[1,]
-  ageselex <- rawageselex[-1,]
+  ageselex <- matchfun2("AGE_SELEX",4,"ENVIRONMENTAL_DATA",-1,header=TRUE)
   if(!forecast) ageselex <- ageselex[ageselex$year <= endyr,]
   for(icol in (1:ncol(ageselex))[!(names(ageselex) %in% c("factor","label"))]) ageselex[,icol] <- as.numeric(ageselex[,icol])
   returndat$ageselex <- ageselex
 
   # time series
-  rawts <- matchfun2("TIME_SERIES",1,"SPR_series",-1,cols=1:ncols)
-  tsfull <- rawts[,rawts[1,]!=""]
-  names(tsfull) <- tsfull[1,]
-  tsfull <- tsfull[-1,]
+  tsfull <- matchfun2("TIME_SERIES",1,"SPR_series",-1,header=TRUE)
   tsfull[tsfull=="_"] <- NA
   for(i in (1:ncol(tsfull))[names(tsfull)!="Era"]) tsfull[,i] = as.numeric(tsfull[,i])
   returndat$timeseries <- tsfull
@@ -763,21 +855,22 @@ SS_output <-
   ## discard fractions ###
 
   # degrees of freedom for T-distribution (or indicator 0, -1, -2 for other distributions)
-  DF_discard <- rawrep[matchfun("DISCARD_OUTPUT"),3]
-  if(length(grep("T_distribution",DF_discard))>0)
-    DF_discard <- as.numeric(strsplit(DF_discard,"=_")[[1]][2])
-  if(length(grep("_normal_with_Std_in_as_CV",DF_discard))>0)     DF_discard <- 0
-  if(length(grep("_normal_with_Std_in_as_stddev",DF_discard))>0) DF_discard <- -1
-  if(length(grep("_lognormal",DF_discard))>0)                    DF_discard <- -2
+  if(SS_versionshort=="SS-V3.20"){
+    DF_discard <- NA
+    shift <- 0
+  }else{
+    DF_discard <- rawrep[matchfun("DISCARD_OUTPUT"),3]
+    if(length(grep("T_distribution",DF_discard))>0)
+      DF_discard <- as.numeric(strsplit(DF_discard,"=_")[[1]][2])
+    if(length(grep("_normal_with_Std_in_as_CV",DF_discard))>0)     DF_discard <- 0
+    if(length(grep("_normal_with_Std_in_as_stddev",DF_discard))>0) DF_discard <- -1
+    if(length(grep("_lognormal",DF_discard))>0)                    DF_discard <- -2
+    shift <- 2
+  }
 
-  rawdisc <- matchfun2("DISCARD_OUTPUT",1,"MEAN_BODY_WT_OUTPUT",-1)
-  discard_type <- rawdisc[1,1]
-  rawdisc <- rawdisc[-1,]
-  if(!((length(rawdisc[,1])) == 1))
-  {
-    rawdisc <- rawdisc[,rawdisc[1,]!=""]
-    names(rawdisc) <- rawdisc[1,]
-    discard <- rawdisc[-1,]
+  discard <- matchfun2("DISCARD_OUTPUT",shift,"MEAN_BODY_WT_OUTPUT",-1,header=TRUE)
+  discard_type <- NA
+  if(nrow(discard)>1){
     for(icol in 2:ncol(discard)) discard[,icol] <- as.numeric(discard[,icol])
   }else{
     discard <- NA
@@ -791,23 +884,15 @@ SS_output <-
   DF_mnwgt <- rawrep[matchfun("MEAN_BODY_WT_OUTPUT"),2]
   DF_mnwgt <- as.numeric(strsplit(DF_mnwgt,"=_")[[1]][2])
 
-  rawmnwgt <- matchfun2("MEAN_BODY_WT_OUTPUT",1,"FIT_LEN_COMPS",-1,cols=1:10)
-  mnwgt <- NA
-  if(nrow(rawmnwgt)>1)
-  {
-    names(rawmnwgt) <- rawmnwgt[1,]
-    mnwgt <- rawmnwgt[-1,]
-    for(i in 2:ncol(mnwgt)) mnwgt[,i] <- as.numeric(mnwgt[,i])
-  } # if mean weight data exists
+  mnwgt <- matchfun2("MEAN_BODY_WT_OUTPUT",1,"FIT_LEN_COMPS",-1,cols=1:10,header=TRUE)
+  if(nrow(mnwgt)>0) for(i in 2:ncol(mnwgt)) mnwgt[,i] <- as.numeric(mnwgt[,i])
   returndat$mnwgt <- mnwgt
   returndat$DF_mnwgt <- DF_mnwgt
 
   # Yield and SPR time-series
-  rawspr <- matchfun2("SPR_series",5,"SPAWN_RECRUIT",-1,cols=1:(22+2*nmorphs))
-  names(rawspr) <- rawspr[1,]
-  rawspr[rawspr=="_"] <- NA
-  rawspr[rawspr=="&"] <- NA
-  spr <- rawspr[-1,]
+  spr <- matchfun2("SPR_series",5,"SPAWN_RECRUIT",-1,header=TRUE)
+  spr[spr=="_"] <- NA
+  spr[spr=="&"] <- NA
   for(i in (1:ncol(spr))[!(names(spr)%in%c("Actual:","More_F(by_morph):"))]) spr[,i] <- as.numeric(spr[,i])
   spr <- spr[spr$Year <= endyr,]
   spr$spr <- spr$SPR
@@ -820,7 +905,7 @@ SS_output <-
    # stats$exploit_at_msy <- as.numeric(rawforcast[35,2])
    # stats$bmsy_over_VLHbzero <- as.numeric(rawforcast[38,3])
    # stats$retained_msy <- as.numeric(rawforcast[43,5])
-  }else{if(verbose) print("You skipped the equilibrium yield data",quote=FALSE)}
+  }else{if(verbose) cat("You skipped the equilibrium yield data\n")}
   flush.console()
 
   returndat$managementratiolabels <- managementratiolabels
@@ -835,13 +920,12 @@ SS_output <-
   for(i in 1:(ncol(sr)-1)) sr[,i] <- as.numeric(sr[,i])
   returndat$recruit <- sr
 
-  # CPUE/Survey series
-  rawcpue <- matchfun2("INDEX_2",1,"INDEX_2",ncpue+1,cols=1:10)
   if(ncpue>0)
   {
-    names(rawcpue) <- rawcpue[1,]
-    cpue <- rawcpue[-1,]
-    for(i in 2:ncol(cpue)) cpue[,i] <- as.numeric(cpue[,i])
+    # CPUE/Survey series
+    cpue <- matchfun2("INDEX_2",1,"INDEX_2",ncpue+1,header=TRUE)
+    cpue[cpue=="_"] <- NA
+    for(i in (1:ncol(cpue))[!names(cpue) %in% c("Fleet","Supr_Per")]) cpue[,i] <- as.numeric(cpue[,i])
     cpue$FleetName <- NA
     cpue$FleetNum <- NA
     for(i in 1:nrow(cpue))
@@ -854,8 +938,6 @@ SS_output <-
   }
   returndat$cpue <- cpue
 
-# temporary split in the code to work with 3.11 and 3.10
-if(SS_versionshort==c("SS-V3.11")){
   # Numbers at age
   rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(12+accuage),substr1=FALSE)
   if(length(rawnatage)>1){
@@ -873,25 +955,6 @@ if(SS_versionshort==c("SS-V3.11")){
     for(i in (1:ncol(rawnatlen))[!(names(rawnatlen) %in% c("Beg/Mid","Era"))]) rawnatlen[,i] = as.numeric(rawnatlen[,i])
     returndat$natlen <- rawnatlen
   }
-}else{
-  # Numbers at age
-  rawnatage <- matchfun2("NUMBERS_AT_AGE",1,"NUMBERS_AT_LENGTH",-1,cols=1:(11+accuage),substr1=FALSE)
-  if(length(rawnatage)>1){
-    names(rawnatage) <- rawnatage[1,]
-    rawnatage <- rawnatage[-1,]
-    for(i in (1:ncol(rawnatage))[names(rawnatage)!="Era"]) rawnatage[,i] = as.numeric(rawnatage[,i])
-    returndat$natage <- rawnatage
-  }
-
-  # Numbers at length
-  rawnatlen <- matchfun2("NUMBERS_AT_LENGTH",1,"CATCH_AT_AGE",-1,cols=1:(10+nlbinspop),substr1=FALSE)
-  if(length(rawnatlen)>1){
-    names(rawnatlen) <- rawnatlen[1,]
-    rawnatlen <- rawnatlen[-1,]
-    for(i in (1:ncol(rawnatlen))[names(rawnatlen)!="Era"]) rawnatlen[,i] = as.numeric(rawnatlen[,i])
-    returndat$natlen <- rawnatlen
-  }
-}
   
   # Movement
   movement <- matchfun2("MOVEMENT",1,"EXPLOITATION",-1,cols=1:(7+accuage),substr1=FALSE)
@@ -960,7 +1023,6 @@ if(SS_versionshort==c("SS-V3.11")){
     returndat$tagtotrecap <- NA
   }
   
-  
   # age-length matrix
   rawALK <- matchfun2("AGE_LENGTH_KEY",4,"AGE_AGE_KEY",-1,cols=1:(accuage+2))
   if(length(rawALK)>1){
@@ -1003,7 +1065,7 @@ if(SS_versionshort==c("SS-V3.11")){
   catage <- matchfun2("CATCH_AT_AGE",1,"BIOLOGY",-1)
   if(catage[[1]][1]=="absent"){
     catage <- NA
-    print("! Warning: no catch-at-age numbers because 'detailed age-structured reports' turned off in starter file.",quote=F)
+    cat("! Warning: no catch-at-age numbers because 'detailed age-structured reports' turned off in starter file.",quote=F)
   }else{
     catage <- catage[,apply(catage,2,emptytest)<1]
     names(catage) <- catage[1,]
@@ -1021,6 +1083,8 @@ if(SS_versionshort==c("SS-V3.11")){
     returndat$agedbase      <- agedbase
     returndat$condbase      <- condbase
     returndat$ghostagedbase <- ghostagedbase
+    returndat$ghostcondbase <- ghostcondbase
+    returndat$ghostlendbase <- ghostlendbase
     returndat$ladbase       <- ladbase
     returndat$wadbase       <- wadbase
     returndat$tagdbase1     <- tagdbase1
@@ -1071,8 +1135,9 @@ if(SS_versionshort==c("SS-V3.11")){
     recdevFore <- rbind(recdevLate,recdevFore)
 
   Yr <- c(recdevEarly$Yr,recdev$Yr,recdevFore$Yr)
-
-  recruitpars <- rbind(recdevEarly, recdev, recdevFore)
+  recruitpars <- rbind(if(nrow(recdevEarly)>0){recdevEarly}else{NULL},
+                       if(nrow(recdevEarly)>0){recdev}else{NULL},
+                       if(nrow(recdevEarly)>0){recdevFore}else{NULL})
   returndat$recruitpars <- recruitpars
   # process adjustments to recruit devs
   RecrDistpars <- parameters[substring(parameters$Label,1,8)=="RecrDist",]
@@ -1080,14 +1145,14 @@ if(SS_versionshort==c("SS-V3.11")){
 
   # print list of statistics
   if(printstats){
-    print("Statistics shown below (to turn off, change input to printstats=FALSE)",quote=FALSE)
+    cat("Statistics shown below (to turn off, change input to printstats=FALSE)\n")
 
     # remove scientific notation (only for display, not returned values, which were added to returndat already)
     stats$likelihoods_used <- format(stats$likelihoods_used,scientific=20)
     stats$estimated_non_rec_devparameters <- format(stats$estimated_non_rec_devparameters,scientific=20)
     print(stats)
     if(covar){
-      if(stats$N_estimated_parameters > 1){print(corstats, quote=FALSE)}else{print("Too few estimated parameters to report correlations")}
+      if(stats$N_estimated_parameters > 1){print(corstats, quote=FALSE)}else{cat("Too few estimated parameters to report correlations")}
     }
   }
 
@@ -1103,7 +1168,7 @@ if(SS_versionshort==c("SS-V3.11")){
 
   returndat$inputs <- inputs
 
-  if(verbose) print("completed SS_output",quote=FALSE)
+  if(verbose) cat("completed SS_output\n")
   invisible(returndat)
 
 } # end function
