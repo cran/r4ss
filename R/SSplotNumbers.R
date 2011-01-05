@@ -37,10 +37,9 @@ SSplotNumbers <-
   natage    <- replist$natage
   natlen    <- replist$natlen
   if(plotdir=="default") plotdir <- replist$inputs$dir
-
   if(is.null(natage)){
-    print("Skipped plot 14 because NUMBERS_AT_AGE unavailable in report file",quote=FALSE)
-    print("     change starter file setting for 'detailed age-structured reports'",quote=FALSE)
+    cat("Skipped plot 14 because NUMBERS_AT_AGE unavailable in report file\n",
+        "     change starter file setting for 'detailed age-structured reports'\n")
   }else{
     # get more stuff from replist
     nsexes          <- replist$nsexes
@@ -74,20 +73,19 @@ SSplotNumbers <-
       if(nareas > 2) areacols <- rich.colors.short(nareas+1)[-1]
     }
 
-    if(SS_versionshort!=c("SS-V3.11")) period <- "B"
+    if(SS_versionshort==c("SS-V3.10")) stop("numbers at age plots no longer supported for SS-V3.10 and earlier")
 
     ###########
     # Numbers at age plots
 
     # combining across submorphs and growth patterns
-    column1 <- 11
-    if(SS_versionshort==c("SS-V3.11")) column1 <- 12
+    column1 <- 12
     remove <- -(1:(column1-1)) # removes first group of columns
 
     bseas <- unique(natage$BirthSeas)
-    if(length(bseas)>1) print("Numbers at age plots are for only the first birth season",quote=FALSE)
-    if(ngpatterns>1) print("Numbers at age plots may not deal correctly with growth patterns: no guarantees!",quote=FALSE)
-    if(nseasons>1) print("Numbers at age plots are for season 1 only",quote=FALSE)
+    if(length(bseas)>1) cat("Numbers at age plots are for only the first birth season\n")
+    if(ngpatterns>1) cat("Numbers at age plots may not deal correctly with growth patterns: no guarantees!\n")
+    if(nseasons>1) cat("Numbers at age plots are for season 1 only\n")
     for(iarea in areas){
       for(iperiod in 1:length(period)){
         for(m in 1:nsexes){
@@ -100,7 +98,7 @@ SSplotNumbers <-
                                    natage$Yr < (endyr+2) &
                                    natage$BirthSeas==min(bseas),]
                                    # natage$Bio_Pattern==1,] # formerly filtered
-          if(SS_versionshort==c("SS-V3.11")) natagetemp_all <- natagetemp_all[natagetemp_all$"Beg/Mid"==period[iperiod],]
+          natagetemp_all <- natagetemp_all[natagetemp_all$"Beg/Mid"==period[iperiod],]
 
           # create data frame with 0 values to fill across submorphs
           morphlist <- unique(natagetemp_all$SubMorph)
@@ -160,7 +158,7 @@ SSplotNumbers <-
           if(m==1 & nsexes==2) meanagef <- meanage # save value for females in 2 sex models
 
           ylab <- labels[6]
-          plottitle2 <- paste(periodtitle,"of year",labels[7])
+          plottitle2 <- paste(periodtitle,labels[7])
           if(nareas>1) plottitle2 <- paste(plottitle2,"in",areanames[iarea])
 
           tempfun <- function(){
@@ -186,13 +184,13 @@ SSplotNumbers <-
             filepartarea <- ""
             if(nareas > 1) filepartarea <- paste("_",areanames[iarea],sep="")
             if(1 %in% subplots){
-              pngfun(file=paste(plotdir,"14_natage",filepartarea,filepartsex,".png",sep=""))
+              pngfun(file=paste(plotdir,"/numbers1",filepartarea,filepartsex,".png",sep=""))
               tempfun()
               dev.off()
             }
             # make 2-sex plot after looping over both sexes
             if(2 %in% subplots & m==2 & nsexes==2){
-              pngfun(file=paste(plotdir,"14_meanage",filepartarea,".png",sep=""))
+              pngfun(file=paste(plotdir,"/numbers2_meanage",filepartarea,".png",sep=""))
               tempfun2()
               dev.off()
             }
@@ -219,11 +217,11 @@ SSplotNumbers <-
           if(print & 3 %in% subplots){
             filepart <- ""
             if(nareas > 1) filepart <- paste("_",areanames[iarea],filepart,sep="")
-            pngfun(file=paste(plotdir,"14_natageratio",filepart,".png",sep=""))
+            pngfun(file=paste(plotdir,"/numbers3_ratio",filepart,".png",sep=""))
             tempfun(labcex=0.4)
             dev.off()}
         }else{
-          print("skipped sex ratio contour plot because ratio=1 for all ages and years",quote=FALSE)
+          cat("skipped sex ratio contour plot because ratio=1 for all ages and years\n")
         }
       } # end area loop
     } # end if nsexes>1
@@ -247,7 +245,7 @@ SSplotNumbers <-
                                      natlen$Yr < (endyr+2) &
                                      natlen$BirthSeas==min(bseas),]
                                      # natlen$Bio_Pattern==1,] # formerly filtered
-            if(SS_versionshort==c("SS-V3.11")) natlentemp_all <- natlentemp_all[natlentemp_all$"Beg/Mid"==period[iperiod],]
+            natlentemp_all <- natlentemp_all[natlentemp_all$"Beg/Mid"==period[iperiod],]
 
             # create data frame with 0 values to fill across submorphs
             morphlist <- unique(natlentemp_all$SubMorph)
@@ -304,7 +302,7 @@ SSplotNumbers <-
             if(m==1 & nsexes==2) meanlenf <- meanlenf <- meanlen # save value for females in 2 sex models
             
             ylab <- labels[13]
-            plottitle2 <- paste(periodtitle,"of year",labels[14])
+            plottitle2 <- paste(periodtitle,labels[14])
             if(nareas>1) plottitle2 <- paste(plottitle2,"in",areanames[iarea])
 
             tempfun <- function(){
@@ -330,13 +328,13 @@ SSplotNumbers <-
               filepartarea <- ""
               if(nareas > 1) filepartarea <- paste("_",areanames[iarea],sep="")
               if(6 %in% subplots){
-                pngfun(file=paste(plotdir,"14_natlen",filepartarea,filepartsex,".png",sep=""))
+                pngfun(file=paste(plotdir,"/numbers6_len",filepartarea,filepartsex,".png",sep=""))
                 tempfun()
                 dev.off()
               }
               # make 2-sex plot after looping over both sexes
               if(7 %in% subplots & m==2 & nsexes==2){
-                pngfun(file=paste(plotdir,"14_meanlen",filepartarea,".png",sep=""))
+                pngfun(file=paste(plotdir,"/numbers7_meanlen",filepartarea,".png",sep=""))
                 tempfun2()
                 dev.off()
               }
@@ -355,7 +353,7 @@ SSplotNumbers <-
       plot(0,type='n',xlim=c(0,accuage),
            ylim=c(0,1.05*max(equilage[equilage$BirthSeas==min(equilage$BirthSeas)
              & equilage$Seas==1,remove])),
-           xaxs='i',yaxs='i',xlab='Age',ylab=labels[9],main=labels[10])
+           xaxs='i',yaxs='i',xlab='Age',ylab=labels[9],main=labels[10],cex.main=cex.main)
 
       # now fill in legend
       legendlty <- NULL
@@ -368,8 +366,8 @@ SSplotNumbers <-
                                    & equilage$BirthSeas==min(equilage$BirthSeas)
                                    & equilage$Seas==1,]
           if(nrow(equilagetemp)>1){
-            print('in plot of equilibrium age composition by gender and area',quote=FALSE)
-            print('multiple morphs or seasons not supported, using first row from choices below',quote=FALSE)
+            cat("in plot of equilibrium age composition by gender and area\n",
+                "multiple morphs or seasons not supported, using first row from choices below\n")
             print(equilagetemp[,1:10])
           }
           equilagetemp <- equilagetemp[1,remove]
@@ -384,14 +382,14 @@ SSplotNumbers <-
           legendlegend <- c(legendlegend,sextitle)
         }
       }
-      if(length(legendlegend)>1) legend('topright',legend=legendlegend,col=legendcol,lty=legendlty,lwd=3)
+      if(length(legendlegend)>1) legend("topright",legend=legendlegend,col=legendcol,lty=legendlty,lwd=3)
     }
 
     if(plot & 4 %in% subplots){
       equilibfun()
     } # end if 14 in plot
     if(print & 4 %in% subplots){
-      pngfun(file=paste(plotdir,"14_equilagecomp.png",sep=""))
+      pngfun(file=paste(plotdir,"/numbers4_equilagecomp.png",sep=""))
       equilibfun()
       dev.off()
     } # close if 14 in print
@@ -404,7 +402,7 @@ SSplotNumbers <-
       if(N_ageerror_defs == 1) colvec <- "black" else colvec <- rich.colors.short(N_ageerror_defs)
 
       ageingfun <- function(){
-        matplot(xvals,yvals,ylim=ylim,type="o",pch=1,lty=1,col=colvec,xlab=labels[3],ylab=labels[4],main=labels[8])
+        matplot(xvals,yvals,ylim=ylim,type="o",pch=1,lty=1,col=colvec,xlab=labels[3],ylab=labels[4],main=labels[8],cex.main=cex.main)
         abline(h=0,col="grey") # grey line at 0
       }
 
@@ -426,18 +424,18 @@ SSplotNumbers <-
         if(mean(ageingbias==0)!=1) ageingfun2()
       } # end if 14 in plot
       if(print & 5 %in% subplots){
-        pngfun(file=paste(plotdir,"14_ageerrorSD.png",sep=""))
+        pngfun(file=paste(plotdir,"/numbers5_ageerrorSD.png",sep=""))
         ageingfun()
         dev.off()
         if(mean(ageingbias==0)!=1){
-          pngfun(file=paste(plotdir,"14_ageerrorMeans.png",sep=""))
+          pngfun(file=paste(plotdir,"/numbers5_ageerrorMeans.png",sep=""))
           ageingfun2()
           dev.off()
         }
       } # close if 14 in print
     } # end if AAK
 
-    if(verbose) print("Finished plot 14: Numbers at age",quote=FALSE)
+    if(verbose) cat("Finished plot 14: Numbers at age\n")
     flush.console()
   } # end if data available
 } # end function

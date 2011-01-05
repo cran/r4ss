@@ -1,13 +1,13 @@
 SS_plots <-
   function(
-    replist=ReportObject, plot=1:24, print=0, pdf=FALSE, printfolder="", dir="default", fleets="all", areas="all",
+    replist=NULL, plot=1:26, print=0, pdf=FALSE, printfolder="plots", dir="default", fleets="all", areas="all",
     fleetnames="default", fleetcols="default", fleetlty=1, fleetpch=1, lwd=1, areacols="default", areanames="default",
     verbose=TRUE, uncertainty=TRUE, forecastplot=FALSE, datplot=FALSE, Natageplot=TRUE, samplesizeplots=TRUE, compresidplots=TRUE,
     sprtarg=0.4, btarg=0.4, minbthresh=0.25, pntscalar=2.6, minnbubble=8, aalyear=-1, aalbin=-1, 
     aalresids=FALSE, maxneff=5000, cohortlines=c(), smooth=TRUE, showsampsize=TRUE, showeffN=TRUE, showlegend=TRUE,
     pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1,selexlines=1:5,
     rows=1, cols=1, maxrows=6, maxcols=6, maxrows2=2, maxcols2=4, tagrows=3, tagcols=3, fixdims=TRUE, new=TRUE,
-    catchasnumbers=FALSE,legendloc="topleft",...)
+    catchasnumbers=FALSE,legendloc="topleft", minyr=NULL, maxyr=NULL, ...)
 
 {
   ################################################################################
@@ -28,12 +28,10 @@ SS_plots <-
   #
   ################################################################################
 
-  codedate <- "November 1, 2010"
+  codedate <- "December 20, 2010"
 
-  if(verbose){
-    print(paste("R function updated:",codedate),quote=FALSE)
-    print("Check for new code and report problems at http://code.google.com/p/r4ss/",quote=FALSE)
-  }
+  if(verbose) cat("R function updated:",codedate,
+    "\nCheck for new code and report problems at http://code.google.com/p/r4ss/\n")
 
   flush.console()
 
@@ -41,12 +39,9 @@ SS_plots <-
   # in the future, this could be read from a file, or we could have multiple columns
   # in the table to choose from
 
+  if(is.null(replist)) stop("The input 'replist' should refer to an R object created by the function 'SS_output'.")
 
   # get quantities from the big list
-  if(replist[[1]]=="ReportObject"){
-    return("The input 'replist' should refer to an R object created by the function 'SSoutput'.")
-  }
-
   nfleets     <- replist$nfleets
   nfishfleets <- replist$nfishfleets
   nareas      <- replist$nareas
@@ -59,25 +54,25 @@ SS_plots <-
   Run_time    <- replist$Run_time
   Files_used  <- replist$Files_used
   FleetNames  <- replist$FleetNames
+  rmse_table <- replist$rmse_table
   
   # check for internal consistency
   if(uncertainty==TRUE & inputs$covar==FALSE){
-    print("To use uncertainty=T, you need to have covar=T in the input to the SSoutput function",quote=FALSE)
-    return()
+    stop("To use uncertainty=T, you need to have covar=T in the input to the SS_output function")
   }
   if(forecastplot==TRUE & inputs$forecast==FALSE){
-    print("To use forecastplot=T, you need to have forecast=T in the input to the SSoutput function",quote=FALSE)
-    return()
+    stop("To use forecastplot=T, you need to have forecast=T in the input to the SSoutput function")
   }
   if(forecastplot==TRUE & max(timeseries$Yr > endyr+1)==0){
-    print("Changeing 'forecastplot' input to FALSE because all years up to endyr+1 are included by default",quote=FALSE)
+    cat("Changeing 'forecastplot' input to FALSE because all years up to endyr+1 are included by default\n")
     forecastplot <- FALSE
   }
 
   # derived quantities
   if(fleets[1]=="all"){
     fleets <- 1:nfleets
-  }else{ if(length(intersect(fleets,1:nfleets))!=length(fleets)){
+  }else{
+    if(length(intersect(fleets,1:nfleets))!=length(fleets)){
       return("Input 'fleets' should be 'all' or a vector of values between 1 and nfleets.")
   }}
   if(areas[1]=="all"){
@@ -86,10 +81,10 @@ SS_plots <-
       return("Input 'areas' should be 'all' or a vector of values between 1 and nareas.")
   }}
 
-  if(verbose) print("Finished defining objects",quote=FALSE)
+  if(verbose) cat("Finished defining objects\n")
   
   if(nareas>1){
-    print(paste("! Warning: some plots are not configured for mult-area models (nareas=",nareas,")",sep=""),quote=FALSE)
+    cat("! Warning: some plots are not configured for mult-area models (nareas=",nareas,")\n",sep="")
     if(areanames[1]=="default") areanames <- paste("area",1:nareas)
   }
   
@@ -108,41 +103,39 @@ SS_plots <-
 
   #### prepare for plotting
   # make plot window (operating system specific)
-  nplots <- length(intersect(1:24,plot))
-  nprints <- length(intersect(1:24,print))
+  nplots <- length(intersect(1:50,plot))
+  nprints <- length(intersect(1:50,print))
 
   if(length(grep("linux",version$os)) > 0) OS <- "Linux"
   if(length(grep("mingw",version$os)) > 0) OS <- "Windows"
   # need appropriate line to support Mac operating systems
 
   if(nprints>0 & pdf){
-    print("can't have pdf=T and print!=0: use print only or pdf & plot inputs",quote=FALSE)
-    return()
+    stop("can't have pdf=T and print!=0: use print only or pdf & plot inputs")
   }
   if(nplots>0 & !pdf & new){
     if(exists(".SavedPlots",where=1)) rm(.SavedPlots,pos=1)
     if(OS=="Windows") windows(width=pwidth,height=pheight,pointsize=ptsize,record=TRUE)
     if(OS=="Linux") X11(width=pwidth,height=pheight,pointsize=ptsize)
     if(OS=="Mac") quartz(width=pwidth,height=pheight,pointsize=ptsize)
-    plotdir <- "No directory"
   }
   if(nplots>0 & !new){
-    if(verbose) print("Adding plots to existing plot window. Plot history not erased.",quote=FALSE)
+    if(verbose) cat("Adding plots to existing plot window. Plot history not erased.\n")
   }
+  if(dir=="default") dir <- inputs$dir
+  plotdir <- paste(dir,printfolder,"/",sep="")
   if(nprints>0){
-    if(dir=="default") dir <- inputs$dir
     dir.create(dir,showWarnings=FALSE)
-    plotdir <- paste(dir,printfolder,"/",sep="")
     dir.create(plotdir,showWarnings=FALSE)
-    if(nprints>0 & verbose) print(paste("Plots specified by 'print' will be written to",plotdir),quote=FALSE)
+    if(nprints>0 & verbose) cat("Plots specified by 'print' will be written to",plotdir,"\n")
   }
+  
   if(pdf){
     if(dir=="default") dir <- inputs$dir
     dir.create(dir,showWarnings=FALSE)
-    plotdir <- paste(dir,printfolder,"/",sep="")
-    pdffile <- paste(inputs$dir,"/SS_plots_",format(Sys.time(),'%d-%b-%Y_%H.%M' ),".pdf",sep="")
+    pdffile <- paste(dir,"/SS_plots_",format(Sys.time(),'%d-%b-%Y_%H.%M' ),".pdf",sep="")
     pdf(file=pdffile,width=pwidth,height=pheight)
-    if(verbose) print(paste("PDF file with plots will be: ",pdffile,sep=""),quote=FALSE)
+    if(verbose) cat("PDF file with plots will be:",pdffile,'\n')
   }
   if(new) par(mfcol=c(rows,cols)) # make multi-panel plot if requested
 
@@ -172,8 +165,8 @@ SS_plots <-
   {
     SSplotBiology(replist=replist,
                   plot=(1 %in% plot),print=(1 %in% print),
-                  cex.main=cex.main)
-    if(verbose) print("Finished plot 1: Biology (weight, maturity, spawning output, growth)",quote=FALSE)
+                  cex.main=cex.main,plotdir=plotdir)
+    if(verbose) cat("Finished plot 1: Biology (weight, maturity, spawning output, growth)\n")
   }
 
   ### plots 3 and 4 selectivity and retention
@@ -182,8 +175,8 @@ SS_plots <-
   {
     SSplotSelex(replist=replist, selexlines=selexlines, fleets=fleets,
                 plot=(3 %in% plot), print=(3 %in% print),
-                cex.main=cex.main)
-    if(verbose) print("Finished plots 3 and 4: selectivity plots",quote=FALSE)
+                cex.main=cex.main,plotdir=plotdir)
+    if(verbose) cat("Finished plots 3 and 4: selectivity plots\n")
   }
 
 
@@ -191,7 +184,7 @@ SS_plots <-
   # stats and dimensions
   if(5 %in% c(plot, print))
   {
-    cat("starting time series plots\n")
+    cat("Starting time series plots (group 5)\n")
     for(isubplot in 1:12){ # which of 12 subplots to make
       for(doforecast in unique(c(FALSE,forecastplot))){ # add forecast or not
         if(isubplot %in% c(7,9,11)){
@@ -207,7 +200,9 @@ SS_plots <-
                              print=(5 %in% print),
                              verbose=verbose,
                              btarg=btarg, 
-                             minbthresh=minbthresh)
+                             minbthresh=minbthresh,
+                             minyr=minyr,maxyr=maxyr,
+                             plotdir=plotdir)
           } # end loop over uncertainty or not
         }else{ # these plots don't have the option for uncertainty
             SSplotTimeseries(replist=replist,
@@ -221,7 +216,9 @@ SS_plots <-
                              print=(5 %in% print),
                              verbose=verbose,
                              btarg=btarg, 
-                             minbthresh=minbthresh)
+                             minbthresh=minbthresh,
+                             minyr=minyr,maxyr=maxyr,
+                             plotdir=plotdir)
         }
       }
     }
@@ -230,12 +227,12 @@ SS_plots <-
   if(6 %in% c(plot, print))
   {
     # time series of catch
+    if(verbose) cat("Starting catch plots (group 6):\n")
     SSplotCatch(replist=replist,
-                plot=(6 %in% plot),
-                print=(6 %in% print),
-                fleetnames=fleetnames)
-
-    if(verbose) print("Finished plot 5: Basic time series",quote=FALSE)
+                plot=(6 %in% plot),print=(6 %in% print),
+                fleetnames=fleetnames,
+                minyr=minyr,maxyr=maxyr,
+                plotdir=plotdir)
   } # end if 6 in plot or print
 
   ### Plot 8: discard fractions (if present) ###
@@ -244,16 +241,18 @@ SS_plots <-
                   plot=(8 %in% plot),
                   print=(8 %in% print),
                   fleets=fleets,
-                  fleetnames=fleetnames)
+                  fleetnames=fleetnames,
+                  plotdir=plotdir)
   } # end if 8 in plot or print
 
   ### Plot 9: mean body weight (if present) ###
-  if(9 %in% c(plot, print)){
+  if(9 %in% c(plot, print) & nrow(replist$mnwgt)>0){
     SSplotMnwt(replist=replist,
                plot=(9 %in% plot),
                print=(9 %in% print),
                fleets=fleets,
-               fleetnames=fleetnames)
+               fleetnames=fleetnames,
+               plotdir=plotdir)
   } # end if 9 in plot or print
 
   ### Plot 11: SPR and fishing intensity plots ###
@@ -262,7 +261,8 @@ SS_plots <-
               plot=(11 %in% plot),
               print=(11 %in% print),
               uncertainty=uncertainty,
-              sprtarg=0.4, btarg=0.4)
+              sprtarg=0.4, btarg=0.4,
+              plotdir=plotdir)
   } # end if 11 in plot or print
 
   ### Plot 7: recruitment (moved to near S-R curve, but needs renumbering) ###
@@ -271,21 +271,27 @@ SS_plots <-
                   plot=(7 %in% plot),
                   print=(7 %in% print),
                   forecastplot=forecastplot,
-                  uncertainty=uncertainty)
+                  uncertainty=uncertainty,
+                  plotdir=plotdir)
 
     if(nareas>1 & nseasons>1){
       SSplotRecdist(replist=replist,
                     plot=(7 %in% plot),
                     print=(7 %in% print),
-                    verbose=verbose)
+                    verbose=verbose,cex.main=cex.main,
+                    plotdir=plotdir)
     }
   } # end if 7 in plot or print
 
   ### Plot 26: estimating recruitment bias adjustment (probably needs renumbering) ###
   if(26 %in% c(plot, print) & uncertainty){
-    SS_fitbiasramp(replist=replist,
-                   png=(26 %in% print),
-                   twoplots=FALSE)
+    if(max(rmse_table$RMSE)>0){
+      SS_fitbiasramp(replist=replist,
+                     png=ifelse(26 %in% print,paste(plotdir,"recdevs_fitbiasramp.png",sep="/"),FALSE),
+                     twoplots=FALSE)
+    }else{
+      cat("Skipping bias adjustment fit because root mean squared error of recruit devs is 0.\n")
+    }
   } # end if 26 in plot or print                   
 
   ### Plot 12: spawner-recruit curve ###
@@ -293,6 +299,7 @@ SS_plots <-
     SSplotSpawnrecruit(replist=replist,
                        plot=(12 %in% plot),
                        print=(12 %in% print),
+                       plotdir=plotdir,
                        virg=TRUE,  # add point on curve at equilibrium values (B0,R0)
                        init=FALSE) # add point on curve at initial values (B1,R1)
   } # end if 12 in plot or print
@@ -305,7 +312,9 @@ SS_plots <-
                   fleetnames=fleetnames,
                   plot=(13 %in% plot),
                   print=(13 %in% print),
-                  datplot=datplot)
+                  datplot=datplot,
+                  cex.main=cex.main,
+                  plotdir=plotdir)
   } # end if 13 in plot or print
 
   ### Plot 14: numbers at age ###
@@ -317,7 +326,8 @@ SS_plots <-
                   pntscalar=pntscalar,
                   cex.main=cex.main,
                   plot=(14 %in% plot),
-                  print=(14 %in% print))
+                  print=(14 %in% print),
+                  plotdir=plotdir)
   } # close if 14 in plot or print
 
   ### Plot 15: Composition data plots ###
@@ -325,7 +335,7 @@ SS_plots <-
   if(!datplot)
   {
     if(length(intersect(15:17,c(plot,print)))>0)
-      print("skipped data-only plots 15-17 (comp data without fit) because input 'datplot=F'",quote=FALSE)
+      cat("skipped data-only plots 15-17 (comp data without fit) because input 'datplot=F'\n")
   }else{
     if(15 %in% c(plot,print))  # data only aspects
     {
@@ -333,27 +343,31 @@ SS_plots <-
       SSplotComps(replist=replist,datonly=TRUE,kind="LEN",bub=FALSE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(15%in%print),plot=(15%in%plot),plotdir=plotdir,cex.main=cex.main,...)
       # length comp bubble plot
       SSplotComps(replist=replist,datonly=TRUE,kind="LEN",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(15%in%print),plot=(15%in%plot),plotdir=plotdir,cex.main=cex.main,cohortlines=cohortlines,...)
       # size comp bar plot
       SSplotComps(replist=replist,datonly=TRUE,kind="SIZE",bub=FALSE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(15%in%print),plot=(15%in%plot),plotdir=plotdir,cex.main=cex.main,...)
       # size comp bubble plot
       SSplotComps(replist=replist,datonly=TRUE,kind="SIZE",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(15%in%print),plot=(15%in%plot),plotdir=plotdir,cex.main=cex.main,cohortlines=cohortlines,...)
-      if(verbose) print("Finished plot 15: length and size comp data",quote=FALSE)
+      if(verbose) cat("Finished plot 15: length and size comp data\n")
       flush.console()
     }
     if(16 %in% c(plot,print))
@@ -362,27 +376,31 @@ SS_plots <-
       SSplotComps(replist=replist,datonly=TRUE,kind="AGE",bub=FALSE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(16%in%print),plot=(16%in%plot),plotdir=plotdir,cex.main=cex.main,...)
       # age comp bubble plot
       SSplotComps(replist=replist,datonly=TRUE,kind="AGE",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(16%in%print),plot=(16%in%plot),plotdir=plotdir,cex.main=cex.main,...)
       # ghost age comp bar plot
       SSplotComps(replist=replist,datonly=TRUE,kind="GSTAGE",bub=FALSE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=FALSE,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(16%in%print),plot=(16%in%plot),plotdir=plotdir,cex.main=cex.main,...)
       # ghost age comp bubble plot
       SSplotComps(replist=replist,datonly=TRUE,kind="GSTAGE",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=FALSE,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                   print=(16%in%print),plot=(16%in%plot),plotdir=plotdir,cex.main=cex.main,...)
-      if(verbose) print("Finished plot 16: age comp data",quote=FALSE)
+      if(verbose) cat("Finished plot 16: age comp data\n")
       flush.console()
     }
     if(17 %in% c(plot,print))
@@ -391,10 +409,11 @@ SS_plots <-
       SSplotComps(replist=replist,datonly=TRUE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=FALSE,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,
                   fixdims=fixdims,rows=rows,cols=cols,
                   print=(17%in%print),plot=(17%in%plot),plotdir=plotdir,cex.main=cex.main,...)
-      if(verbose) print("Finished plot 17: conditional age at length data",quote=FALSE)
+      if(verbose) cat("Finished plot 17: conditional age at length data\n")
       flush.console()
     }
   } # end if data plot
@@ -404,16 +423,25 @@ SS_plots <-
     SSplotComps(replist=replist,datonly=FALSE,kind="LEN",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                minnbubble=minnbubble, pntscalar=pntscalar,
+                maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
+                print=(18%in%print),plot=(18%in%plot),smooth=smooth,plotdir=plotdir,
+                maxneff=maxneff,cex.main=cex.main,cohortlines=cohortlines,...)
+    SSplotComps(replist=replist,datonly=FALSE,kind="GSTLEN",bub=TRUE,verbose=verbose,fleets=fleets,
+                fleetnames=fleetnames,
+                samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(18%in%print),plot=(18%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,cohortlines=cohortlines,...)
     SSplotComps(replist=replist,datonly=FALSE,kind="SIZE",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(18%in%print),plot=(18%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,cohortlines=cohortlines,...)
-    if(verbose) print("Finished plot 18: length and size comps with fits",quote=FALSE)
+    if(verbose) cat("Finished plot 18: length and size comps with fits\n")
     flush.console()
   }
 
@@ -422,16 +450,18 @@ SS_plots <-
     SSplotComps(replist=replist,datonly=FALSE,kind="AGE",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(19%in%print),plot=(19%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
     SSplotComps(replist=replist,datonly=FALSE,kind="GSTAGE",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(19%in%print),plot=(19%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
-    if(verbose) print("Finished plot 19: age comps with fits",quote=FALSE)
+    if(verbose) cat("Finished plot 19: age comps with fits\n")
     flush.console()
   } # end if 19 in plot or print
 
@@ -441,6 +471,7 @@ SS_plots <-
       SSplotComps(replist=replist,subplot=3,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
                   print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                   maxneff=maxneff,cex.main=cex.main,...)
@@ -452,6 +483,7 @@ SS_plots <-
                   fleetnames=fleetnames,
                   aalbin=aalbin,aalyear=aalyear,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
                   print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                   maxneff=maxneff,cex.main=cex.main,...)
@@ -462,11 +494,12 @@ SS_plots <-
                   fleetnames=fleetnames,
                   aalbin=aalbin,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                  minnbubble=minnbubble, pntscalar=pntscalar,
                   maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
                   print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                   maxneff=maxneff,cex.main=cex.main,...)
     }
-    if(verbose) print("Finished plot 20a: conditional age at length with fits",quote=FALSE)
+    if(verbose) cat("Finished plot 20: conditional age at length with fits\n")
   } #end if 20 in plot or print
   
   if(21 %in% c(plot,print)){
@@ -475,16 +508,17 @@ SS_plots <-
                 fleetnames=fleetnames,
                 aalbin=aalbin,aalyear=aalyear,
                 samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,maxrows2=maxrows2,maxcols2=maxcols2,fixdims=fixdims,rows=rows,cols=cols,
                 print=(20%in%print),plot=(20%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
     if(nrow(replist$condbase)>0 & verbose){
-      print("Finished plot 21: mean age and std. dev. in conditional AAL",quote=FALSE)
-      print("  This is a new plot, currently in beta mode.",quote=FALSE)
-      print("  Left plots are mean AAL by size-class (obs. and pred.)",quote=FALSE)
-      print("  with 90% CIs based on adding 1.64 SE of mean to the data",quote=FALSE)
-      print("  Right plots in each pair are SE of mean AAL (obs. and pred.)",quote=FALSE)
-      print("  with 90% CIs based on the chi-square distribution.",quote=FALSE)
+      cat("Finished plot 21: mean age and std. dev. in conditional AAL\n",
+          "  This is a new plot, currently in beta mode.\n",
+          "  Left plots are mean AAL by size-class (obs. and pred.)\n",
+          "  with 90% CIs based on adding 1.64 SE of mean to the data\n",
+          "  Right plots in each pair are SE of mean AAL (obs. and pred.)\n",
+          "  with 90% CIs based on the chi-square distribution.\n")
     }
   } # end if 21 in plot or print
 
@@ -493,16 +527,18 @@ SS_plots <-
     SSplotComps(replist=replist,datonly=FALSE,kind="L@A",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(22%in%print),plot=(22%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
     SSplotComps(replist=replist,datonly=FALSE,kind="W@A",bub=TRUE,verbose=verbose,fleets=fleets,
                 fleetnames=fleetnames,
                 samplesizeplots=FALSE,showsampsize=FALSE,showeffN=FALSE,
+                minnbubble=minnbubble, pntscalar=pntscalar,
                 maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                 print=(22%in%print),plot=(22%in%plot),smooth=smooth,plotdir=plotdir,
                 maxneff=maxneff,cex.main=cex.main,...)
-    if(verbose) print("Finished plot 22: mean length at age and mean weight at age",quote=FALSE)
+    if(verbose) cat("Finished plot 22: mean length at age and mean weight at age\n")
     flush.console()
   } # end if 22 in plot or print
 
@@ -531,8 +567,15 @@ SS_plots <-
                print=(24 %in% print))
   } # end if 24 in plot or print
 
+  ### Plot 25: Movement rates ###
+  if(25 %in% plot & nrow(replist$movement)>0)
+    for(i in 1:nseasons)
+      SSplotMovementRates(replist=replist,moveseas=i,cex.main=cex.main)
+  # note! need to add png output for this funciton
+  # end if 25 in plot or print
+
   if(pdf) dev.off() # close PDF file if it was open
-  if(verbose) print("Finished all requested plots in SS_plots function",quote=FALSE)
+  if(verbose) cat("Finished all requested plots in SS_plots function\n")
   ### end of SS_plots function
   return(invisible(999))
 }

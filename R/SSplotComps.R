@@ -27,7 +27,7 @@ SSplotComps <-
   ################################################################################
   # SSplotComps October 21, 2010
   ################################################################################
- 
+
   pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
 
   lendbase      <- replist$lendbase
@@ -35,6 +35,7 @@ SSplotComps <-
   agedbase      <- replist$agedbase
   condbase      <- replist$condbase
   ghostagedbase <- replist$ghostagedbase
+  ghostlendbase <- replist$ghostlendbase
   ladbase       <- replist$ladbase
   wadbase       <- replist$wadbase
   tagdbase1     <- replist$tagdbase1
@@ -45,8 +46,7 @@ SSplotComps <-
   FleetNames    <- replist$FleetNames
   nsexes        <- replist$nsexes
 
-  if(!exists("make_multifig"))
-  print("you are missing the function 'make_mulitifig'")
+  if(!exists("make_multifig")) stop("you are missing the function 'make_mulitifig'")
 
   titles <- NULL
   if(plotdir=="default") plotdir <- replist$inputs$dir
@@ -55,7 +55,7 @@ SSplotComps <-
     fleets <- 1:nfleets
   }else{
     if(length(intersect(fleets,1:nfleets))!=length(fleets)){
-      return("Input 'fleets' should be 'all' or a vector of values between 1 and nfleets.")
+      stop("Input 'fleets' should be 'all' or a vector of values between 1 and nfleets.")
     }
   }
   if(fleetnames[1]=="default") fleetnames <- FleetNames
@@ -65,21 +65,32 @@ SSplotComps <-
     dbase_kind <- lendbase
     kindlab=labels[1]
     if(datonly){
-      filenamestart <- "15_lendat_"
+      filenamestart <- "comp_lendat_"
       titledata <- "length comp data, "
     }else{
-      filenamestart <- "18_lenfit_"
+      filenamestart <- "comp_lenfit_"
       titledata <- "length comps, "
+    }
+  }
+  if(kind=="GSTLEN"){
+    dbase_kind <- ghostlendbase
+    kindlab=labels[1]
+    if(datonly){
+      filenamestart <- "comp_gstlendat_"
+      titledata <- "ghost length comp data, "
+    }else{
+      filenamestart <- "comp_gstlenfit_"
+      titledata <- "ghost length comps, "
     }
   }
   if(kind=="SIZE"){
     dbase_kind <- sizedbase
     kindlab=labels[9]
     if(datonly){
-      filenamestart <- "15_sizedat_"
+      filenamestart <- "comp_sizedat_"
       titledata <- "size comp data, "
     }else{
-      filenamestart <- "18_sizefit_"
+      filenamestart <- "comp_sizefit_"
       titledata <- "size comps, "
     }
   }
@@ -87,10 +98,10 @@ SSplotComps <-
     dbase_kind <- agedbase
     kindlab=labels[2]
     if(datonly){
-      filenamestart <- "16_agedat_"
+      filenamestart <- "comp_agedat_"
       titledata <- "age comp data, "
     }else{
-      filenamestart <- "19_agefit_"
+      filenamestart <- "comp_agefit_"
       titledata <- "age comps, "
     }
   }
@@ -98,38 +109,60 @@ SSplotComps <-
     dbase_kind <- condbase
     kindlab=labels[2]
     if(datonly){
-      filenamestart <- "17_condAALdat_"
-      titledata <- "conditional age at length data, "
+      filenamestart <- "comp_condAALdat_"
+      titledata <- "conditional age-at-length data, "
     }else{
-      filenamestart <- "20_condAALfit_"
-      titledata <- "conditional age at length, "
+      filenamestart <- "comp_condAALfit_"
+      titledata <- "conditional age-at-length, "
     }
   }
-  
   if(kind=="GSTAGE"){
     dbase_kind <- ghostagedbase
     kindlab=labels[2]
     if(datonly){
-      filenamestart <- "16_gstagedat_"
-      titledata <- "gst age comp data, "
+      filenamestart <- "comp_gstagedat_"
+      titledata <- "ghost age comp data, "
     }else{
-      filenamestart <- "19_gstagefit_"
-      titledata <- "gst age comps, "
+      filenamestart <- "comp_gstagefit_"
+      titledata <- "ghost age comps, "
+    }
+  }
+  if(kind=="GSTcond"){
+    dbase_kind <- ghostagedbase
+    kindlab=labels[2]
+    if(datonly){
+      filenamestart <- "comp_gstCAALdat_"
+      titledata <- "ghost conditional age-at-length data, "
+    }else{
+      filenamestart <- "comp_gstCAALfit_"
+      titledata <- "ghost conditional age-at-length comps, "
     }
   }
   if(kind=="L@A"){
-    dbase_kind <- ladbase
+    dbase_kind <- ladbase[ladbase$N!=0,] # remove values with 0 sample size
     kindlab=labels[2]
-    filenamestart <- "21_lenatagefit_"
+    filenamestart <- "comp_LAAfit_"
     titledata <- "mean length at age, "
+    dbase_kind$SD <- dbase_kind$Lbin_lo/dbase_kind$N
   }
   if(kind=="W@A"){
-    dbase_kind <- wadbase
+    dbase_kind <- wadbase[wadbase$N!=0,] # remove values with 0 sample size
     kindlab=labels[2]
-    filenamestart <- "21_wtatagefit_"
+    filenamestart <- "comp_WAAfit_"
     titledata <- "mean weight at age, "
   }
-  if(!(kind%in%c("LEN","SIZE","AGE","cond","GSTAGE","L@A","W@A"))) return("Input 'kind' to SSplotComps is not right.")
+  if(!(kind%in%c("LEN","SIZE","AGE","cond","GSTAGE","GSTLEN","L@A","W@A"))) stop("Input 'kind' to SSplotComps is not right.")
+
+  # add asterix to indicate super periods and then remove rows labeled "skip"
+  # would be better to somehow show the range of years, but that seems difficult
+  # at this point
+  if(any(dbase_kind$SuprPer=="Sup" & dbase_kind$Used=="skip")){
+    cat("Note: removing super-period composition values labeled 'skip'\n",
+        "     and designating super-period values with a '*'\n")
+    dbase_kind <- dbase_kind[dbase_kind$SuprPer=="No" | dbase_kind$Used!="skip",]
+    dbase_kind$YrSeasName <- paste(dbase_kind$YrSeasName,ifelse(dbase_kind$SuprPer=="Sup","*",""),sep="")
+  }
+  
   # loop over fleets
   for(f in fleets)
   {
@@ -182,7 +215,7 @@ SSplotComps <-
             ptitle <- paste(titledata,title_sexmkt, fleetnames[f],sep="") # total title
             titles <- c(ptitle,titles) # compiling list of all plot titles
             tempfun <- function(ipage,...){
-              if(!(kind %in% c("GSTAGE","L@A","W@A"))){
+              if(!(kind %in% c("GSTAGE","GSTLEN","L@A","W@A"))){
                 make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
                               sampsize=dbase$N,effN=dbase$effN,showsampsize=showsampsize,showeffN=showeffN,
                               bars=bars,linepos=(1-datonly)*linepos,
@@ -200,8 +233,18 @@ SSplotComps <-
                                 maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
                                 fixdims=fixdims,ipage=ipage,...)
               }
+              if(kind=="GSTLEN"){
+                  make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
+                                sampsize=dbase$N,effN=dbase$effN,showsampsize=FALSE,showeffN=FALSE,
+                                bars=bars,linepos=(1-datonly)*linepos,
+                                nlegends=3,legtext=list(dbase$YrSeasName,"sampsize","effN"),
+                                main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=labels[6],
+                                maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
+                                fixdims=fixdims,ipage=ipage,...)
+              }
               if(kind %in% c("L@A","W@A")){
                   make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
+                                ptsSD=dbase$SD,
                                 sampsize=dbase$N,effN=0,showsampsize=FALSE,showeffN=FALSE,
                                 nlegends=1,legtext=list(dbase$YrSeasName),
                                 bars=bars,linepos=(1-datonly)*linepos,
@@ -217,7 +260,7 @@ SSplotComps <-
               for(ipage in 1:npages)
               {
                   if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
-                  filename <- paste(plotdir,filenamestart,filename_fltsexmkt,pagetext,".png",sep="")
+                  filename <- paste(plotdir,"/",filenamestart,filename_fltsexmkt,pagetext,".png",sep="")
                   pngfun(file=filename)
                   tempfun(ipage=ipage,...)
                   dev.off()
@@ -261,7 +304,7 @@ SSplotComps <-
               # add lines for growth of individual cohorts if requested
               if(length(cohortlines)>0){
                 for(icohort in 1:length(cohortlines)){
-                  print(paste("Adding line for",cohortlines[icohort],"cohort"),quote=FALSE)
+                  cat("  Adding line for",cohortlines[icohort],"cohort\n")
                   if(k %in% c(1,2)) lines(growdatF$Age+cohortlines[icohort],growdatF$Len_Mid, col="red")  #females
                   if(k %in% c(1,3)) lines(growdatM$Age+cohortlines[icohort],growdatM$Len_Mid, col="blue") #males
                 }
@@ -270,14 +313,14 @@ SSplotComps <-
 
             if(plot) tempfun()
             if(print){ # set up plotting to png file if required
-              filename <- paste(plotdir,filenamestart,filetype,filename_fltsexmkt,".png",sep="")
+              filename <- paste(plotdir,"/",filenamestart,filetype,filename_fltsexmkt,".png",sep="")
               pngfun(file=filename)
               tempfun()
               dev.off() # close device if png
             }
           } # end bubble plot
 
-          ### subplot 3: multi-panel bubble plots for conditional age at length
+          ### subplot 3: multi-panel bubble plots for conditional age-at-length
           if(3 %in% subplots & kind=="cond")
           {
             ptitle <- paste(titletype, title_sexmkt, fleetnames[f],sep="")
@@ -298,14 +341,14 @@ SSplotComps <-
               for(ipage in 1:npages)
               {
                   if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
-                  filename <- paste(plotdir,filenamestart,filetype,filename_fltsexmkt,pagetext,".png",sep="")
+                  filename <- paste(plotdir,"/",filenamestart,filetype,filename_fltsexmkt,pagetext,".png",sep="")
                   pngfun(file=filename)
                   tempfun(ipage=ipage,...)
                   dev.off() # close device if png
               }
             }
           } # end conditional bubble plot
-          ### subplots 4 and 5: multi-panel plot of point and line fit to conditional age at length
+          ### subplots 4 and 5: multi-panel plot of point and line fit to conditional age-at-length
           #                        and Pearson residuals of A-L key for specific years
           if((4 %in% subplots | 5 %in% subplots) & aalyear[1] > 0 & kind=="cond")
           {
@@ -315,8 +358,8 @@ SSplotComps <-
               if(length(dbase$Obs[dbase$Yr==aalyr])>0)
               {
                 if(4 %in% subplots){
-                  ### subplot 4: multi-panel plot of fit to conditional age at length for specific years
-                  ptitle <- paste(aalyr," age at length bin, ",title_sexmkt,fleetnames[f],sep="")
+                  ### subplot 4: multi-panel plot of fit to conditional age-at-length for specific years
+                  ptitle <- paste(aalyr," age-at-length bin, ",title_sexmkt,fleetnames[f],sep="")
                   titles <- c(ptitle,titles) # compiling list of all plot titles
                   ydbase <- dbase[dbase$Yr==aalyr,]
                   lenbinlegend <- paste(ydbase$Lbin_lo,labels[7],sep="")
@@ -337,7 +380,7 @@ SSplotComps <-
                     for(ipage in 1:npages)
                     {
                       if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
-                      filename <- paste(plotdir,filenamestart,filename_fltsexmkt,"_",aalyr,"_",pagetext,".png",sep="")
+                      filename <- paste(plotdir,"/",filenamestart,filename_fltsexmkt,"_",aalyr,"_",pagetext,".png",sep="")
                       pngfun(file=filename)
                       tempfun(ipage=ipage,...)
                       dev.off() # close device if print
@@ -357,7 +400,7 @@ SSplotComps <-
                   if(plot) tempfun()
                   if(print)
                   {
-                      filename <- paste(plotdir,filenamestart,"yearresids_",filename_fltsexmkt,"_",aalyr,".png",sep="")
+                      filename <- paste(plotdir,"/",filenamestart,"yearresids_",filename_fltsexmkt,"_",aalyr,".png",sep="")
                       pngfun(file=filename)
                       tempfun()
                       dev.off() # close device if print
@@ -367,7 +410,7 @@ SSplotComps <-
             }
           }
 
-          ### subplot 6: multi-panel plot of point and line fit to conditional age at length
+          ### subplot 6: multi-panel plot of point and line fit to conditional age-at-length
           #                   for specific length bins
           if(6 %in% subplots & aalbin[1] > 0)
           {
@@ -376,8 +419,8 @@ SSplotComps <-
             if(length(goodbins)>0)
             {
               if(length(badbins)>0){
-                print(paste("Error! the following inputs for 'aalbin' do not match the Lbin_hi values for the conditional age at length data:",badbins),quote=FALSE)
-                print(paste("            the following inputs for 'aalbin' are fine:",goodbins),quote=FALSE)
+                cat("Error! the following inputs for 'aalbin' do not match the Lbin_hi values for the conditional age-at-length data:",badbins,"\n",
+                    "       the following inputs for 'aalbin' are fine:",goodbins,"\n")
               }
               for(ibin in 1:length(goodbins)) # loop over good bins
               {
@@ -385,7 +428,7 @@ SSplotComps <-
               abindbase <- dbase[dbase$Lbin_hi==ilenbin,]
               if(nrow(abindbase)>0) # check for data associated with this bin
               {
-                ptitle <- paste("Age at length ",ilenbin,labels[7],", ",title_sexmkt,fleetnames[f],sep="")
+                ptitle <- paste("Age-at-length ",ilenbin,labels[7],", ",title_sexmkt,fleetnames[f],sep="")
                 titles <- c(ptitle,titles) # compiling list of all plot titles
                 tempfun <- function(ipage,...){ # temporary function to aid repeating the big function call
                     make_multifig(ptsx=abindbase$Bin,ptsy=abindbase$Obs,yr=abindbase$Yr,linesx=abindbase$Bin,linesy=abindbase$Exp,
@@ -413,7 +456,7 @@ SSplotComps <-
           } # end if plot requested
 
           ### subplot 7: sample size plot
-          if(7 %in% subplots & samplesizeplots & !datonly & !(kind %in% c("GSTAGE","L@A","W@A")))
+          if(7 %in% subplots & samplesizeplots & !datonly & !(kind %in% c("GSTAGE","GSTLEN","L@A","W@A")))
           {
             ptitle <- paste("N-EffN comparison, ",titledata,title_sexmkt,fleetnames[f], sep="")
             titles <- c(ptitle,titles) # compiling list of all plot titles
@@ -421,7 +464,7 @@ SSplotComps <-
             {
               if(kind=="cond"){
                   # trap nonrobust effective n's
-                  # should this only be for conditional age at length or all plots?
+                  # should this only be for conditional age-at-length or all plots?
                   dbasegood <- dbase[dbase$Obs>=0.0001 & dbase$Exp<0.99 & !is.na(dbase$effN) & dbase$effN<maxneff,]
               }else{
                   dbasegood <- dbase
@@ -524,10 +567,10 @@ SSplotComps <-
   ### subplot 9: by fleet aggregating across years
   if(9 %in% subplots & kind!="cond") # for age or length comps, but not conditional AAL
   {
+    dbasef <- dbase_kind[dbase_kind$Fleet %in% fleets,]
     # check for the presence of data
-    if(nrow(dbase_kind)>0)
+    if(nrow(dbasef)>0)
     {
-      dbasef <- dbase_kind
       testor    <- length(dbasef$Gender[dbasef$Gender==1 & dbasef$Pick_gender==0 ])>0
       testor[2] <- length(dbasef$Gender[dbasef$Gender==1 & dbasef$Pick_gender %in% c(1,3)])>0
       testor[3] <- length(dbasef$Gender[dbasef$Gender==2])>0
@@ -546,91 +589,99 @@ SSplotComps <-
           # dbase is the final data.frame used in the individual plots
           # it is subset based on the kind (age, len, age-at-len), fleet, gender, and partition
           dbase <- dbase_k[dbase_k$Part==j,]
-
-          ## assemble pieces of plot title
-          # sex
-          if(k==1) titlesex <- "sexes combined, "
-          if(k==2) titlesex <- "female, "
-          if(k==3) titlesex <- "male, "
-          titlesex <- ifelse(printsex,titlesex,"")
-
-          # market category
-          if(j==0) titlemkt <- "whole catch, "
-          if(j==1) titlemkt <- "discard, "
-          if(j==2) titlemkt <- "retained, "
-          titlemkt <- ifelse(printmkt,titlemkt,"")
-
-          # plot bars for data only or if input 'fitbar=TRUE'
-          if(datonly | fitbar) bars <- TRUE else bars <- FALSE
-
-          # aggregating identifiers for plot titles and filenames
-          title_sexmkt <- paste(titlesex,titlemkt,sep="")
-          filename_fltsexmkt <- paste("flt",f,"sex",sex,"mkt",j,sep="")
-
-          ptitle <- paste(titledata,title_sexmkt, " aggregated across time by fleet",sep="") # total title
-          titles <- c(ptitle,titles) # compiling list of all plot titles
-
-          # group remaining calculations as a function
-          tempfun <- function(ipage,...){
-            Bins <- sort(unique(dbase$Bin))
-            nbins <- length(Bins)
-            sampsize <- EffN <- AggregatedObs <- AggregatedExp <- AggregatedExp2 <- matrix(0,nrow=nfleets,ncol=nbins)
-
-            df <- data.frame(N=dbase$N,
-                             effN=dbase$effN,
-                             obs=dbase$Obs*dbase$N,
-                             exp=dbase$Exp*dbase$N)
-            agg <- aggregate(x=df, by=list(bin=dbase$Bin,f=dbase$Fleet), FUN=sum)
-            agg <- agg[agg$f %in% fleets,]
-            agg$obs <- agg$obs/agg$N
-            agg$exp <- agg$exp/agg$N
-            namesvec <- fleetnames[agg$f]
-            if(!(kind %in% c("GSTAGE","L@A","W@A"))){
-              make_multifig(ptsx=agg$bin,ptsy=agg$obs,yr=agg$f,
-                            linesx=agg$bin,linesy=agg$exp,
-                            sampsize=agg$N,effN=agg$effN,
-                            showsampsize=showsampsize,showeffN=showeffN,
-                            bars=bars,linepos=(1-datonly)*linepos,
-                            nlegends=3,
-                            legtext=list(namesvec,"sampsize","effN"),
-                            main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=labels[6],
-                            maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
-                            fixdims=F,ipage=ipage,lwd=2,...)
+          if(nrow(dbase)>0){
+            ## assemble pieces of plot title
+            # sex
+            if(k==1) titlesex <- "sexes combined, "
+            if(k==2) titlesex <- "female, "
+            if(k==3) titlesex <- "male, "
+            titlesex <- ifelse(printsex,titlesex,"")
+  
+            # market category
+            if(j==0) titlemkt <- "whole catch, "
+            if(j==1) titlemkt <- "discard, "
+            if(j==2) titlemkt <- "retained, "
+            titlemkt <- ifelse(printmkt,titlemkt,"")
+  
+            # plot bars for data only or if input 'fitbar=TRUE'
+            if(datonly | fitbar) bars <- TRUE else bars <- FALSE
+  
+            # aggregating identifiers for plot titles and filenames
+            title_sexmkt <- paste(titlesex,titlemkt,sep="")
+            filename_fltsexmkt <- paste("flt",f,"sex",sex,"mkt",j,sep="")
+  
+            ptitle <- paste(titledata,title_sexmkt, "aggregated across time by fleet",sep="") # total title
+            titles <- c(ptitle,titles) # compiling list of all plot titles
+  
+            # group remaining calculations as a function
+            tempfun <- function(ipage,...){
+              Bins <- sort(unique(dbase$Bin))
+              nbins <- length(Bins)
+              df <- data.frame(N=dbase$N,
+                               effN=dbase$effN,
+                               obs=dbase$Obs*dbase$N,
+                               exp=dbase$Exp*dbase$N)
+              agg <- aggregate(x=df, by=list(bin=dbase$Bin,f=dbase$Fleet), FUN=sum)
+              agg <- agg[agg$f %in% fleets,]
+              agg$obs <- agg$obs/agg$N
+              agg$exp <- agg$exp/agg$N
+              # note: sample sizes will be different for each bin if tail compression is used
+              #       printed sample sizes in plot will be maximum, which may or may not
+              #       represent sum of sample sizes over all years/ages
+              for(f in unique(agg$f)){
+                infleet <- agg$f==f
+                agg$N[infleet] <- max(agg$N[infleet])
+                agg$effN[infleet] <- max(agg$effN[infleet])
+              }
+  
+              namesvec <- fleetnames[agg$f]
+              if(!(kind %in% c("GSTAGE","GSTLEN","L@A","W@A"))){
+                make_multifig(ptsx=agg$bin,ptsy=agg$obs,yr=agg$f,
+                              linesx=agg$bin,linesy=agg$exp,
+                              sampsize=agg$N,effN=agg$effN,
+                              showsampsize=showsampsize,showeffN=showeffN,
+                              bars=bars,linepos=(1-datonly)*linepos,
+                              nlegends=3,
+                              legtext=list(namesvec,"sampsize","effN"),
+                              main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=labels[6],
+                              maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
+                              fixdims=F,ipage=ipage,lwd=2,...)
+              }
+  
+         # haven't configured this aggregated plot for other types
+              ## if(kind=="GSTAGE"){
+              ##   make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
+              ##                 sampsize=dbase$N,effN=dbase$effN,showsampsize=FALSE,showeffN=FALSE,
+              ##                 bars=bars,linepos=(1-datonly)*linepos,
+              ##                 nlegends=3,legtext=list(dbase$YrSeasName,"sampsize","effN"),
+              ##                 main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=labels[6],
+              ##                 maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
+              ##                 fixdims=fixdims,ipage=ipage,...)
+              ## }
+              ## if(kind %in% c("L@A","W@A")){
+              ##   make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
+              ##                 sampsize=dbase$N,effN=0,showsampsize=FALSE,showeffN=FALSE,
+              ##                 nlegends=1,legtext=list(dbase$YrSeasName),
+              ##                 bars=bars,linepos=(1-datonly)*linepos,
+              ##                 main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=ifelse(kind=="W@A",labels[9],labels[1]),
+              ##                 maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
+              ##                 fixdims=fixdims,ipage=ipage,...)
+              ## }
+  
             }
-
-       # haven't configured this aggregated plot for other types
-            ## if(kind=="GSTAGE"){
-            ##   make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
-            ##                 sampsize=dbase$N,effN=dbase$effN,showsampsize=FALSE,showeffN=FALSE,
-            ##                 bars=bars,linepos=(1-datonly)*linepos,
-            ##                 nlegends=3,legtext=list(dbase$YrSeasName,"sampsize","effN"),
-            ##                 main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=labels[6],
-            ##                 maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
-            ##                 fixdims=fixdims,ipage=ipage,...)
-            ## }
-            ## if(kind %in% c("L@A","W@A")){
-            ##   make_multifig(ptsx=dbase$Bin,ptsy=dbase$Obs,yr=dbase$Yr,linesx=dbase$Bin,linesy=dbase$Exp,
-            ##                 sampsize=dbase$N,effN=0,showsampsize=FALSE,showeffN=FALSE,
-            ##                 nlegends=1,legtext=list(dbase$YrSeasName),
-            ##                 bars=bars,linepos=(1-datonly)*linepos,
-            ##                 main=ptitle,cex.main=cex.main,xlab=kindlab,ylab=ifelse(kind=="W@A",labels[9],labels[1]),
-            ##                 maxrows=maxrows,maxcols=maxcols,rows=rows,cols=cols,
-            ##                 fixdims=fixdims,ipage=ipage,...)
-            ## }
-
-          }
-          if(plot) tempfun(ipage=0,...) 
-          if(print){ # set up plotting to png file if required
-            npages <- ceiling(length(unique(dbase$Yr))/maxrows/maxcols)
-            for(ipage in 1:npages)
-            {
-              if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
-              filename <- paste(plotdir,filenamestart,filename_fltsexmkt,pagetext,".png",sep="")
-              pngfun(file=filename)
-              tempfun(ipage=ipage,...)
-              dev.off()
-            }
-          }
+            if(plot) tempfun(ipage=0,...) 
+            if(print){ # set up plotting to png file if required
+              npages <- ceiling(length(unique(dbase$Yr))/maxrows/maxcols)
+              for(ipage in 1:npages)
+              {
+                if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
+                filename <- paste(plotdir,filenamestart,filename_fltsexmkt,pagetext,".png",sep="")
+                pngfun(file=filename)
+                tempfun(ipage=ipage,...)
+                dev.off()
+              }
+            } # end print function
+          } # end test for presence of observations in this partition
         } # end loop over partitions
       } # end loop over combined/not-combined genders
     } # end if data

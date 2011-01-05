@@ -5,15 +5,20 @@
   Make a vector of colors.
 }
 \description{
-  A subset of rich.colors by Arni Magnusson from the gregmisc package.
+  A subset of rich.colors by Arni Magnusson from the gplots package,
+  with the addition of alpha transparency.
 }
 \usage{
-rich.colors.short(n)
+rich.colors.short(n, alpha = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{n}{
     Number of colors to generate.
+  }
+  \item{alpha}{
+    Alpha transparency value for all colors in vector. Value is passed
+    to rgb function.
   }
 }
 \details{

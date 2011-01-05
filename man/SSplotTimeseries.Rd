@@ -10,19 +10,20 @@ Synthesis report file. Some values have optional uncertainty intervals.
 }
 \usage{
 SSplotTimeseries(replist, subplot, add = FALSE, areas = "all",
-areacols = 1:10, areanames = "default", forecastplot = TRUE, uncertainty
-= TRUE, bioscale = "default", plot = TRUE, print = FALSE, plotdir =
-"default", verbose = FALSE, btarg=0.4, minbthresh=0.25, xlab = "Year",
-labels=c("Total biomass (mt)",
-"Total biomass at beginning of season 1 (mt)",
+areacols = "default", areanames = "default", forecastplot = TRUE,
+uncertainty = TRUE, bioscale = "default", minyr=NULL, maxyr=NULL,
+plot = TRUE, print = FALSE, plotdir = "default", verbose = TRUE,
+btarg=0.4, minbthresh=0.25, xlab = "Year",
+labels = c("Total biomass (mt)",
+"Total biomass (mt) at beginning of season",
 "Summary biomass (mt)",
-"Summary biomass at beginning of season 1 (mt)",
+"Summary biomass (mt) at beginning of season",
 "Spawning biomass (mt)",
 "Spawning depletion",
 "Spawning output (eggs)",
 "Age-0 recruits (1,000s)"),
-pwidth = 7, pheight = 7, punits =
-"in", res = 300, ptsize = 12, cex.main = 1)
+pwidth = 7, pheight = 7, punits = "in", res = 300, ptsize = 12,
+cex.main = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,7 +40,7 @@ pwidth = 7, pheight = 7, punits =
     optional subset of areas to plot for spatial models
   }
   \item{areacols}{
-    vector of colors by area
+    vector of colors by area. Default uses rich.colors by Arni Magnusson
   }
   \item{areanames}{
     names for areas. Default is to use Area1, Area2,...
@@ -53,6 +54,12 @@ pwidth = 7, pheight = 7, punits =
   \item{bioscale}{
     scaling for spawning biomass by default it will be set to 0.5 for
     single-sex models, and 1.0 for all others
+  }
+  \item{minyr}{
+    optional input for minimum year to show in plots
+  }
+  \item{maxyr}{
+    optional input for maximum year to show in plots
   }
   \item{plot}{
     plot to active plot device?
