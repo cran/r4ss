@@ -1,10 +1,12 @@
 SSsummarize <- function(biglist,
                         keyvec=NULL,
                         numvec=NULL,
-                        selfactor=c("Lsel"),
+                        selfactor="Lsel",
                         selfleet=NULL,
                         selyr="min",
-                        selgender=1){
+                        selgender=1,
+                        lowerCI=0.025,
+                        upperCI=0.975){
 
   # a bunch of 'key' related stuff is more for Ian T's simulation work
   # the goal is to be able to extract a subset of the models in biglist in
@@ -64,6 +66,7 @@ SSsummarize <- function(biglist,
   quants <- quantsSD <- as.data.frame(matrix(NA,nrow=length(dernames),ncol=n))
   growth     <- NULL
   maxgrad    <- NULL
+  nsexes     <- NULL
   likelihoods <- likelambdas <- as.data.frame(matrix(NA,nrow=length(likenames),ncol=n))
   indices <- NULL
   
@@ -71,7 +74,8 @@ SSsummarize <- function(biglist,
   sim        <- NULL
   keyvec2    <- NULL
   listnames  <- NULL
-
+  npars      <- NULL
+  
   warn <- FALSE # flag for whether filter warning has been printed or not
 
   # loop over models within biglist
@@ -87,6 +91,9 @@ SSsummarize <- function(biglist,
 
     # gradient
     maxgrad <- c(maxgrad, stats$maximum_gradient_component)
+
+    # nsexes
+    nsexes <- c(nsexes, stats$nsexes)
 
     # selex
     if(FALSE){
@@ -151,6 +158,8 @@ SSsummarize <- function(biglist,
     indextemp$Model <- keyvec2[imodel]
     indextemp$imodel <- imodel
     indices <- rbind(indices, indextemp)
+
+    npars <- c(npars, stats$N_estimated_parameters)
   } # end loop over models
 
   if(!setequal(keyvec,keyvec2)){
@@ -174,11 +183,12 @@ SSsummarize <- function(biglist,
     pars$Yr[ipar] <- ifelse(is.null(yr), NA, as.numeric(yr))
   }
 
-  quants$Yr <- NA
+  quants$Yr <- quantsSD$Yr <- NA
   for(iquant in 1:nrow(quants)){
     substrings <- strsplit(as.character(quants$Label[iquant]),"_")[[1]]
     yr <- substrings[substrings %in% allyears][1]
     quants$Yr[iquant] <- ifelse(is.null(yr), NA, as.numeric(yr))
+    quantsSD$Yr[iquant] <- ifelse(is.null(yr), NA, as.numeric(yr))
   }
 
 
@@ -210,18 +220,45 @@ SSsummarize <- function(biglist,
       }
     }
   }
+  
+  SpawnBioLower <- SpawnBioUpper <- SpawnBioSD
+  SpawnBioLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(SpawnBio[,1:n]),
+                               sd=as.matrix(SpawnBioSD[,1:n]))
+  SpawnBioUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(SpawnBio[,1:n]),
+                               sd=as.matrix(SpawnBioSD[,1:n]))
 
   # identify biomass ratio parameters
   Bratio <- quants[grep("^Bratio_",quants$Label),]
   BratioSD <- quantsSD[grep("^Bratio_",quantsSD$Label),]
 
-  # identify recruitment parameters
+  BratioLower <- BratioUpper <- BratioSD
+  BratioLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(Bratio[,1:n]),
+                             sd=as.matrix(BratioSD[,1:n]))
+  BratioUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(Bratio[,1:n]),
+                             sd=as.matrix(BratioSD[,1:n]))
+
+  # identify biomass ratio parameters
+  SPRratio <- quants[grep("^SPRratio_",quants$Label),]
+  SPRratioSD <- quantsSD[grep("^SPRratio_",quantsSD$Label),]
+
+  SPRratioLower <- SPRratioUpper <- SPRratioSD
+  SPRratioLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(SPRratio[,1:n]),
+                             sd=as.matrix(SPRratioSD[,1:n]))
+  SPRratioUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(SPRratio[,1:n]),
+                             sd=as.matrix(SPRratioSD[,1:n]))
+  
+  # identify recruitment parameters and their uncertainty
   recruits <- quants[grep("^Recr_",quants$Label), ]
   recruits <- recruits[-grep("Recr_Unfished",recruits$Label),]
+  recruitsSD <- quantsSD[grep("^Recr_",quantsSD$Label), ]
+  recruitsSD <- recruitsSD[-grep("Recr_Unfished",recruitsSD$Label),]
   minyr <- min(recruits$Yr,na.rm=TRUE)
   recruits$Yr[grep("Recr_Virgin",recruits$Label)] <- minyr - 2
   recruits$Yr[grep("Recr_Initial",recruits$Label)] <- minyr - 1
+  recruitsSD$Yr[grep("Recr_Virgin",recruitsSD$Label)] <- minyr - 2
+  recruitsSD$Yr[grep("Recr_Initial",recruitsSD$Label)] <- minyr - 1
   recruits <- recruits[order(recruits$Yr),]
+  recruitsSD <- recruitsSD[order(recruitsSD$Yr),]
 
   if(any(is.na(recruits[3,]))){
     cat("Models have different start years, so recruits values in VIRG & INIT yrs are shifted to correct year\n")
@@ -232,9 +269,18 @@ SSsummarize <- function(biglist,
         recruits[recruits$Yr==minyr-2, imodel] <- recruits[1,imodel]
         recruits[recruits$Yr==minyr-1, imodel] <- recruits[2,imodel]
         recruits[1:2,imodel] <- NA
+        recruitsSD[recruitsSD$Yr==minyr-2, imodel] <- recruitsSD[1,imodel]
+        recruitsSD[recruitsSD$Yr==minyr-1, imodel] <- recruitsSD[2,imodel]
+        recruitsSD[1:2,imodel] <- NA
       }
     }
   }
+  recruitsLower <- recruitsUpper <- recruitsSD
+  recruitsLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(recruits[,1:n]),
+                               sd=as.matrix(recruitsSD[,1:n]))
+  recruitsUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(recruits[,1:n]),
+                               sd=as.matrix(recruitsSD[,1:n]))
+
 
   # identify parameters that are recruitment deviations
   pars$recdev <- FALSE
@@ -265,38 +311,59 @@ SSsummarize <- function(biglist,
     InitAgeYrs <- NA
   }
   recdevs <- pars[pars$recdev,]
-  recdevs <- recdevs[order(recdevs$Yr),1:(n+2)]
-
-
-
+  recdevsSD <- parsSD[pars$recdev,]
+  myorder <- order(recdevs$Yr) # save order for use in both values and SDs
+  recdevs <- recdevs[myorder,1:(n+2)]
+  recdevsSD <- recdevsSD[myorder,1:(n+1)]
+  recdevsSD$Yr <- recdevs$Yr
+  recdevsLower <- recdevsUpper <- recdevsSD
+  recdevsLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(recdevs[,1:n]),
+                              sd=as.matrix(recdevsSD[,1:n]))
+  recdevsUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(recdevs[,1:n]),
+                              sd=as.matrix(recdevsSD[,1:n]))
 
   
   mylist <- list()
-  mylist$n           <- n
-  mylist$listnames   <- names(biglist)
-  mylist$keyvec      <- keyvec
-  mylist$maxgrad     <- maxgrad
-  #mylist             <- c(mylist,selexlist)
-  mylist$pars        <- pars
-  mylist$parsSD      <- parsSD
-  mylist$parphases   <- parphases
-  mylist$quants      <- quants
-  mylist$quantsSD    <- quantsSD
-  mylist$likelihoods <- likelihoods
-  mylist$likelambdas <- likelambdas
-  mylist$SpawnBio    <- SpawnBio
-  mylist$SpawnBioSD  <- SpawnBioSD
-  mylist$Bratio      <- Bratio
-  mylist$BratioSD    <- BratioSD
-  mylist$recruits    <- recruits
-  mylist$recdevs     <- recdevs
-  mylist$growth      <- growth
-  mylist$indices     <- indices
-  mylist$InitAgeYrs  <- InitAgeYrs
-
+  mylist$n              <- n
+  mylist$npars          <- npars
+  mylist$listnames      <- names(biglist)
+  mylist$keyvec         <- keyvec
+  mylist$maxgrad        <- maxgrad
+  mylist$nsexes         <- nsexes
+  #mylist                <- c(mylist,selexlist)
+  mylist$pars           <- pars
+  mylist$parsSD         <- parsSD
+  mylist$parphases      <- parphases
+  mylist$quants         <- quants
+  mylist$quantsSD       <- quantsSD
+  mylist$likelihoods    <- likelihoods
+  mylist$likelambdas    <- likelambdas
+  mylist$SpawnBio       <- SpawnBio
+  mylist$SpawnBioSD     <- SpawnBioSD
+  mylist$SpawnBioLower  <- SpawnBioLower
+  mylist$SpawnBioUpper  <- SpawnBioUpper
+  mylist$Bratio         <- Bratio
+  mylist$BratioSD       <- BratioSD
+  mylist$BratioLower    <- BratioLower
+  mylist$BratioUpper    <- BratioUpper
+  mylist$SPRratio       <- SPRratio
+  mylist$SPRratioSD     <- SPRratioSD
+  mylist$SPRratioLower  <- SPRratioLower
+  mylist$SPRratioUpper  <- SPRratioUpper
+  mylist$recruits       <- recruits
+  mylist$recruitsSD     <- recruitsSD
+  mylist$recruitsLower  <- recruitsLower
+  mylist$recruitsUpper  <- recruitsUpper
+  mylist$recdevs        <- recdevs
+  mylist$recdevsSD      <- recdevsSD
+  mylist$recdevsLower   <- recdevsLower
+  mylist$recdevsUpper   <- recdevsUpper
+  mylist$growth         <- growth
+  mylist$indices        <- indices
+  mylist$InitAgeYrs     <- InitAgeYrs
+  mylist$lowerCI        <- lowerCI
+  mylist$upperCI        <- upperCI
   #mylist$lbinspop   <- as.numeric(names(stats$sizeselex)[-(1:5)])
   
   return(mylist)
 } # end function
-
-

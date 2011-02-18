@@ -1,5 +1,5 @@
 SSplotCatch <-
-  function(replist,subplots=1:9,add=FALSE,areas=1,
+  function(replist,subplots=1:15,add=FALSE,areas=1,
            plot=TRUE,print=FALSE,
            type="l",
            fleetlty=1, fleetpch=1,
@@ -149,6 +149,7 @@ SSplotCatch <-
     subset <- ts$Seas[goodrows]==1
     retmat2         <- retmat[subset,]
     totcatchmat2    <- totcatchmat[subset,]
+    totcatchmat2Yr  <- ts$Yr[subset]
     totobscatchmat2 <- totobscatchmat[subset,]
     discmat2        <- discmat[subset,]
     for(iseason in 2:nseasons){
@@ -228,22 +229,22 @@ SSplotCatch <-
     if(subplot==9) a <- linefunc(ymat=Hratemat, ylab=ylabF, addtotal=FALSE)
     if(nseasons>1){
       if(subplot==10) a <- linefunc(ymat=retmat2, ylab=paste(labels[3],labels[10]), addtotal=TRUE, x=catchyrs2)
-      if(subplot==11 & nfishfleets>1) a <- stackfunc(ymat=retmat2, ylab=labels[3], x=catchyrs2)
+      if(subplot==11 & nfishfleets>1) a <- stackfunc(ymat=retmat2, ylab=paste(labels[3],labels[10]), x=catchyrs2)
       if(max(discmat)>0){
-        if(subplot==12) a <- linefunc(ymat=totcatchmat2, ylab=labels[4], addtotal=TRUE, x=catchyrs2)
-        if(subplot==13 & nfishfleets>1) a <- stackfunc(ymat=totcatchmat2, ylab=labels[4], x=catchyrs2)
-        if(subplot==14) a <- linefunc(ymat=discmat2,ylab=labels[5], addtotal=TRUE, x=catchyrs2)
-        if(subplot==15 & nfishfleets>1) a <- stackfunc(ymat=discmat2,ylab=labels[5], x=catchyrs2)
+        if(subplot==12) a <- linefunc(ymat=totcatchmat2, ylab=paste(labels[4],labels[10]), addtotal=TRUE, x=catchyrs2)
+        if(subplot==13 & nfishfleets>1) a <- stackfunc(ymat=totcatchmat2, ylab=paste(labels[4],labels[10]), x=catchyrs2)
+        if(subplot==14) a <- linefunc(ymat=discmat2,ylab=paste(labels[5],labels[10]), addtotal=TRUE, x=catchyrs2)
+        if(subplot==15 & nfishfleets>1) a <- stackfunc(ymat=discmat2,ylab=paste(labels[5],labels[10]), x=catchyrs2)
       }
     }
     if(verbose & a) cat("  finished catch subplot",subplot_names[subplot],"\n")
     return(a)
   } # end makeplots
 
-  if(plot) for(isubplot in 1:15) makeplots(isubplot)
+  if(plot) for(isubplot in subplots) makeplots(isubplot)
 
   if(print){
-    for(isubplot in 1:15){
+    for(isubplot in subplots){
       a <- FALSE
       myname <- subplot_names[isubplot]
       badstrings <- c(":","  ","__")
@@ -257,5 +258,18 @@ SSplotCatch <-
       if(!a) file.remove(filename)
     }
   }
+
+  totcatchmat <- as.data.frame(totcatchmat)
+  names(totcatchmat) <- fleetnames[1:nfishfleets]
+  totcatchmat$Yr <- catchyrs
+  returnlist <- list()
+  returnlist[["totcatchmat"]] <- totcatchmat
+  if(nseasons > 1){
+    totcatchmat2 <- as.data.frame(totcatchmat2)
+    names(totcatchmat2) <- fleetnames[1:nfishfleets]
+    #totcatchmat2$Yr <- totcatchmat2Yr
+    returnlist[["totcatchmat2"]] <- totcatchmat2
+  }
+  return(invisible(returnlist))
   # if(verbose) cat("  finished catch plots\n")
 }

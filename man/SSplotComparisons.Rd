@@ -10,34 +10,46 @@ plot model comparisons
   \code{SSsummarize} function.
 }
 \usage{
-SSplotComparisons(summaryoutput,subplots=1:10,
-           plot=TRUE,print=FALSE,
-           models="all",
-           endyrvec=NULL,
-           indexfleets="default",
-           indexUncertainty=FALSE,
-           indexSEvec="default",
-           labels=c("Year",             #1
-             "Spawning biomass (mt)",   #2
-             "Spawning depletion",      #3
-             "Age-0 recruits (1,000s)", #4
-             "Recruitment deviations",  #5
-             "Index",                   #6
-             "Log index",               #7
-             "Density"),                #8
-           col="default", shadecol="default",
-           pch="default", lty=1, lwd=2,
-           xlim="default", xaxs="r", yaxs="r",
-           type="o", uncertainty=TRUE, shadealpha=0.1,
-           legend=TRUE, legendlabels="default", legendloc="topright",
-           btarg=0.4, minbthresh=0.25,
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
-           plotdir="workingdirectory",
-           densitynames=c("SPB_Virgin","SPB_2011","Bratio_2011","SR_R0","TotYield_MSY"),
-           densityxlabs=c("B0","Spawning Biomass in 2011","depletion in 2011","log(R0)","MSY"),
-           densityscale=1,
-           new=TRUE,
-           verbose=TRUE)
+SSplotComparisons(summaryoutput,subplots=1:13,
+  plot=TRUE,print=FALSE,
+  models="all",
+  endyrvec=NULL,
+  indexfleets="default",
+  indexUncertainty=FALSE,
+  indexSEvec="default",
+  indexPlotEach=FALSE,         
+  labels=c("Year",             #1
+    "Spawning biomass (mt)",   #2
+    "Spawning depletion",      #3
+    "Age-0 recruits (1,000s)", #4
+    "Recruitment deviations",  #5
+    "Index",                   #6
+    "Log index",               #7
+    "Density"),                #8
+  col="default", shadecol="default",
+  pch="default", lty=1, lwd=2,
+  xlim="default", xaxs="r", yaxs="r",
+  type="o", uncertainty=TRUE, shadealpha=0.1,
+  legend=TRUE, legendlabels="default", legendloc="topright",
+  btarg=0.4, minbthresh=0.25,
+  pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
+  plotdir=NULL,
+  densitynames=c("SPB_Virgin",
+                 "SPB_2011",
+                 "Bratio_2011",
+                 "SR_R0",
+                 "TotYield_MSY"),
+  densityxlabs=c("B0 (mt)",
+                 "Spawning Biomass in 2011 (mt)",
+                 "depletion in 2011",
+                 "log(R0)",
+                 "MSY (mt)"),
+  densityscalex=1,
+  densityscaley=1,
+  fix0=TRUE,
+  new=TRUE,
+  verbose=TRUE,
+  mcmcVec="default")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -76,6 +88,10 @@ SSplotComparisons(summaryoutput,subplots=1:10,
     deal with the issue of differing uncertainty by models described
     above.
   } 
+  \item{indexPlotEach}{
+    TRUE plots the observed index for each model with colors,
+    or FALSE just plots observed once in black dots.
+  }
   \item{labels}{
     vector of labels for plots (titles and axis labels)
   }
@@ -121,7 +137,8 @@ SSplotComparisons(summaryoutput,subplots=1:10,
     add a legend?
   }
   \item{legendlabels}{
-    optional vector of labels to include in legend. Default is 'model1','model2',etc.
+    optional vector of labels to include in legend. Default is
+    'model1','model2',etc.
   }
   \item{legendloc}{
     location of legend. See ?legend for more info.
@@ -130,7 +147,8 @@ SSplotComparisons(summaryoutput,subplots=1:10,
     target biomass value at which to show a line (set to 0 to remove)
   }
   \item{minbthresh}{
-    minimum biomass threshhold at which to show a line (set to 0 to remove)
+    minimum biomass threshhold at which to show a line (set to 0 to
+    remove)
   }
   \item{pwidth}{
     width of plot written to PNG file
@@ -163,16 +181,28 @@ SSplotComparisons(summaryoutput,subplots=1:10,
     vector of x-axis labels to use in the density plots (must be equal
     in length to \code{densitynames})
   }
-  \item{densityscale}{
-    scalar for upper y-limit in density plots (values below 1 will cut
-    of top of highest peaks to provide better contrast among broader
+  \item{densityscalex}{
+    scalar for upper x-limit in density plots (values below 1 will cut
+    off the right tail to provide better contrast among narrower
     distributions
   }
+  \item{densityscaley}{
+    scalar for upper y-limit in density plots (values below 1 will cut
+    off top of highest peaks to provide better contrast among broader
+    distributions
+  }
+  \item{fix0}{
+    always include 0 in the density plots?
+  }
   \item{new}{
-    create new empty plot window (Windows only)
+    create new empty plot window
   }
   \item{verbose}{
     report progress to R GUI?
+  }
+  \item{mcmcVec}{
+    vector of TRUE/FALSE values (or single value) indicating whether
+    input values are from MCMC or to use normal distribution around MLE
   }
   
 }
