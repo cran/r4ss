@@ -32,7 +32,10 @@ SSplotNumbers <-
 {
   # plot various things related to numbers-at-age for Stock Synthesis
 
-  pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+  pngfun <- function(file){
+    cat('writing to',file,'\n')
+    png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+  }
 
   natage    <- replist$natage
   natlen    <- replist$natlen
@@ -45,6 +48,7 @@ SSplotNumbers <-
     nsexes          <- replist$nsexes
     nareas          <- replist$nareas
     nseasons        <- replist$nseasons
+    spawnseas       <- replist$spawnseas
     ngpatterns      <- replist$ngpatterns
     morphlist       <- replist$morphlist
     morph_indexing  <- replist$morph_indexing
@@ -95,6 +99,7 @@ SSplotNumbers <-
                                    natage$Gender==m &
                                    natage$Seas==1 &
                                    natage$Era!="VIRG" &
+                                   !is.na(natage$"0") &
                                    natage$Yr < (endyr+2) &
                                    natage$BirthSeas==min(bseas),]
                                    # natage$Bio_Pattern==1,] # formerly filtered
@@ -152,8 +157,12 @@ SSplotNumbers <-
           if(iperiod==1) natageyrsB <- natageyrs # unique name for beginning of year
 
           meanage <- 0*natageyrs
+
           for(i in 1:length(natageyrs)){ # averaging over values within a year (depending on birth season)
-            meanage[i] <- sum(natagetemp2$meanage[natagetemp0$Yr==natageyrs[i]]*natagetemp2$sum[natagetemp0$Yr==natageyrs[i]])/sum(natagetemp2$sum[natagetemp0$Yr==natageyrs[i]])}
+            meanage[i] <- sum(natagetemp2$meanage[natagetemp0$Yr==natageyrs[i]]*
+                              natagetemp2$sum[natagetemp0$Yr==natageyrs[i]])/
+                                sum(natagetemp2$sum[natagetemp0$Yr==natageyrs[i]])
+          }
 
           if(m==1 & nsexes==2) meanagef <- meanage # save value for females in 2 sex models
 
@@ -170,7 +179,7 @@ SSplotNumbers <-
           }
           tempfun2 <- function(){
             # mean length for males and femails
-            ylim <- c(0, max(meanage, meanagef))
+            ylim <- c(0, max(meanage, meanagef, na.rm=TRUE))
             plot(natageyrs,meanage,col="blue",lty=1,pch=4,xlab=labels[1],ylim=ylim,type="o",ylab=ylab,main=plottitle2,cex.main=cex.main)
             points(natageyrs,meanagef,col="red",lty=2,pch=1,type="o")
             legend("bottomleft",bty="n", c("Females","Males"), lty=c(2,1), pch=c(1,4), col = c("red","blue"))
@@ -351,8 +360,8 @@ SSplotNumbers <-
       equilage <- equilage[as.vector(apply(equilage[,remove],1,sum))>0,]
 
       plot(0,type='n',xlim=c(0,accuage),
-           ylim=c(0,1.05*max(equilage[equilage$BirthSeas==min(equilage$BirthSeas)
-             & equilage$Seas==1,remove])),
+           ylim=c(0,1.05*max(equilage[equilage$BirthSeas==spawnseas
+             & equilage$Seas==spawnseas,remove])),
            xaxs='i',yaxs='i',xlab='Age',ylab=labels[9],main=labels[10],cex.main=cex.main)
 
       # now fill in legend
@@ -363,11 +372,11 @@ SSplotNumbers <-
       for(iarea in areas){
         for(m in 1:nsexes){
           equilagetemp <- equilage[equilage$Area==iarea & equilage$Gender==m
-                                   & equilage$BirthSeas==min(equilage$BirthSeas)
-                                   & equilage$Seas==1,]
+                                   & equilage$BirthSeas==spawnseas
+                                   & equilage$Seas==spawnseas,]
           if(nrow(equilagetemp)>1){
             cat("in plot of equilibrium age composition by gender and area\n",
-                "multiple morphs or seasons not supported, using first row from choices below\n")
+                "multiple morphs are not supported, using first row from choices below\n")
             print(equilagetemp[,1:10])
           }
           equilagetemp <- equilagetemp[1,remove]

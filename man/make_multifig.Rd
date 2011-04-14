@@ -15,12 +15,12 @@ sampsizeround = 1, maxrows = 6, maxcols = 6, rows = 1, cols = 1,
 fixdims = TRUE, main = "", cex.main = 1, xlab = "", ylab = "",
 size = 1, maxsize = 3, do.sqrt = TRUE, minnbubble = 8, allopen = TRUE,
 horiz_lab = "default", xbuffer = c(0.1, 0.1), ybuffer = c(0, 0.15),
-ymin0 = TRUE, axis1 = "default", axis2 = "default", linepos = 1, bars = FALSE,
-barwidth = "default", ptscex = 1, ptscol = 1, ptscol2 = 1, linescol = 2,
-lty = 1, lwd = 1, pch = 1, nlegends = 3,
+ymin0 = TRUE, axis1 = "default", axis2 = "default", linepos = 1,
+type = "o", bars = FALSE, barwidth = "default", ptscex = 1, ptscol = 1,
+ptscol2 = 1, linescol = 2, lty = 1, lwd = 1, pch = 1, nlegends = 3,
 legtext = list("yr","sampsize", "effN"), legx = "default",
 legy = "default", legadjx = "default", legadjy = "default",
-legsize = c(1.2, 1), legfont = c(2, 1), ipage = 0) 
+legsize = c(1.2, 1), legfont = c(2, 1), ipage = 0, scalebins = FALSE) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -126,6 +126,11 @@ legsize = c(1.2, 1), legfont = c(2, 1), ipage = 0)
   \item{linepos}{
     should lines be added on top of points (linepos=1) or behind (linepos=2)?
   }
+  \item{type}{
+    type of line/points used for observed values (see 'type' in ?plot
+    for details) on top of a grey polygon. Default is "o" for
+    overplotting points on lines.
+  }
   \item{bars}{
     should the ptsx/ptsy values be bars instead of points (TRUE/FALSE)
   }
@@ -183,7 +188,13 @@ legsize = c(1.2, 1), legfont = c(2, 1), ipage = 0)
     font type for legends, same as "font" under ?par
   }
   \item{ipage}{
-    which page of plots when covering more than will fit within maxrows by maxcols.
+    which page of plots when covering more than will fit within maxrows
+    by maxcols.
+  }
+  \item{scalebins}{
+    Rescale expected and observed proportions by dividing by bin width
+    for models where bins have different widths? Caution!: May not work
+    correctly in all cases.
   }
 }
 \details{

@@ -7,13 +7,29 @@ SSplotSelex <-
                     "Age (yr)",    #2
                     "Year",        #3
                     "Selectivity", #4
-                    "Retention"),  #5
+                    "Retention",   #5
+                    "Discard mortality"),  #6
            col1="red",col2="blue",
            pwidth = 7, pheight = 7, punits = "in",
            res = 300, ptsize = 12,
            cex.main=1, plotdir = "default",
            verbose = TRUE)
 {
+  # subplots:
+  # 1. selectivity at length time-varying surface
+  # 2. selectivity at length time-varying contour
+  # 3. retention at length time-varying surface
+  # 4. retention at length time-varying surface
+  # 3. discard mortality time-varying surface # needs new subplot number
+  # 4. discard mortality time-varying contour # needs new subplot number
+  # 5. selectivity, retention, and discard mortality at length in ending year
+  # 6. selectivity at age time-varying surface
+  # 7. selectivity at age time-varying contour
+  # 8. selectivity at age in ending year
+  # 9. selectivity at age in ending year (redundant with subplot 8?)
+  # 10. selecitivity at age and length contour with overlaid growth curve
+  # 11. selectivity with uncertainty if requested at end of control file
+  
   nsexes         <- replist$nsexes
   nseasons       <- replist$nseasons
   nfleets        <- replist$nfleets
@@ -22,6 +38,7 @@ SSplotSelex <-
   sizeselex      <- replist$sizeselex
   ageselex       <- replist$ageselex
   accuage        <- replist$accuage
+  startyr        <- replist$startyr
   endyr          <- replist$endyr
   FleetNames     <- replist$FleetNames
   growdat        <- replist$endgrowth
@@ -60,16 +77,17 @@ SSplotSelex <-
       if(m==1 & nsexes==1) sextitle2 <- "Ending"
       if(m==1 & nsexes==2) sextitle2 <- "Female ending"
       if(m==2) sextitle2 <- "Male ending"
-      intret <- sizeselex[sizeselex$Factor=="Ret" & sizeselex$gender==m,]
-      intmort <- sizeselex[sizeselex$Factor=="Mort" & sizeselex$gender==m,]
-      intkeep <- sizeselex[sizeselex$Factor=="Keep" & sizeselex$gender==m,]
-      intdead <- sizeselex[sizeselex$Factor=="Dead" & sizeselex$gender==m,]
+      intret   <- sizeselex[sizeselex$Factor=="Ret" & sizeselex$gender==m,]
+      intmort  <- sizeselex[sizeselex$Factor=="Mort" & sizeselex$gender==m,]
+      intkeep  <- sizeselex[sizeselex$Factor=="Keep" & sizeselex$gender==m,]
+      intdead  <- sizeselex[sizeselex$Factor=="Dead" & sizeselex$gender==m,]
       intselex <- sizeselex[sizeselex$Factor=="Lsel" & sizeselex$gender==m,]
       plotselex <- intselex[intselex$Fleet==i,]
       plotret <- intret[intret$Fleet==i,]
+      plotmort <- intmort[intmort$Fleet==i,]
 
       # test for time-varying length selectivity
-      time <- any(apply(plotselex[-nrow(plotselex),-(1:5)], 2, function(x){any(x!=x[1])}))      
+      time <- any(apply(plotselex[-c(1,nrow(plotselex)),-(1:5)], 2, function(x){any(x!=x[1])}))      
       if(time)
       {
         x <- lbinspop
@@ -126,6 +144,41 @@ SSplotSelex <-
           }
         }
       }
+      # test for time-varying discard mortality rates
+      time3 <- any(apply(plotmort[-nrow(plotmort),-(1:5)],2,function(x){any(x!=x[1])}))
+      if(time3)
+      {
+        x <- lbinspop
+        y <- intmort$year[intmort$Fleet==i]
+        z <- intmort[intmort$Fleet==i,-(1:5)]
+        z <- matrix(as.numeric(as.matrix(z)),ncol=ncol(z))
+        z <- t(z)
+        main <- paste(sextitle1,"varying discard mortality for ", fleetnames[i],sep="")
+        if(plot)
+        {
+          if(3 %in% subplot)
+            persp(x,y,z,col="white",xlab=labels[1],ylab=labels[3],zlab=labels[6],
+                  expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",
+                  phi=35,theta=-10,zlim=c(0,max(z)))
+          if(4 %in% subplot)
+            contour(x,y,z,nlevels=5,xlab=labels[1],ylab=labels[3],main=main,
+                    cex.main=cex.main,col=ians_blues,lwd=2)
+        }
+        if(print)
+        {
+          if(3 %in% subplot){
+            pngfun(file=paste(plotdir,"sel3b_timevary_mort_surf_flt",i,"sex",m,".png",sep=""))
+            persp(x,y,z,col="white",xlab=labels[1],ylab=labels[3],zlab=labels[6],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
+            dev.off()
+          }
+          if(4 %in% subplot){
+            pngfun(file=paste(plotdir,"sel4b_timevary_mort_contour_flt",i,"sex",m,".png",sep=""))
+            contour(x,y,z,nlevels=5,xlab=labels[1],ylab=labels[3],main=main,cex.main=cex.main,col=ians_blues,lwd=2)
+            dev.off()
+          }
+        }
+      }
+      
       plotselex <- plotselex[plotselex$year==endyr,-(1:5)]
 
       plotret <- plotret[nrow(plotret),-(1:5)] # final year only
@@ -141,7 +194,9 @@ SSplotSelex <-
         retchecktemp <- as.vector(unlist(intret2[1,]))
         retcheck <- as.numeric(retchecktemp[6:length(retchecktemp)])
         if(is.na(sum(retcheck))) retcheckuse <- 0
-        if(!is.na(sum(retcheck))) retcheckuse <- max(retcheck)-min(retcheck)
+        # if minimum retention is less than 1, show additional stuff in plot
+        if(!is.na(sum(retcheck))) retcheckuse <- 1 - min(retcheck)
+        
         # make plot
         plot(bins,vals,xlab=labels[1],ylim=c(0,1),main=main,cex.main=cex.main,ylab="",type="n")
         abline(h=0,col="grey")
@@ -153,10 +208,15 @@ SSplotSelex <-
           usekeep <- intkeep[intkeep$Fleet==i,]
           usemort <- intmort[intmort$Fleet==i,]
           usedead <- intdead[intdead$Fleet==i,]
-          plotret <- useret[useret$year==max(as.numeric(useret$year)),]
-          plotkeep <- usekeep[usekeep$year==max(as.numeric(usekeep$year)),]
-          plotmort <- usemort[usemort$year==max(as.numeric(usemort$year)),]
-          plotdead <- usedead[usedead$year==max(as.numeric(usedead$year)),]
+          if(endyr %in% as.numeric(useret$year)){
+            useyr <- endyr
+          }else{
+            useyr <- max(as.numeric(useret$year))
+          }
+          plotret <- useret[useret$year==useyr,]
+          plotkeep <- usekeep[usekeep$year==useyr,]
+          plotmort <- usemort[usemort$year==useyr,]
+          plotdead <- usedead[usedead$year==useyr,]
           if(2%in%selexlines){
             lines((as.numeric(as.vector(names(plotret)[-(1:5)]))),(as.numeric(as.character(plotret[1,-(1:5)]))),col="red",type="o",pch=3,cex=.9)
             ylab <- paste(ylab,", Retention",sep="")
@@ -168,7 +228,7 @@ SSplotSelex <-
           if(4%in%selexlines) lines((as.numeric(as.vector(names(plotkeep)[-(1:5)]))),(as.numeric(as.character(plotkeep[1,-(1:5)]))),col="purple",type="o",pch=2,cex=.9)
           if(5%in%selexlines) lines((as.numeric(as.vector(names(plotdead)[-(1:5)]))),(as.numeric(as.character(plotdead[1,-(1:5)]))),col="green3",type="o",pch=5,cex=.9)
           legend("bottomright",inset=c(0.05,0.05),bty="n",
-      	   c(labels[4],labels[5],"Discard mortality","Keep = Sel*Ret","Dead = Sel*(Ret+(1-Ret)*Mort)")[selexlines],
+      	   c(labels[4],labels[5],labels[6],"Keep = Sel*Ret","Dead = Sel*(Ret+(1-Ret)*Mort)")[selexlines],
       	   lty=1,col=c("blue","red","orange","purple","green3")[selexlines],
       	   pch=c(1,3,4,2,5)[selexlines], pt.cex=c(1.1,.9,.9,.9,.9)[selexlines])
         }
@@ -204,7 +264,7 @@ SSplotSelex <-
       ageselexcols <- (1:ncol(ageselex))[names(ageselex) %in% as.character(0:accuage)]
       plotageselex <- ageselex[ageselex$factor=="Asel" & ageselex$fleet==i & ageselex$gender==m,]
       # test for time-varying age selectivity
-      time <- any(apply(plotageselex[-nrow(plotageselex),ageselexcols],2,function(x){any(x!=x[1])}))      
+      time <- any(apply(plotageselex[-c(1,nrow(plotageselex)),ageselexcols],2,function(x){any(x!=x[1])}))      
       if(time)
       {
         if((min(as.numeric(as.vector(t(plotageselex[,-(1:7)])))) < 1))
