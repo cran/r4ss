@@ -22,10 +22,12 @@ SSplotCatch <-
              "Observed and expected",     #9
              "aggregated across seasons"),#10
            catchasnumbers=FALSE,
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,verbose=TRUE)
+           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,
+           cex.main=1, # note: no plot titles yet implemented
+           verbose=TRUE)
 {
   # plot catch-related time-series for Stock Synthesis
-  # updated December 27, 2010
+  # updated March 23, 2011
 
   # note: stacked plots only shown with multiple fleets
   subplot_names <- c("1: landings",
@@ -101,12 +103,12 @@ SSplotCatch <-
   goodrows <- ts$Area==1 & ts$Era %in% c("INIT","TIME")
   catchyrs <- ts$Yr[goodrows] # T/F indicator of the lines for which we want to plot catch
 
-  if(SS_versionshort=="SS-V3.20"){
-    stringN <- "sel(N)"
-    stringB <- "sel(B)"
-  }else{
+  if(SS_versionshort=="SS-V3.11"){
     stringN <- "enc(N)"
     stringB <- "enc(B)"
+  }else{
+    stringN <- "sel(N)"
+    stringB <- "sel(B)"
   }
   if(catchasnumbers){
     retmat <- as.matrix(ts[goodrows, substr(names(ts),1,nchar("retain(N)"))=="retain(N)"])
@@ -138,6 +140,7 @@ SSplotCatch <-
   # ghost is a fleet with no catch (or a survey for these purposes)
   ghost <- rep(TRUE,nfleets)
   ghost[(1:nfishfleets)[colSums(totcatchmat)>0]] <- FALSE
+  if(all(ghost)) showlegend <- FALSE
   discmat <- totcatchmat - retmat
 
   discfracmat <- discmat/totcatchmat
@@ -163,13 +166,13 @@ SSplotCatch <-
 
   
   # generic function to plot catch, landings, discards or harvest rates
-  linefunc <- function(ymat,ylab,addtotal=TRUE,x=catchyrs){
+  linefunc <- function(ymat,ylab,addtotal=TRUE,x=catchyrs,ymax=NULL){
     if(addtotal & nfishfleets>1){
       ytotal <- rowSums(ymat)
-      ymax <- max(ytotal)
+      if(is.null(ymax)) ymax <- max(ytotal)
     }else{
       ytotal <- rep(NA,nrow(ymat))
-      ymax <- max(ymat)
+      if(is.null(ymax)) ymax <- max(ymat)
     }
     plot(x, ytotal, ylim=c(0,ymax), xlab=xlab, ylab=ylab, type=type, lwd=lwd, col="black")
     abline(h=0,col="grey")
@@ -208,7 +211,8 @@ SSplotCatch <-
     if(subplot==2 & nfishfleets>1) a <- stackfunc(ymat=retmat, ylab=labels[3])
     # if observed catch differs from estimated by more than 0.1%, then make plot to compare
     if(subplot==3 & diff(range(retmat-totobscatchmat))/max(totobscatchmat) > 0.001){
-      a <- linefunc(ymat=retmat, ylab=paste(labels[9],labels[3]), addtotal=FALSE)
+      a <- linefunc(ymat=retmat, ylab=paste(labels[9],labels[3]), addtotal=FALSE,
+                    ymax=max(totobscatchmat,retmat))
       for(f in 1:nfishfleets){
         if(max(totobscatchmat[,f])>0){
           lines(catchyrs, totobscatchmat[,f], type=type, col=fleetcols[f],
@@ -260,10 +264,14 @@ SSplotCatch <-
   }
 
   totcatchmat <- as.data.frame(totcatchmat)
+  totobscatchmat <- as.data.frame(totobscatchmat)
   names(totcatchmat) <- fleetnames[1:nfishfleets]
+  names(totobscatchmat) <- fleetnames[1:nfishfleets]
   totcatchmat$Yr <- catchyrs
+  totobscatchmat$Yr <- catchyrs
   returnlist <- list()
   returnlist[["totcatchmat"]] <- totcatchmat
+  returnlist[["totobscatchmat"]] <- totobscatchmat
   if(nseasons > 1){
     totcatchmat2 <- as.data.frame(totcatchmat2)
     names(totcatchmat2) <- fleetnames[1:nfishfleets]

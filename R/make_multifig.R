@@ -3,11 +3,11 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
                           maxrows=6, maxcols=6, rows=1, cols=1, fixdims=TRUE, main="",cex.main=1,
                           xlab="",ylab="",size=1,maxsize=3,do.sqrt=TRUE,minnbubble=8,allopen=TRUE,
                           horiz_lab="default",xbuffer=c(.1,.1),ybuffer=c(0,0.15),ymin0=TRUE,
-                          axis1="default",axis2="default",linepos=1,
+                          axis1="default",axis2="default",linepos=1,type="o",
                           bars=FALSE,barwidth="default",ptscex=1,ptscol=1,ptscol2=1,linescol=2,lty=1,lwd=1,pch=1,
                           nlegends=3,legtext=list("yr","sampsize","effN"),legx="default",legy="default",
                           legadjx="default",legadjy="default",legsize=c(1.2,1.0),legfont=c(2,1),
-                          ipage=0){
+                          ipage=0,scalebins=FALSE){
   ################################################################################
   #
   # make_multifig June 11, 2010
@@ -17,7 +17,6 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
   # Written: Ian Taylor, NWFSC/UW. Ian.Taylor-at-noaa.gov
   #
   ################################################################################
-
   bubble3 <- function (x,y,z,col=c(1,1),maxsize=3,do.sqrt=TRUE,
                        main="",cex.main=1,xlab="",ylab="",minnbubble=8,
                        xlimextra=1,add=FALSE,las=1,allopen=TRUE){
@@ -64,7 +63,8 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
     linesx <- ptsx
     linesy <- ptsy
   }
-
+  anyscaled <- FALSE
+  
   # quick and dirty formula to get width of bars (if used) based on
   #	  number of columns and maximum number of bars within a in panel
   if(bars & barwidth=="default") barwidth <- 400/max(table(yr)+2)/ncols
@@ -91,7 +91,7 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
 
   # create multifigure layout and set inner margins all to 0 and add outer margins
   # new settings
-  par(mfcol=c(nrows,ncols),mar=rep(0,4),oma=c(5,5,4,2)+.1)
+  par(mfcol=c(nrows,ncols),mar=rep(0,4),oma=c(5,5,5,2)+.1)
 
   panelrange <- 1:npanels
   if(npages > 1 & ipage!=0) panelrange <- intersect(panelrange, 1:(nrows*ncols) + nrows*ncols*(ipage-1))
@@ -111,6 +111,24 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
 
     z_i <- size[yr==yr_i]
 
+    # optional rescaling of bins for line plots
+    scaled <- FALSE
+    if(scalebins){
+      bins <- sort(unique(ptsx_i))
+      binwidths <- diff(bins)
+      if(diff(range(binwidths))>0){
+        binwidths <- c(binwidths,tail(binwidths,1))
+        allbinwidths <- apply(as.matrix(ptsx_i),1,function(x) (binwidths)[bins==x])
+        ptsy_i <- ptsy_i/allbinwidths
+        linesy_i <- linesy_i/allbinwidths
+        scaled <- TRUE
+      }
+      if(scaled){
+        anyscaled <- TRUE
+        if(ylab=="Proportion") ylab <- "Proportion / bin width"
+      }
+    }
+
     # make plot
     plot(0,type="n",axes=FALSE,xlab="",ylab="",xlim=xrange_big,ylim=yrange_big,
          xaxs="i",yaxs=ifelse(bars,"i","r"))
@@ -120,12 +138,23 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
       bubble3(x=ptsx_i,y=ptsy_i,z=z_i,col=c(ptscol,ptscol2),
               maxsize=maxsize,minnbubble=minnbubble,allopen=allopen,add=TRUE) # bubble plot
     }else{
-      if(!bars) points(ptsx_i,ptsy_i,pch=pch,col=ptscol,cex=ptscex)	# points
-      if( bars) points(ptsx_i,ptsy_i,type="h",lwd=barwidth,col=ptscol,lend=1)  # histogram-style bars
+      if(FALSE){
+        # turning off old way
+        if(!bars) points(ptsx_i,ptsy_i,type=type,pch=pch,col=ptscol,cex=ptscex)	# points
+        if( bars) points(ptsx_i,ptsy_i,type="o",lwd=barwidth,col=ptscol,lend=1)  # histogram-style bars
+      }
+      # new way
+      if(!doSD) polygon(c(ptsx_i[1],ptsx_i,tail(ptsx_i,1)),c(0,ptsy_i,0),col='grey80')  # polygon
+      points(ptsx_i,ptsy_i,type=type,lwd=1,pch=16,cex=0.7,col=ptscol)  # lines with solid points on top
+
+      # adding uncertainty for mean length or weight at age plots
       if(doSD){
+        old_warn <- options()$warn      # previous setting
+        options(warn=-1)                # turn off "zero-length arrow" warning
         arrows(x0=ptsx_i,y0=qnorm(p=0.05,mean=ptsy_i,sd=ptsSD_i),
                x1=ptsx_i,y1=qnorm(p=0.95,mean=ptsy_i,sd=ptsSD_i),
                length=0.01, angle=90, code=3, col=ptscol)
+        options(warn=old_warn)  #returning to old value
       }
     }
     if(linepos==1) lines(linesx_i,linesy_i,col=linescol,lwd=lwd,lty=lty)
@@ -203,6 +232,7 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
   # restore default single panel settings
   par(mfcol=c(rows,cols),mar=c(5,4,4,2)+.1,oma=rep(0,4))
 
+  if(anyscaled) cat("Note: compositions have been rescaled by dividing by binwidth\n")
   # return information on what was plotted
   return(list(npages=npages, npanels=npanels, ipage=ipage))
 } # end embedded function: make_multifig
