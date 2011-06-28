@@ -36,7 +36,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
 
   datlist$sourcefile <- file
   datlist$type <- "Stock_Synthesis_data_file"
-  datlist$SSversion <- "SSv3.20"
+  datlist$SSversion <- NULL # "SSv3.21"
 
   if(verbose) cat("SSversion =",datlist$SSversion,"\n")
   # model dimensions
@@ -54,6 +54,8 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(Ntypes>1){
     fleetnames <- dat[grep('%',dat)[1]]
     fleetnames <- strsplit(fleetnames,'%')[[1]]
+    # strip any white space off the end of the fleetnames
+    fleetnames[length(fleetnames)] <- strsplit(fleetnames[length(fleetnames)],"[[:blank:]]+")[[1]][1]
     if(length(fleetnames)!=Ntypes)
       fleetnames <- c(paste("fishery",1:Nfleet),paste("survey",1:Nsurveys))
   }else{
@@ -130,9 +132,21 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   # datlist$discard_units <- discard_units <- allnums[i]; i <- i+1
   datlist$N_discard_fleets <- N_discard_fleets <- allnums[i]; i <- i+1
   if(verbose) cat("N_discard_fleets =",N_discard_fleets,"\n")
+  N_discard <- 0 # temporarily set to 0
+  if(N_discard_fleets > 0){
+    # fleet info
+    Ncols <- 3
+    discard_fleet_info <- data.frame(matrix(
+      allnums[i:(i+N_discard_fleets*Ncols-1)],nrow=N_discard_fleets,ncol=Ncols,byrow=TRUE))
+    i <- i+N_discard_fleets*Ncols
+    names(discard_fleet_info) <- c("Fleet","units","errtype")
+  }else{
+    discard_fleet_info <- NULL
+  }
   datlist$N_discard <- N_discard <- allnums[i]; i <- i+1
   if(verbose) cat("N_discard =",N_discard,"\n")
   if(N_discard > 0){
+    # discard data
     Ncols <- 5
     discard_data <- data.frame(matrix(
       allnums[i:(i+N_discard*Ncols-1)],nrow=N_discard,ncol=Ncols,byrow=TRUE))
@@ -141,6 +155,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   }else{
     discard_data <- NULL
   }
+  datlist$discard_fleet_info <- discard_fleet_info
   datlist$discard_data <- discard_data
 
   # meanbodywt
