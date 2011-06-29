@@ -7,8 +7,8 @@ SStableComparisons <-
              "Age_comp",
              "priors",
              "Size_at_age"),
-           names=c("SR_R0",
-             "SR_steep",
+           names=c("R0",
+             "steep",
              "NatM",
              "Q",
              "L_at_Amax",
@@ -21,7 +21,7 @@ SStableComparisons <-
            csv=FALSE,
            csvdir="workingdirectory",
            csvfile="parameter_comparison_table.csv",
-           verbose=FALSE)
+           verbose=TRUE)
 {
   if(verbose) cat("running SStableComparisons\n")
   
@@ -56,7 +56,7 @@ SStableComparisons <-
     vals <- bigtable[grep(name, bigtable$Label),]
 
     # fix scale on a few things
-    if(name=="SR_R0"){
+    if(name %in% c("SR_LN(R0)","SR_R0")){
       vals[-1] <- round(exp(vals[-1])/1e6,6)
       vals[1] <- "R0_billions"
     }
@@ -70,10 +70,14 @@ SStableComparisons <-
     }
 
     if(name=="Q"){
-      vals <- rbind(NA,vals)
-      vals[1,1] <- "Q_from_indices"
-      Calc_Q <- aggregate(indices$Calc_Q,by=list(model=indices$Model),FUN=mean)$x
-      vals[1,-1] <- Calc_Q[models]
+      Calc_Q <- aggregate(Calc_Q ~ Model+FleetNum,data=indices,FUN=mean)
+      cat("\n")
+      fleetvec <- unique(Calc_Q$FleetNum)
+      for(f in rev(sort(as.numeric(fleetvec)))){
+        vals <- rbind(NA,vals)
+        vals[1,1] <- paste("Q_calc_mean_fleet_",f,sep="")
+        vals[1,-1] <- Calc_Q$Calc_Q[Calc_Q$FleetNum==f]
+      }
     }
     if(verbose) cat("added ",nrow(vals)," row",ifelse(nrow(vals)!=1,"s",""),"\n",sep="")
     # add to table

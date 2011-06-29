@@ -1,7 +1,7 @@
 SS_output <-
   function(dir="C:/myfiles/mymodels/myrun/", model="ss3",
            repfile="Report.sso", compfile="CompReport.sso",covarfile="covar.sso",
-           ncols=200, forecast=TRUE, warn=TRUE, covar=TRUE,
+           ncols=200, forecast=TRUE, warn=TRUE, covar=TRUE, 
            checkcor=TRUE, cormax=0.95, cormin=0.01, printhighcor=10, printlowcor=10,
            verbose=TRUE, printstats=TRUE,hidewarn=FALSE, NoCompOK=FALSE, aalmaxbinrange=4)
 {
@@ -22,7 +22,7 @@ SS_output <-
   #
   ################################################################################
 
-  codedate <- "April 4, 2011"
+  codedate <- "June 28, 2011"
 
   if(verbose){
     cat("R function updated:",codedate,"\n")
@@ -205,23 +205,25 @@ SS_output <-
 
   # read forecast report file
   if(forecast){
-    forcastname <- paste(dir,"Forecast-report.sso",sep="")
-    temp <- file.info(forcastname)$size
+    forecastname <- paste(dir,"Forecast-report.sso",sep="")
+    temp <- file.info(forecastname)$size
     if(is.na(temp) | temp==0){
       stop("Forecase-report.sso file is empty.\n",
            "Change input to 'forecast=FALSE' or rerun model with forecast turned on.")
     }
     # read the file
-    rawforcast1 <- read.table(file=forcastname,col.names=1:ncols,fill=TRUE,quote="",colClasses="character",nrows=-1)
-    endyield <- matchfun("MSY_not_calculated",rawforcast1[,1])
+    rawforecast1 <- read.table(file=forecastname,col.names=1:ncols,fill=TRUE,quote="",colClasses="character",nrows=-1)
+    sprtarg <- as.numeric(rawforecast1[matchfun("SPR_target",rawforecast1[,1]),2])
+    btarg   <- as.numeric(rawforecast1[matchfun("Btarget",rawforecast1[,1]),2])
+    endyield <- matchfun("MSY_not_calculated",rawforecast1[,1])
     if(is.na(endyield)) yesMSY <- TRUE else yesMSY <- FALSE
-    if(yesMSY) endyield <- matchfun("findFmsy",rawforcast1[,10])
+    if(yesMSY) endyield <- matchfun("findFmsy",rawforecast1[,10])
     if(verbose) cat("Got forecast file\n")
 
     # this section on equilibrium yield moved to Report.sso on Jan 6
-    startline <- matchfun("profile",rawforcast1[,11])
+    startline <- matchfun("profile",rawforecast1[,11])
     if(!is.na(startline)){ # before the Jan 6 fix to benchmarks
-      yieldraw <- rawforcast1[(startline+1):endyield,]
+      yieldraw <- rawforecast1[(startline+1):endyield,]
     }else{
       yieldraw <- matchfun2("SPR/YPR_Profile",1,"Dynamic_Bzero",-2)
       # note: section with "Dynamic_Bzero" is missing before Hessian is run or skipped
@@ -244,7 +246,12 @@ SS_output <-
       yielddat$Depletion <- as.numeric(yielddat$Depletion)
       yielddat <- yielddat[order(yielddat$Depletion,decreasing = FALSE),]
     }
-  }else{if(verbose) cat("You skipped the forecast file\n")}
+  }else{
+    if(verbose) cat("You skipped the forecast file\n",
+                    "setting sprtarg and btarg to 0.4 (can override in SS_plots)")
+    sprtarg <- 0.4
+    btarg <- 0.4
+  }
   flush.console()
 
   # check for use of temporary files
@@ -491,16 +498,20 @@ SS_output <-
 
   # info on growth morphs (see also section setting mainmorphs below)
   endcode <- "SIZEFREQ_TRANSLATION" #(this section heading not present in all models)
-  if(is.na(matchfun(endcode))) endcode <- "MOVEMENT"
-  if(SS_versionshort=="SS-V3.11") shift <- -1 else shift <- -2
+  #if(SS_versionshort=="SS-V3.11") shift <- -1 else shift <- -2
+  shift <- -1
+  if(is.na(matchfun(endcode))){
+    endcode <- "MOVEMENT"
+    shift <- -2
+  }
   morph_indexing <- matchfun2("MORPH_INDEXING",1,endcode,shift,cols=1:9,header=T)
   for(i in 1:ncol(morph_indexing)) morph_indexing[,i] <- as.numeric(morph_indexing[,i])
   ngpatterns <- max(morph_indexing$Gpattern)
 
   # forecast
   if(forecast){
-    grab  <- rawforcast1[,1]
-    nforecastyears <- as.numeric(rawforcast1[grab %in% c("N_forecast_yrs:"),2])
+    grab  <- rawforecast1[,1]
+    nforecastyears <- as.numeric(rawforecast1[grab %in% c("N_forecast_yrs:"),2])
     nforecastyears <- nforecastyears[1]
   }else{
     nforecastyears <- NA
@@ -536,7 +547,20 @@ SS_output <-
   # parameters
   parameters <- matchfun2("PARAMETERS",1,"DERIVED_QUANTITIES",-1,header=TRUE)
   parameters[parameters=="_"] <- NA
-  for(i in (1:ncol(parameters))[!(names(parameters)%in%c("Label","Status"))]) parameters[,i] = as.numeric(parameters[,i])
+  if(SS_versionshort %in% c("SS-V3.11","SS-V3.20")){
+    # old parameters section
+    for(i in (1:ncol(parameters))[!(names(parameters)%in%c("Label","Status"))])
+      parameters[,i] <- as.numeric(parameters[,i])
+  }else{
+    # revised section as of SS-V3.21 which text description of PR_type instead of number
+    for(i in (1:ncol(parameters))[!(names(parameters)%in%c("Label","PR_type","Status"))])
+      parameters[,i] <- as.numeric(parameters[,i])
+    temp <- names(parameters)
+    cat("Note: inserting new 13th column heading in parameters section due to error in Report.sso in SSv3.21f\n")
+    temp <- c(temp[1:12],"PR_type_code",temp[-(1:12)])
+    temp <- temp[-length(temp)]
+    names(parameters) <- temp
+  }
   activepars <- parameters$Label[!is.na(parameters$Active_Cnt)]
   
   if(!is.na(parfile)){
@@ -548,17 +572,21 @@ SS_output <-
   stats$N_estimated_parameters <- parline[1,6]
 
   pars <- parameters[!is.na(parameters$Phase) & parameters$Phase>0,]
-  pars$Afterbound <- ""
-  pars$checkdiff <- pars$Value - pars$Min
-  pars$checkdiff2 <- pars$Max - pars$Value
-  pars$checkdiff3 <- abs(pars$Value-(pars$Max-(pars$Max-pars$Min)/2))
-  pars$Afterbound[pars$checkdiff < 0.001 | pars$checkdiff2 < 0.001 | pars$checkdiff2 < 0.001] <- "CHECK"
-  pars$Afterbound[!pars$Afterbound %in% "CHECK"] <- "OK"
-
-  stats$table_of_phases <- table(pars$Phase)
-  pars <- pars[pars$Phase %in% 0:100,]
-  stats$estimated_non_rec_devparameters <- pars[,c(2,3,5:14,17)]
-
+  if(nrow(pars)>0){
+    pars$Afterbound <- ""
+    pars$checkdiff <- pars$Value - pars$Min
+    pars$checkdiff2 <- pars$Max - pars$Value
+    pars$checkdiff3 <- abs(pars$Value-(pars$Max-(pars$Max-pars$Min)/2))
+    pars$Afterbound[pars$checkdiff < 0.001 | pars$checkdiff2 < 0.001 | pars$checkdiff2 < 0.001] <- "CHECK"
+    pars$Afterbound[!pars$Afterbound %in% "CHECK"] <- "OK"
+  }
+  stats$table_of_phases <- table(parameters$Phase)
+  #pars <- pars[pars$Phase %in% 0:100,]
+  #stats$estimated_non_rec_devparameters <- pars[,c(2,3,5:14,17)]
+  stats$estimated_non_rec_devparameters <- pars[,names(pars) %in%
+      c("Label","Value","Phase","Min","Max","Init","Prior","PR_type",
+        "Pr_SD","Prior_Like","Parm_StDev","Status","Afterbound")]
+  
   # read covar.sso file
   if(covar){
     CoVar <- read.table(covarfile,header=TRUE,colClasses=c(rep("numeric",4),rep("character",4),"numeric"),skip=covarskip)
@@ -734,11 +762,13 @@ SS_output <-
   agentune <- agentune[agentune$N>0, c(1,2,4,5,6,8,9)]
   stats$Age_comp_Eff_N_tuning_check <- agentune
 
+if(FALSE){   # !! Ian, fix this:
   sizentune <- matchfun2("LEN_SELEX",-(nfleets+1),"LEN_SELEX",-1,cols=1:10,header=TRUE)
   sizentune[,1] <- sizentune[,10]
   sizentune <- sizentune[sizentune$Npos>0, c(1,3,4,5,6,8,9)]
   stats$Size_comp_Eff_N_tuning_check <- sizentune
-
+}
+  
   if(verbose) cat("Finished primary run statistics list\n")
   flush.console()
 
@@ -851,7 +881,7 @@ SS_output <-
     names(rawgrow) <- rawgrow[1,]
     growdat <- rawgrow[-1,]
     for(i in 1:ncol(growdat)) growdat[,i] <- as.numeric(growdat[,i])
-    growdat <- growdat[growdat$Beg==1 & growdat$Yr < endyr,]
+    growdat <- growdat[growdat$Beg==1 & growdat$Yr >= startyr & growdat$Yr < endyr,]
     if(nseasons > 1) growdat <- growdat[growdat$Seas==1,]
     if(length(unique(growdat$Yr))>1) growthvaries <- TRUE
     returndat$growthseries <- growdat
@@ -884,7 +914,13 @@ SS_output <-
   # and the largest fraction of the submorphs (should equal middle morph when using sub-morphs)
   temp <- morph_indexing[morph_indexing$Bseas==min(spawnseas) &
                          morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
-  mainmorphs <- min(temp$Index[temp$Gender==1])
+  # however, if there are no fish born in the spawning season, then it should be the first birth season
+  if(recruitment_dist$Used[spawnseas]==0)
+    temp <- morph_indexing[morph_indexing$Bseas==min(recruitment_dist$Seas[recruitment_dist$Used==1]) &
+                         morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
+
+  # filter in case multiple growth patterns (would cause problems)
+  mainmorphs <- min(temp$Index[temp$Gender==1]) 
   if(nsexes==2) mainmorphs <- c(mainmorphs, min(temp$Index[temp$Gender==2]))
   if(length(mainmorphs)==0) cat("!Error with morph indexing in SS_output function.\n")
   returndat$mainmorphs  <- mainmorphs
@@ -962,10 +998,18 @@ SS_output <-
     for(icol in 1:3) discard_spec[,icol] <- as.numeric(discard_spec[,icol])
     names(discard_spec)[1] <- "Fleet"
   }
-
   discard <- matchfun2("DISCARD_OUTPUT",shift,"MEAN_BODY_WT_OUTPUT",-1,header=TRUE)
+  if(names(discard)[1]=="MEAN_BODY_WT_OUTPUT"){
+    discard <- NA
+  }
+  if(!is.na(discard) && names(discard)[1]!="Fleet"){
+    # rerun read of discard if in SSv3.20b which had missing line break
+    discard <- matchfun2("DISCARD_OUTPUT",shift,"MEAN_BODY_WT_OUTPUT",-1,header=FALSE)
+    names(discard) <- c("Fleet","Yr","Seas","Obs","Exp","Std_in","Std_use","Dev")
+  }
+
   discard_type <- NA
-  if(nrow(discard)>1){
+  if(!is.na(discard) && nrow(discard)>1){
     for(icol in 2:ncol(discard)) discard[,icol] <- as.numeric(discard[,icol])
     for(i in 2:ncol(discard)) discard[,i] <- as.numeric(discard[,i])
     discard$FleetName <- NA
@@ -1007,6 +1051,7 @@ SS_output <-
   
   # Yield and SPR time-series
   spr <- matchfun2("SPR_series",5,"SPAWN_RECRUIT",-1,header=TRUE)
+  if(length(grep("Kobe_Plot",rawrep[,1]))!=0) spr <- matchfun2("SPR_series",5,"Kobe_Plot",-1,header=TRUE)
   spr[spr=="_"] <- NA
   spr[spr=="&"] <- NA
   for(i in (1:ncol(spr))[!(names(spr)%in%c("Actual:","More_F(by_morph):"))]) spr[,i] <- as.numeric(spr[,i])
@@ -1019,16 +1064,20 @@ SS_output <-
 
   if(forecast){
    returndat$equil_yield <- yielddat
-   # stats$spr_at_msy <- as.numeric(rawforcast[33,2])
-   # stats$exploit_at_msy <- as.numeric(rawforcast[35,2])
-   # stats$bmsy_over_VLHbzero <- as.numeric(rawforcast[38,3])
-   # stats$retained_msy <- as.numeric(rawforcast[43,5])
+   # stats$spr_at_msy <- as.numeric(rawforecast[33,2])
+   # stats$exploit_at_msy <- as.numeric(rawforecast[35,2])
+   # stats$bmsy_over_VLHbzero <- as.numeric(rawforecast[38,3])
+   # stats$retained_msy <- as.numeric(rawforecast[43,5])
   }else{if(verbose) cat("You skipped the equilibrium yield data\n")}
   flush.console()
 
   returndat$managementratiolabels <- managementratiolabels
   returndat$B_ratio_denominator <- as.numeric(strsplit(managementratiolabels$Label[3],"%")[[1]][1])/100
-
+  returndat$sprtarg <- sprtarg
+  returndat$btarg <- btarg
+  returndat$minbthresh <- ifelse(btarg==0.25,0.125,0.25)
+  
+  
   # Spawner-recruit curve
   rawsr <- matchfun2("SPAWN_RECRUIT",11,"INDEX_2",-1,cols=1:9)
   names(rawsr) <- rawsr[1,]

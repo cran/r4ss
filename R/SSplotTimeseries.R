@@ -4,7 +4,7 @@ SSplotTimeseries <-
            forecastplot=TRUE,uncertainty=TRUE,bioscale="default",
            minyr=NULL,maxyr=NULL,
            plot=TRUE,print=FALSE,plotdir="default",verbose=TRUE,
-           btarg=0.4,minbthresh=0.25,xlab="Year",
+           btarg="default",minbthresh="default",xlab="Year",
            labels=c("Total biomass (mt)", #1
              "Total biomass (mt) at beginning of season", #2
              "Summary biomass (mt)",      #3
@@ -51,6 +51,10 @@ SSplotTimeseries <-
   FecPar2        <- replist$FecPar2
   B_ratio_denominator <- replist$B_ratio_denominator
   seasfracs      <- replist$seasfracs
+  recruitment_dist <- replist$recruitment_dist
+
+  if(btarg=="default") btarg <- replist$btarg
+  if(minbthresh=="default") minbthresh <- replist$minbthresh
   
   if(areacols[1]=="default"){
     areacols  <- rich.colors.short(nareas)
@@ -159,15 +163,20 @@ SSplotTimeseries <-
     main=ylab
 
     # birth season-related calculations
+    yrshift <- 0 # years of shift for fish spawning to next birth season
+    if(!is.null(birthseas) && max(birthseas) < spawnseas){
+      # case where fish are born in the year after spawning
+      yrshift <- 1
+    }
     if(!is.null(birthseas) && nbirthseas > 1){
-      if(subplot %in% c(11)){
+      if(subplot==11){
         # sum total recruitment across birth seasons
         for(y in ts$Yr){
           yvals[ts$Yr==y & ts$Seas==1] <- sum(yvals[ts$Yr==y],na.rm=TRUE)
           yvals[ts$Yr==y & ts$Seas >1] <- 0
         }
       }
-      if(subplot %in% c(15)){
+      if(subplot==15){
         # sum total recruitment across birth seasons
         for(y in ts$Yr){
           yvals[ts$Yr==y] <- yvals[ts$Yr==y]/sum(yvals[ts$Yr==y],na.rm=TRUE)
@@ -233,7 +242,7 @@ SSplotTimeseries <-
           # year as part of the LABEL string starting with 5th character
           stdtable$Yr <- substring(stdtable$LABEL,5)
           # filling in Virgin and Initial years as 2 and 1 years prior to following years
-          stdtable$Yr[1:2] <- as.numeric(stdtable$Yr[3])-(2:1)
+          stdtable$Yr[1:2] <- as.numeric(stdtable$Yr[3])-(2:1)  - yrshift
           stdtable$Yr <- as.numeric(stdtable$Yr)
         }
         if(subplot==9){ # spawning depletion
@@ -252,7 +261,7 @@ SSplotTimeseries <-
           stdtable$Yr <- substring(stdtable$LABEL,6)
           # filling in Virgin and Initial years as 2 and 1 years prior to following years
           stdtable$Yr[1:2] <- as.numeric(stdtable$Yr[3])-(2:1)
-          stdtable$Yr <- as.numeric(stdtable$Yr)
+          stdtable$Yr <- as.numeric(stdtable$Yr) + yrshift
           bioscale <- 1
         }
 
@@ -301,9 +310,9 @@ SSplotTimeseries <-
     }
 
     # move VIRG value from startyr-2 to startyr-1 to show closer to plot
-    if(exists("stdtable")) stdtable$Yr[stdtable$Yr %in% ts$Yr[plot1]] <- stdtable$Yr[stdtable$Yr %in% ts$Yr[plot1]]+1
-    ts$Yr[plot1] <- ts$Yr[plot1]+1
-    ts$YrSeas[plot1] <- ts$YrSeas[plot1]+1
+    # this one didn't work:   if(exists("stdtable")) stdtable$Yr[stdtable$Yr %in% ts$Yr[plot1]] <- stdtable$Yr[stdtable$Yr %in% ts$Yr[plot1]]+1
+    ts$Yr[ts$Era=="VIRG"] <- ts$Yr[ts$Era=="VIRG"]+1
+    ts$YrSeas[ts$Era=="VIRG"] <- ts$YrSeas[ts$Era=="VIRG"]+1
     
              
     # create an empty plot (if not adding to existing plot)
@@ -325,11 +334,11 @@ SSplotTimeseries <-
       addtarg <- function(){
         if(btarg>0){
           abline(h=btarg,col="red")
-          text(startyr+4,btarg+0.03,"Management target",adj=0)
+          text(max(startyr,minyr)+4,btarg+0.03,"Management target",adj=0)
         }
         if(minbthresh>0){
           abline(h=minbthresh,col="red")
-          text(startyr+4,minbthresh+0.03,"Minimum stock size threshold",adj=0)
+          text(max(startyr,minyr)+4,minbthresh+0.03,"Minimum stock size threshold",adj=0)
         }
       }
       addtarg()
@@ -377,25 +386,32 @@ SSplotTimeseries <-
           plot2[3] <- FALSE
         }
         mycol <- areacols[iarea]
-        
         mytype <- "o" # overplotting points on lines for most time series
         if(subplot==11 & uncertainty) mytype <- "p" # just points without connecting lines if plotting recruitment with confidence intervals
         if(!uncertainty){
           points(ts$YrSeas[plot1],yvals[plot1],pch=19,  col=mycol) # filled points for virgin conditions
-          lines(ts$YrSeas[plot2],yvals[plot2],type=mytype,col=mycol) # open points and lines in middle
+          lines( ts$YrSeas[plot2],yvals[plot2],type=mytype,col=mycol) # open points and lines in middle
           points(ts$YrSeas[plot3],yvals[plot3],pch=19,  col=mycol) # filled points for forecast
         }else{
           # add lines for confidence intervals areas if requested
           # lines and points on integer years
           points(ts$Yr[plot1],yvals[plot1],pch=19,  col=mycol) # filled points for virgin conditions
-          lines(ts$Yr[plot2],yvals[plot2],type=mytype,col=mycol) # open points and lines in middle
+          lines( ts$Yr[plot2],yvals[plot2],type=mytype,col=mycol) # open points and lines in middle
           points(ts$Yr[plot3],yvals[plot3],pch=19,  col=mycol) # filled points for forecast
           if(subplot %in% c(7,9,11)){
             # subset years for confidence intervals
-            plot1 <- stdtable$Yr %in% ts$Yr[plot1]
+            if(subplot==7){
+              plot1 <- stdtable$LABEL=="SPB_Virgin"
+              stdtable$Yr[plot1] <- stdtable$Yr[plot1]+yrshift
+            }else{
+              plot1 <- stdtable$Yr %in% ts$Yr[plot1]
+            }
             plot2 <- stdtable$Yr %in% ts$Yr[plot2]
             plot3 <- stdtable$Yr %in% ts$Yr[plot3]
-            plotall <- plot1 | plot2 | plot3 # all years that are within ts$Yr
+            plotall <- plot1 | plot2 | plot3
+            ## stdtable$plot1 <- plot1
+            ## stdtable$plot2 <- plot2
+            ## stdtable$plot3 <- plot3
           }
           if(subplot %in% c(7,9)){
             # add lines for main period

@@ -2,8 +2,9 @@ SSplotData <- function(replist,
                        plot=TRUE,print=FALSE,
                        plotdir="default",
                        fleetcol="default",
-                       datatypes="all",fleets="all",ghost=FALSE,
+                       datatypes="all",fleets="all",fleetnames="default",ghost=FALSE,
                        pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
+                       margins=c(5.1,2.1,4.1,8.1),
                        verbose=TRUE)
 {
   # updated April 4, 2011
@@ -15,7 +16,7 @@ SSplotData <- function(replist,
   endyr         <- replist$endyr
   nfleets       <- replist$nfleets
   nfishfleets   <- replist$nfishfleets
-  fleetnames    <- replist$FleetNames
+  if(fleetnames[1]=="default") fleetnames  <- replist$FleetNames
   if(plotdir=="default") plotdir <- replist$inputs$dir
   
   # catch
@@ -69,7 +70,7 @@ SSplotData <- function(replist,
   # loop over types to make a database of years with comp data
   ntypes <- 0
   # replace typetable object with empty table
-  typetable <- as.data.frame(matrix(NA,nrow=0,ncol=5))
+  typetable <- NULL
   # now loop over typenames looking for presence of this data type
   for(itype in 1:length(typenames)){
     dat <- get(typenames[itype])
@@ -87,14 +88,12 @@ SSplotData <- function(replist,
           yrs <- sort(unique(floor(allyrs)))
           typetable <- rbind(typetable,
                              data.frame(yr=yrs,fleet=ifleet,
-                                        itype=ntypes,typename=typename))
+                                        itype=ntypes,typename=typename,
+                                        stringsAsFactors=FALSE))
         }
       }
     }
   }
-  # not sure how typename became a factor, but need to make it character
-  typetable$typename <- as.character(typetable$typename)
-  
   # typetable is full data frame of all fleets and data types
   # typetable2 has been subset according to requested choices
   
@@ -111,6 +110,7 @@ SSplotData <- function(replist,
   # define colors
   if(fleetcol[1]=="default"){
     if(nfleets2>3) fleetcol <- rich.colors.short(nfleets2+1)[-1]
+    if(nfleets2==1) fleetcol <- "grey40"
     if(nfleets2==2) fleetcol <- rich.colors.short(nfleets2)
     if(nfleets2==3) fleetcol <- c("blue","red","green3")
   }else{
@@ -119,12 +119,12 @@ SSplotData <- function(replist,
 
   # function containing plotting commands
   plotdata <- function(){
-    par(mar=c(5,2,4,8)+0.1) # multi-panel plot
+    par(mar=margins) # multi-panel plot
     xlim <- c(-1,1)+range(typetable2$yr,na.rm=TRUE)
     yval <- 0
     # count number of unique combinations of fleet and data type
     ymax <- sum(as.data.frame(table(typetable2$fleet,typetable2$itype))$Freq>0)
-    plot(0,xlim=xlim,ylim=c(0,ymax+ntypes),axes=FALSE,xaxs='i',yaxs='i',
+    plot(0,xlim=xlim,ylim=c(0,ymax+ntypes+.5),axes=FALSE,xaxs='i',yaxs='i',
          type="n",xlab="Year",ylab="",main="Data by type and year")
     xticks <- 5*round(xlim[1]:xlim[2]/5)
     abline(v=xticks,col='grey',lty=3)
@@ -158,9 +158,9 @@ SSplotData <- function(replist,
         }
       }
       
-      text(mean(xlim),yval+.7,typelabels[typenames==typename],font=2)
       yval <- yval+1
       if(itype!=1) abline(h=yval,col='grey',lty=3)
+      text(mean(xlim),yval-.3,typelabels[typenames==typename],font=2)
     }
     axis(4,at=axistable$yval,label=fleetnames[axistable$fleet],las=1)
     box()
@@ -174,5 +174,6 @@ SSplotData <- function(replist,
     dev.off()
   }
 
+  if(verbose) cat("Finished plot 27: data table\n")
   return(invisible(typetable2))
 }

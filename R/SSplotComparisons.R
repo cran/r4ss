@@ -1,10 +1,12 @@
 SSplotComparisons <-
-  function(summaryoutput,subplots=1:13,
+  function(summaryoutput,subplots=1:14,
            plot=TRUE,print=FALSE,
            models="all",
            endyrvec=NULL,
            indexfleets=NULL,
            indexUncertainty=FALSE,
+           indexQlabel=TRUE,
+           indexQdigits=4,
            indexSEvec="default",
            indexPlotEach=FALSE,         #TRUE plots the observed index for each model with colors, or FALSE just plots observed once in black dots
            labels=c("Year",             #1
@@ -17,13 +19,15 @@ SSplotComparisons <-
              "Density"),                #8
            col="default", shadecol="default",
            pch="default", lty=1, lwd=2,
+           spacepoints=10,
+           staggerpoints=1,
            xlim="default", xaxs="r", yaxs="r",
            type="o", uncertainty=TRUE, shadealpha=0.1,
            legend=TRUE, legendlabels="default", legendloc="topright",
            btarg=0.4, minbthresh=0.25,
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
            plotdir=NULL,
-           densitynames=c("SPB_Virgin","SPB_2011","Bratio_2011","SR_R0","TotYield_MSY"),
+           densitynames=c("SPB_Virgin","SPB_2011","Bratio_2011","SR_R0","SR_LN(R0)","TotYield_MSY"),
            densityxlabs=c("B0 (mt)","Spawning Biomass in 2011 (mt)","depletion in 2011","log(R0)","MSY (mt)"),
            densityscalex=1,
            densityscaley=1,
@@ -37,7 +41,7 @@ SSplotComparisons <-
   if(print & is.null(plotdir)) stop("to print PNG files, you must supply a directory as 'plotdir'")
   
   # subfunction to add legend
-  legendfun <- function() legend(legendloc, legend=legendlabels, col=col, lty=lty, lwd=lwd, pch=pch, bty="n")
+  legendfun <- function(legendlabels) legend(legendloc, legend=legendlabels, col=col, lty=lty, lwd=lwd, pch=pch, bty="n")
 
   rc <- function(n,alpha=1){
     # a subset of rich.colors by Arni Magnusson from the gregmisc package
@@ -78,7 +82,11 @@ SSplotComparisons <-
   mcmc          <- summaryoutput$mcmc               #a list of dataframes, 1 for each model with mcmc output
   lowerCI       <- summaryoutput$lowerCI
   upperCI       <- summaryoutput$upperCI
-  
+
+  if(all(quantsSD[,1:n]==0)){
+    cat("setting uncertainty to FALSE because no uncertainty includes in the model results\n")
+    uncertainty <- FALSE
+  }
   # fix biomass for single-sex models
   if(any(nsexes==1)){
     cat("dividing SpawnBio by 2 for single-sex models:",(1:n)[nsexes==1],"\n")
@@ -112,6 +120,7 @@ SSplotComparisons <-
   if(legendlabels[1]=="default") legendlabels <- paste("model",1:nlines)
 
   # determine operating system and open new window if requested
+  OS <- "Mac"
   if(grepl("linux",version$os)) OS <- "Linux"
   if(grepl("mingw",version$os)) OS <- "Windows"
   # need appropriate line to support Mac operating systems
@@ -199,8 +208,11 @@ SSplotComparisons <-
         mcmclabs <- names(mcmc.tmp)
         lower <- apply(mcmc.tmp,2,quantile,prob=lowerCI)   #hard-wired probability
         med   <- apply(mcmc.tmp,2,quantile,prob=0.5)   #hard-wired probability
+        mean  <- apply(mcmc.tmp,2,mean)   #mean recruitment should be more comparable
         upper <- apply(mcmc.tmp,2,quantile,prob=upperCI)   #hard-wired probability
-        recruits[,imodel] <- med[match(recruits$Label,mcmclabs)]
+        cat("note: using mean recruitment from MCMC instead of median, because it is more comparable to MLE\n")
+        #recruits[,imodel] <- med[match(recruits$Label,mcmclabs)]
+        recruits[,imodel] <- mean[match(recruits$Label,mcmclabs)]
         recruitsLower[,imodel] <- lower[match(recruitsLower$Label,mcmclabs)]
         recruitsUpper[,imodel] <- upper[match(recruitsUpper$Label,mcmclabs)]
       }
@@ -292,16 +304,32 @@ SSplotComparisons <-
     }else{
       xEqu <- rep(SpawnBio$Yr[2], nlines)  # equilibrium spawning biomass year by model
     }
+    # draw points and lines
+    if(spacepoints %in% c(0,1,FALSE) ){ # don't spread out points
+      matplot(SpawnBio$Yr[-(1:2)], SpawnBio[-(1:2), models],
+              col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+    }else{ # spread out points with interval equal to spacepoints and staggering equal to staggerpoints
+      matplot(SpawnBio$Yr[-(1:2)], SpawnBio[-(1:2), models],
+              col=col,lty=lty,lwd=lwd,type="l",add=TRUE)
+      SpawnBio2 <- SpawnBio
+      for(iline in 1:nlines){
+        imodel <- models[iline]
+        SpawnBio2[SpawnBio2$Yr%%spacepoints != (staggerpoints*iline)%%spacepoints, imodel] <- NA
+      }
+      matplot(SpawnBio2$Yr[-(1:2)], SpawnBio2[-(1:2), models],
+              col=col,pch=pch,lwd=lwd,type="p",add=TRUE)
+    }
     # add arrows for equilibrium values
-    matplot(SpawnBio$Yr[-(1:2)], SpawnBio[-(1:2), models],
-            col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+    old_warn <- options()$warn      # previous setting
+    options(warn=-1)                # turn off "zero-length arrow" warning
     if(uncertainty) arrows(x0=xEqu, y0=as.numeric(SpawnBioLower[1,models]),
                            x1=xEqu, y1=as.numeric(SpawnBioUpper[1,models]),
                            length=0.01, angle=90, code=3, col=col)
+    options(warn=old_warn)  #returning to old value
     # add points at equilibrium values
     points(x=xEqu, SpawnBio[1, models], col=col, pch=pch, cex=1.2, lwd=lwd)
     abline(h=0,col="grey")
-    if(legend) legendfun()
+    if(legend) legendfun(legendlabels)
 
     # add axes
     axis(1)
@@ -322,7 +350,19 @@ SSplotComparisons <-
     # make plot
     plot(0,type="n",xlim=xlim,ylim=ylim,xlab=labels[1],ylab=labels[3],xaxs=xaxs,yaxs=yaxs,las=1)
     if(uncertainty) addpoly(Bratio$Yr, lower=BratioLower, upper=BratioUpper)
-    matplot(Bratio$Yr,Bratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+
+    if(spacepoints %in% c(0,1,FALSE) ){ # don't spread out points
+      matplot(Bratio$Yr,Bratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+    }else{ # spread out points with interval equal to spacepoints and staggering equal to staggerpoints
+      matplot(Bratio$Yr,Bratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type="l",add=TRUE)
+      Bratio2 <- Bratio
+      for(iline in 1:nlines){
+        imodel <- models[iline]
+        Bratio2[Bratio2$Yr%%spacepoints != (staggerpoints*iline)%%spacepoints, imodel] <- NA
+      }
+      matplot(Bratio2$Yr,Bratio2[,models],col=col,pch=pch,lty=lty,lwd=lwd,type="p",add=TRUE)
+    }
+
     abline(h=0,col="grey")
     abline(h=1,col="grey",lty=2)
 
@@ -335,7 +375,7 @@ SSplotComparisons <-
       text(min(Bratio$Yr)+4,minbthresh+0.03,"Minimum stock size threshold",adj=0)
     }
 
-    if(legend) legendfun()
+    if(legend) legendfun(legendlabels)
   }
 
   plotSPRratio <- function(uncertainty=TRUE){ # plot biomass ratio (may be identical to previous plot)
@@ -350,7 +390,17 @@ SSplotComparisons <-
     # make plot
     plot(0,type="n",xlim=xlim,ylim=ylim,xlab=labels[1],ylab="(1-SPR)/(1-SPR_40%)" ,xaxs=xaxs,yaxs=yaxs,las=1)
     if(uncertainty) addpoly(SPRratio$Yr, lower=SPRratioLower, upper=SPRratioUpper)
-    matplot(SPRratio$Yr,SPRratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+    if(spacepoints %in% c(0,1,FALSE) ){ # don't spread out points
+      matplot(SPRratio$Yr,SPRratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,add=TRUE)
+    }else{ # spread out points with interval equal to spacepoints and staggering equal to staggerpoints
+      matplot(SPRratio$Yr,SPRratio[,models],col=col,pch=pch,lty=lty,lwd=lwd,type="l",add=TRUE)
+      SPRratio2 <- SPRratio
+      for(iline in 1:nlines){
+        imodel <- models[iline]
+        SPRratio2[SPRratio2$Yr%%spacepoints != (staggerpoints*iline)%%spacepoints, imodel] <- NA
+      }
+      matplot(SPRratio2$Yr,SPRratio2[,models],col=col,pch=pch,lty=lty,lwd=lwd,type="p",add=TRUE)
+    }
     abline(h=0,col="grey")
     abline(h=1,col="grey",lty=2)
 
@@ -360,7 +410,7 @@ SSplotComparisons <-
       text(SPRratio$Yr[1]+4,(1+0.02),"Management target",adj=0)
     }
 
-    if(legend) legendfun()
+    if(legend) legendfun(legendlabels)
   }
   
   plotRecruits <- function(uncertainty=TRUE){ # plot recruitment
@@ -386,9 +436,24 @@ SSplotComparisons <-
     }
 
     # plot lines showing recruitment
-    matplot(recruits$Yr[-(1:2)],recruits[-(1:2),models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,
-            xlim=xlim,ylim=ylim,
-            xlab=labels[1],ylab=ylab,xaxs=xaxs,yaxs=yaxs,axes=FALSE)
+    if(spacepoints %in% c(0,1,FALSE) ){ # don't spread out points
+      matplot(recruits$Yr[-(1:2)],recruits[-(1:2),models],col=col,pch=pch,lty=lty,lwd=lwd,type=type,
+              xlim=xlim,ylim=ylim,
+              xlab=labels[1],ylab=ylab,xaxs=xaxs,yaxs=yaxs,axes=FALSE)
+    }else{ # spread out points with interval equal to spacepoints and staggering equal to staggerpoints
+      matplot(recruits$Yr[-(1:2)],recruits[-(1:2),models],col=col,pch=pch,lty=lty,lwd=lwd,type="l",
+              xlim=xlim,ylim=ylim,
+              xlab=labels[1],ylab=ylab,xaxs=xaxs,yaxs=yaxs,axes=FALSE)
+      recruits2 <- recruits
+      for(iline in 1:nlines){
+        imodel <- models[iline]
+        recruits2[recruits2$Yr%%spacepoints != (staggerpoints*iline)%%spacepoints, imodel] <- NA
+      }
+      matplot(recruits2$Yr[-(1:2)],recruits2[-(1:2),models],col=col,pch=pch,lty=lty,lwd=lwd,type="p",
+              xlim=xlim,ylim=ylim,
+              xlab=labels[1],ylab=ylab,xaxs=xaxs,yaxs=yaxs,axes=FALSE,add=TRUE)
+    }
+
     # add points at equilibrium values
     points(x=rep(recruits$Yr[1],nlines), recruits[1, models], col=col, pch=pch, cex=1.2, lwd=lwd)    
 
@@ -397,13 +462,16 @@ SSplotComparisons <-
         imodel <- models[iline]
         xvec <- recruits$Yr
         if(nlines>1) xvec <- xvec + 0.4*iline/nlines - 0.2
+        old_warn <- options()$warn      # previous setting
+        options(warn=-1)                # turn off "zero-length arrow" warning
         arrows(x0=xvec, y0=pmax(as.numeric(recruitsLower[,imodel]),0),
                x1=xvec, y1=as.numeric(recruitsUpper[,imodel]),
                length=0.01, angle=90, code=3, col=col[iline])
+        options(warn=old_warn)  #returning to old value
       }
     }
     abline(h=0,col="grey")
-    if(legend) legendfun()
+    if(legend) legendfun(legendlabels)
     axis(1)
     yticks <- pretty(ylim)
     axis(2,at=yticks,lab=format(yticks/yunits),las=1)
@@ -417,7 +485,10 @@ SSplotComparisons <-
       if(!is.null(endyrvec) & all(endyrvec < max(xlim))) xlim[2] <- max(endyrvec)
     }
     ylim <- range(recdevs[,models],na.rm=TRUE)
-    if(uncertainty) ylim <- range(recdevsLower[,models],recdevsUpper[,models],na.rm=TRUE)
+    if(uncertainty){
+      if(all(is.na(recdevsLower[,models]))) return() # can't do uncertainty if no range present
+      ylim <- range(recdevsLower[,models],recdevsUpper[,models],na.rm=TRUE)
+    }
     ylim <- range(-ylim,ylim) # make symmetric
                    
     plot(0,xlim=xlim,ylim=ylim,
@@ -443,7 +514,7 @@ SSplotComparisons <-
       yvec <- yvec[!is.na(yvec)]
       points(xvec,yvec,pch=pch[iline],lwd=lwd[iline],col=col[iline])
     }
-    if(legend) legendfun()
+    if(legend) legendfun(legendlabels)
   }
 
   plotIndices <- function(log=FALSE){ # plot different fits to a single index of abundance
@@ -459,18 +530,19 @@ SSplotComparisons <-
           ifleet <- indexfleets[imodel]
           indices2 <- rbind(indices2,indices[subset & indices$FleetNum==ifleet,])
         }else{
-          stop("some models have multiple indices, 'indexfleets' required\n  for all models in summaryoutput")
+          cat("some models have multiple indices, 'indexfleets' required\n  for all models in summaryoutput\n")
+          return()
         }
       }else{
         indices2 <- rbind(indices2,indices[subset,])
       }
     }
-       
     # get quantities for plot
     yr <- indices2$Yr
     obs <- indices2$Obs
     exp <- indices2$Exp
     imodel <- indices2$imodel
+    Q <- indices2$Calc_Q
     if(log){
       obs <- log(obs)
       exp <- log(exp)
@@ -511,18 +583,22 @@ SSplotComparisons <-
     # make plot
     ylim <- range(obs,exp,lower,upper)
     if(!log) ylim <- range(0,ylim) # 0 included if not in log space
+    meanQ <- rep(NA,nlines)
     
     plot(0,type="n",xlim=range(yr),ylim=ylim,xlab="Year",ylab=ylab,axes=FALSE)
     if(!log) abline(h=0,col="grey")
     for(iline in (1:nlines)[!mcmcVec]){
       imodel <- models[iline]
       subset <- indices2$imodel==imodel
+      meanQ[iline] <- mean(Q[subset])
       x <- yr[subset]
       y <- exp[subset]
       lines(x, y, pch=pch[iline], lwd=lwd[iline],
             lty=lty[iline], col=col[iline], type=type)
-      if(legend) legendfun()
     }
+    legendlabels2 <- legendlabels
+    if(indexQlabel) legendlabels2 <- paste(legendlabels,"(mean Q =",format(meanQ,digits=indexQdigits),")")
+    if(legend) legendfun(legendlabels2)
     
     # get uncertainty intervals if requested
     # put observed values on top
@@ -625,7 +701,7 @@ SSplotComparisons <-
     }
     if(grepl("Bratio",parname)) xmin <- 0 # xmin=0 for depletion plots
     if(limit0) xmin <- max(0,xmin) # by default no plot can go below 0 
-    if(fix0 & !grepl("SR_R0",parname)) xmin <- 0 # include 0 if requested (except for log(R0) plots)
+    if(fix0 & !grepl("SR_LN(R0)",parname) & !grepl("SR_R0",parname)) xmin <- 0 # include 0 if requested (except for log(R0) plots)
     
     # calculate x-limits and vector of values for densities
     xlim <- c(xmin,xmin+(xmax-xmin)*densityscalex)
@@ -642,81 +718,86 @@ SSplotComparisons <-
       xlab <- gsub("mt","million mt",xlab)
     }
     # make empty plot
-    plot(0,type="n",xlim=xlim,axes=FALSE,xaxs="i",
-         ylim=c(0,1.1*ymax*densityscaley),xlab=xlab,ylab="")
+    if(!is.null(ymax)){
+      plot(0,type="n",xlim=xlim,axes=FALSE,xaxs="i",
+           ylim=c(0,1.1*ymax*densityscaley),xlab=xlab,ylab="")
 
-    # add vertical lines for target and threshold depletion values
-    if(grepl("Bratio",parname)){
-      if(btarg>0){
-        abline(v=btarg,col="red",lty=2)
-        text(btarg+0.03,par()$usr[4],"Management target",adj=1.05,srt=90)
+      # add vertical lines for target and threshold depletion values
+      if(grepl("Bratio",parname)){
+        if(btarg>0){
+          abline(v=btarg,col="red",lty=2)
+          text(btarg+0.03,par()$usr[4],"Management target",adj=1.05,srt=90)
+        }
+        if(minbthresh>0){
+          abline(v=minbthresh,col="red",lty=2)
+          text(minbthresh+0.03,par()$usr[4],"Minimum stock size threshold",adj=1.05,srt=90)
+        }
       }
-      if(minbthresh>0){
-        abline(v=minbthresh,col="red",lty=2)
-        text(minbthresh+0.03,par()$usr[4],"Minimum stock size threshold",adj=1.05,srt=90)
-      }
-    }
       
-    symbolsQuants <- c(0.025,0.1,0.25,0.5,0.75,0.9,0.975)
-    # loop again to make plots
-    for(iline in (1:nlines)[good]){
-      imodel <- models[iline]
-      if(mcmcVec[iline]) {
-        mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]))
-        mcmcVals <- mcmc[[imodel]][,mcmcColumn]
-        if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
-            mcmcVals <- mcmcVals/2
-        }
-        x2 <- quantile(mcmcVals,symbolsQuants)   # for symbols on plot
-        #find the positions in the density that are closest to these quantiles
-        x <- mcmcDens[[iline]]$x
-        y <- mcmcDens[[iline]]$y
-        yscale <- 1/(sum(y)*mean(diff(x)))
-        y <- y*yscale
-        y2 <- NULL
-        for(ii in x2) {
-            y2 <- c(y2,y[abs(x-ii)==min(abs(x-ii))])
-        }
-        polygon(c(x[1],x,rev(x)[1]),c(0,y,0),col=shadecol[iline],border=NA)
-        lines(x,y,col=col[iline],lwd=2)
-        points(x2,y2,col=col[iline],pch=pch[iline])
-        lines(rep(x2[median(1:length(x2))],2),c(0,y2[median(1:length(x2))]),col=col[iline]) #really hokey and assumes that the middle value of the vector is the median
-      }else{
-        parval <- vals[1,imodel]
-        parSD <- valSDs[1,imodel]
-        if(!is.na(parSD) && parSD>0){
+      symbolsQuants <- c(0.025,0.1,0.25,0.5,0.75,0.9,0.975)
+      # loop again to make plots
+      for(iline in (1:nlines)[good]){
+        imodel <- models[iline]
+        if(mcmcVec[iline]) {
+          mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]))
+          mcmcVals <- mcmc[[imodel]][,mcmcColumn]
           if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
-            parval <- parval/2
-            parSD <- parSD/2
+            mcmcVals <- mcmcVals/2
           }
-          #x2 <- parval+(-2:2)*parSD # 1 and 2 SDs away from mean to plot symbols
-          x2 <- qnorm(symbolsQuants,parval,parSD)
-          mle <- dnorm(x,parval,parSD)  # smooth line
-          mle2 <- dnorm(x2,parval,parSD) # symbols
-          mlescale <- 1/(sum(mle)*mean(diff(x)))
-          mle <- mle*mlescale
-          mle2 <- mle2*mlescale
-          polygon(c(x[1],x,rev(x)[1]),c(0,mle,0),col=shadecol[iline],border=NA)
-          lines(x,mle,col=col[iline],lwd=2)
-          points(x2,mle2,col=col[iline],pch=pch[iline])
-          lines(rep(parval,2),c(0,dnorm(parval,parval,parSD)*mlescale),col=col[iline]) #
-                #,pch=pch[iline],type='o')
+          x2 <- quantile(mcmcVals,symbolsQuants)   # for symbols on plot
+          #find the positions in the density that are closest to these quantiles
+          x <- mcmcDens[[iline]]$x
+          y <- mcmcDens[[iline]]$y
+          yscale <- 1/(sum(y)*mean(diff(x)))
+          y <- y*yscale
+          y2 <- NULL
+          for(ii in x2) {
+            y2 <- c(y2,y[abs(x-ii)==min(abs(x-ii))])
+          }
+          polygon(c(x[1],x,rev(x)[1]),c(0,y,0),col=shadecol[iline],border=NA)
+          lines(x,y,col=col[iline],lwd=2)
+          points(x2,y2,col=col[iline],pch=pch[iline])
+          lines(rep(x2[median(1:length(x2))],2),c(0,y2[median(1:length(x2))]),col=col[iline]) #really hokey and assumes that the middle value of the vector is the median
         }else{
-          abline(v=parval,col=col[iline])
+          parval <- vals[1,imodel]
+          parSD <- valSDs[1,imodel]
+          if(!is.na(parSD) && parSD>0){
+            if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
+              parval <- parval/2
+              parSD <- parSD/2
+            }
+            #x2 <- parval+(-2:2)*parSD # 1 and 2 SDs away from mean to plot symbols
+            x2 <- qnorm(symbolsQuants,parval,parSD)
+            mle <- dnorm(x,parval,parSD)  # smooth line
+            mle2 <- dnorm(x2,parval,parSD) # symbols
+            mlescale <- 1/(sum(mle)*mean(diff(x)))
+            mle <- mle*mlescale
+            mle2 <- mle2*mlescale
+            polygon(c(x[1],x,rev(x)[1]),c(0,mle,0),col=shadecol[iline],border=NA)
+            lines(x,mle,col=col[iline],lwd=2)
+            points(x2,mle2,col=col[iline],pch=pch[iline])
+            lines(rep(parval,2),c(0,dnorm(parval,parval,parSD)*mlescale),col=col[iline]) #
+            #,pch=pch[iline],type='o')
+          }else{
+            abline(v=parval,col=col[iline])
+          }
         }
+        abline(h=0,col="grey")
+        xticks <- pretty(xlim)
+        axis(1,at=xticks,lab=format(xticks/xunits))
+        mtext(side=2,line=1,labels[8])
+        box()
+        legendfun(legendlabels)
       }
-      abline(h=0,col="grey")
-      xticks <- pretty(xlim)
-      axis(1,at=xticks,lab=format(xticks/xunits))
-      mtext(side=2,line=1,labels[8])
-      box()
-      legendfun()
     }
   } # end plotDensities function
   
 
+  uncertaintyplots <- intersect(c(2,4,6,8,10,13),subplots)
+  if(!uncertainty) cat("skipping plots with uncertainty:",paste(uncertaintyplots,collapse=","),"\n")
   # subplot 1: spawning biomass
   if(1 %in% subplots){
+    if(verbose) cat("subplot 1: spawning biomass\n")
     if(plot) plotSpawnBio(uncertainty=FALSE)
     if(print){
       pngfun("compare1_spawnbio.png")
@@ -726,17 +807,21 @@ SSplotComparisons <-
   }
 
   # subplot 2: spawning biomass with uncertainty intervals
-  if(2 %in% subplots & uncertainty){
-    if(plot) plotSpawnBio(uncertainty=uncertainty)
-    if(print){
-      pngfun("compare2_spawnbio_uncertainty.png")
-      plotSpawnBio(uncertainty=uncertainty)
-      dev.off()
+  if(2 %in% subplots){
+    if(uncertainty){
+      if(verbose) cat("subplot 2: spawning biomass with uncertainty intervals\n")
+      if(plot) plotSpawnBio(uncertainty=uncertainty)
+      if(print){
+        pngfun("compare2_spawnbio_uncertainty.png")
+        plotSpawnBio(uncertainty=uncertainty)
+        dev.off()
+      }
     }
   }
 
   # subplot 3: biomass ratio (hopefully equal to spawning depletion)
   if(3 %in% subplots){
+    if(verbose) cat("subplot 3: biomass ratio (hopefully equal to spawning depletion)\n")
     if(plot) plotBratio(uncertainty=FALSE)
     if(print){
       pngfun("compare3_Bratio.png")
@@ -747,16 +832,20 @@ SSplotComparisons <-
 
   # subplot 4: biomass ratio with uncertainty
   if(4 %in% subplots){
-    if(plot) plotBratio(uncertainty=uncertainty)
-    if(print){
-      pngfun("compare4_Bratio_uncertainty.png")
-      plotBratio(uncertainty=uncertainty)
-      dev.off()
+    if(uncertainty){
+      if(verbose) cat("subplot 4: biomass ratio with uncertainty\n")
+      if(plot) plotBratio(uncertainty=uncertainty)
+      if(print){
+        pngfun("compare4_Bratio_uncertainty.png")
+        plotBratio(uncertainty=uncertainty)
+        dev.off()
+      }
     }
   }
 
   # subplot 5: SPR ratio
   if(5 %in% subplots){
+    if(verbose) cat("subplot 5: SPR ratio\n")
     if(plot) plotSPRratio(uncertainty=FALSE)
     if(print){
       pngfun("compare5_SPRratio.png")
@@ -767,16 +856,20 @@ SSplotComparisons <-
 
   # subplot 6: SPR ratio with uncertainty
   if(6 %in% subplots){
-    if(plot) plotSPRratio(uncertainty=uncertainty)
-    if(print){
-      pngfun("compare6_SPRratio_uncertainty.png")
-      plotSPRratio(uncertainty=uncertainty)
-      dev.off()
+    if(uncertainty){
+      if(verbose) cat("subplot 6: SPR ratio with uncertainty\n")
+      if(plot) plotSPRratio(uncertainty=uncertainty)
+      if(print){
+        pngfun("compare6_SPRratio_uncertainty.png")
+        plotSPRratio(uncertainty=uncertainty)
+        dev.off()
+      }
     }
   }
 
   # subplot 7: recruits
   if(7 %in% subplots){
+    if(verbose) cat("subplot 7: recruits\n")
     if(plot) plotRecruits(uncertainty=FALSE)
     if(print){
       pngfun("compare7_recruits.png")
@@ -787,16 +880,20 @@ SSplotComparisons <-
 
   # subplot 8: recruits with uncertainty
   if(8 %in% subplots){
-    if(plot) plotRecruits()
-    if(print){
-      pngfun("compare8_recruits_uncertainty.png")
-      plotRecruits()
-      dev.off()
+    if(uncertainty){
+      if(verbose) cat("subplot 8: recruits with uncertainty\n")
+      if(plot) plotRecruits()
+      if(print){
+        pngfun("compare8_recruits_uncertainty.png")
+        plotRecruits()
+        dev.off()
+      }
     }
   }
   
   # subplot 9: recruit devs
   if(9 %in% subplots){
+    if(verbose) cat("subplot 9: recruit devs\n")
     if(plot) plotRecDevs(uncertainty=FALSE)
     if(print){
       pngfun("compare9_recdevs.png")
@@ -807,16 +904,20 @@ SSplotComparisons <-
 
   # subplot 10: recruit devs with uncertainty
   if(10 %in% subplots){
-    if(plot) plotRecDevs()
-    if(print){
-      pngfun("compare10_recdevs_uncertainty.png")
-      plotRecDevs()
-      dev.off()
+    if(uncertainty){
+      if(verbose) cat("subplot 10: recruit devs with uncertainty\n")
+      if(plot) plotRecDevs()
+      if(print){
+        pngfun("compare10_recdevs_uncertainty.png")
+        plotRecDevs()
+        dev.off()
+      }
     }
   }
   
   # subplot 11: index fits
   if(11 %in% subplots){
+    if(verbose) cat("subplot 11: index fits\n")
     if(plot) plotIndices()
     if(print){
       pngfun("compare11_indices.png")
@@ -825,8 +926,9 @@ SSplotComparisons <-
     }
   }
 
-  # subplot 12: index fits
+  # subplot 12: index fits on a log scale
   if(12 %in% subplots){
+    if(verbose) cat("subplot 12: index fits on a log scale\n")
     if(plot) plotIndices(log=TRUE)
     if(print){
       pngfun("compare12_indices_log.png")
@@ -835,20 +937,48 @@ SSplotComparisons <-
     }
   }
 
+  #### unfinished addition of growth comparisons
+  ## # subplot 13: growth, females
+  ## if(13 %in% subplots){
+  ##   if(verbose) cat("subplot 13: growth, females\n")
+  ##   if(plot) plotIndices(log=TRUE)
+  ##   if(print){
+  ##     pngfun("compare13_growth_females.png")
+  ##     plotgrowth(sex='f')
+  ##     dev.off()
+  ##   }
+  ## }
+
+  ## # subplot 14: growth, females
+  ## if(13 %in% subplots){
+  ##   if(verbose) cat("subplot 13: growth, females\n")
+  ##   if(plot) plotIndices(log=TRUE)
+  ##   if(print){
+  ##     pngfun("compare13_growth_females.png")
+  ##     plotgrowth(sex='f')
+  ##     dev.off()
+  ##   }
+  ## }
+  
+  
   # subplot 13: densities
   if(13 %in% subplots){
-    ndensities <- length(densitynames)
-    for(iplot in 1:ndensities){
-      name <- densitynames[iplot]
-      if(plot) {
-        plotDensities(parname=name,xlab=densityxlabs[iplot])
-      }
-      if(print){
-        pngfun(paste("compare13_densities_",name,".png"))
-        plotDensities(parname=name,xlab=densityxlabs[iplot])
-        dev.off()
+    if(uncertainty){
+      if(verbose) cat("subplot 13: densities\n")
+      ndensities <- length(densitynames)
+      for(iplot in 1:ndensities){
+        name <- densitynames[iplot]
+        if(plot) {
+          plotDensities(parname=name,xlab=densityxlabs[iplot])
+        }
+        if(print){
+          pngfun(paste("compare13_densities_",name,".png"))
+          plotDensities(parname=name,xlab=densityxlabs[iplot])
+          dev.off()
+        }
       }
     }
   }
+
 
 }

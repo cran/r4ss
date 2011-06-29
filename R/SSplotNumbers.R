@@ -1,5 +1,5 @@
 SSplotNumbers <-
-  function(replist,subplots=1:7,
+  function(replist,subplots=1:9,
            plot=TRUE,print=FALSE,
            areas="all",
            areanames="default",
@@ -24,7 +24,9 @@ SSplotNumbers <-
              "expected numbers at age",       #15
              "Beginning of year",             #16
              "Middle of year",                #17
-             "expected numbers at length"),   #18
+             "expected numbers at length",   #18
+             "Sex ratio of numbers at length (males/females)", #19 (out of order, but I don't feel like runumbering)
+             "Sex ratio of numbers at length (females/males)"), #20 (out of order, but I don't feel like runumbering)
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,
            cex.main=1,
            plotdir="default",
@@ -60,10 +62,12 @@ SSplotNumbers <-
     age_error_sd    <- replist$age_error_sd
     lbinspop        <- replist$lbinspop
     nlbinspop       <- replist$nlbinspop
-
+    recruitment_dist <- replist$recruitment_dist
+    # this logic is now out of date, not sure why it wasn't coming from replist anyway
+    #mainmorphs <- morph_indexing$Index[morph_indexing$Bseas==1 & morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
+    mainmorphs <- replist$mainmorphs
+      
     SS_versionshort <- toupper(substr(replist$SS_version,1,8))
-
-    mainmorphs <- morph_indexing$Index[morph_indexing$Bseas==1 & morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
 
     if(areas[1]=="all"){
       areas <- 1:nareas
@@ -226,7 +230,7 @@ SSplotNumbers <-
           if(print & 3 %in% subplots){
             filepart <- ""
             if(nareas > 1) filepart <- paste("_",areanames[iarea],filepart,sep="")
-            pngfun(file=paste(plotdir,"/numbers3_ratio",filepart,".png",sep=""))
+            pngfun(file=paste(plotdir,"/numbers3_ratio_age",filepart,".png",sep=""))
             tempfun(labcex=0.4)
             dev.off()}
         }else{
@@ -304,6 +308,8 @@ SSplotNumbers <-
             natlentemp2$sumprod <- prodsum
             natlentemp2$meanlen <- natlentemp2$sumprod/natlentemp2$sum - (natlentemp0$BirthSeas-1)/nseasons
             natlenyrs <- sort(unique(natlentemp0$Yr))
+            if(iperiod==1) natlenyrsB <- natlenyrs # unique name for beginning of year
+            
             meanlen <- 0*natlenyrs
             for(i in 1:length(natlenyrs)){ # averaging over values within a year (depending on birth season)
               meanlen[i] <- sum(natlentemp2$meanlen[natlentemp0$Yr==natlenyrs[i]]*natlentemp2$sum[natlentemp0$Yr==natlenyrs[i]])/sum(natlentemp2$sum[natlentemp0$Yr==natlenyrs[i]])}
@@ -351,6 +357,53 @@ SSplotNumbers <-
           } # end gender loop
         } # end period loop
       } # end area loop
+
+      if(nsexes>1){
+        for(iarea in areas){
+
+          natlenf <- get(paste("natlentemp0area",iarea,"sex",1,sep=""))
+          natlenm <- get(paste("natlentemp0area",iarea,"sex",2,sep=""))
+          natlenratio <- as.matrix(natlenm[,remove]/natlenf[,remove])
+          if(diff(range(natlenratio,finite=TRUE))!=0){
+            tempfun <- function(males.to.females=TRUE,...){
+              if(males.to.females){
+                main <- labels[19]
+                z <- natlenratio
+              }else{
+                main <- labels[20]
+                z <- 1/natlenratio
+              }                
+              if(nareas > 1) main <- paste(main," for ",areanames[iarea],sep="")
+              contour(natlenyrsB,lbinspop,z,
+                      xaxs="i",yaxs="i",xlab=labels[1],ylab=labels[12],
+                      main=main,cex.main=cex.main,...)
+            }
+            if(plot & 8 %in% subplots){
+              tempfun(males.to.females=TRUE,labcex=1)
+            }
+            if(plot & 9 %in% subplots){
+              tempfun(males.to.females=FALSE,labcex=1)
+            }
+            if(print & 8 %in% subplots){
+              filepart <- ""
+              if(nareas > 1) filepart <- paste("_",areanames[iarea],filepart,sep="")
+              pngfun(file=paste(plotdir,"/numbers8_ratio_len1",filepart,".png",sep=""))
+              tempfun(labcex=0.4)
+              dev.off()
+            }
+            if(print & 9 %in% subplots){
+              filepart <- ""
+              if(nareas > 1) filepart <- paste("_",areanames[iarea],filepart,sep="")
+              pngfun(file=paste(plotdir,"/numbers8_ratio_len2",filepart,".png",sep=""))
+              tempfun(labcex=0.4)
+              dev.off()
+            }
+          }else{
+            cat("skipped sex ratio contour plot because ratio=1 for all lengths and years\n")
+          }
+        } # end area loop
+      } # end if nsexes>1
+
     } # end numbers at length plots
 
     ##########
@@ -359,21 +412,25 @@ SSplotNumbers <-
       equilage <- natage[natage$Era=="VIRG",]
       equilage <- equilage[as.vector(apply(equilage[,remove],1,sum))>0,]
 
+
+      BirthSeas <- spawnseas
+      if(!(spawnseas %in% bseas)) BirthSeas <- min(bseas)
+      if(length(bseas)>1) cat("showing equilibrium age for first birth season",BirthSeas,"\n")
+
       plot(0,type='n',xlim=c(0,accuage),
-           ylim=c(0,1.05*max(equilage[equilage$BirthSeas==spawnseas
-             & equilage$Seas==spawnseas,remove])),
+           ylim=c(0,1.05*max(equilage[equilage$BirthSeas==BirthSeas
+             & equilage$Seas==BirthSeas,remove])),
            xaxs='i',yaxs='i',xlab='Age',ylab=labels[9],main=labels[10],cex.main=cex.main)
 
       # now fill in legend
       legendlty <- NULL
       legendcol <- NULL
       legendlegend <- NULL
-      if(length(unique(equilage$BirthSeas))>1) cat("showing equilibrium age in in season 1 for only the first birth season\n")
       for(iarea in areas){
         for(m in 1:nsexes){
           equilagetemp <- equilage[equilage$Area==iarea & equilage$Gender==m
-                                   & equilage$BirthSeas==spawnseas
-                                   & equilage$Seas==spawnseas,]
+                                   & equilage$BirthSeas==BirthSeas
+                                   & equilage$Seas==BirthSeas,]
           if(nrow(equilagetemp)>1){
             cat("in plot of equilibrium age composition by gender and area\n",
                 "multiple morphs are not supported, using first row from choices below\n")

@@ -24,7 +24,7 @@ SSplotPars <-
   #
   ################################################################################
 
-  codedate <- "November 9, 2010"
+  codedate <- "June 17, 2011"
 
   if(verbose){
     print(paste("R function updated:",codedate),quote=F)
@@ -34,26 +34,33 @@ SSplotPars <-
   # define subfunction
   GetPrior <- function(Ptype,Pmin,Pmax,Pr,Psd,Pval){
     # function to calculate prior values is direct translation of code in SSv3
+    if(is.character(Ptype)){
+      if(Ptype=="No_prior") Ptype2 <- -1
+      if(Ptype=="Normal") Ptype2 <- 0
+      if(Ptype=="Sym_Beta") Ptype2 <- 1
+      if(Ptype=="Full_Beta") Ptype2 <- 2
+      if(Ptype=="Log_Norm") Ptype2 <- 3
+    }
     Pconst <- 0.0001
-    if(Ptype==-1){ # no prior
+    if(Ptype2==-1){ # no prior
       Prior_Like <- rep(0.,length(Pval));
     }
-    if(Ptype==0){ # normal
+    if(Ptype2==0){ # normal
       Prior_Like <- 0.5*((Pval-Pr)/Psd)^2;
     }
-    if(Ptype==1){  # symmetric beta    value of Psd must be >0.0
+    if(Ptype2==1){  # symmetric beta    value of Psd must be >0.0
       mu <- -(Psd*(log( (Pmax+Pmin)*0.5 - Pmin))) - (Psd*(log(0.5)));
       Prior_Like <- -(mu+ (Psd*(log(Pval-Pmin+Pconst)))+(Psd*(log(1.-((Pval-Pmin-Pconst)/(Pmax-Pmin))))));
     }
-    if(Ptype==2){  # CASAL's Beta;  check to be sure that Aprior and Bprior are OK before running SS2!
+    if(Ptype2==2){  # CASAL's Beta;  check to be sure that Aprior and Bprior are OK before running SS2!
       mu <- (Pr-Pmin) / (Pmax-Pmin);  # CASAL's v
       tau <- (Pr-Pmin)*(Pmax-Pr)/(Psd^2)-1.0;
       Bprior <- tau*mu;  Aprior <- tau*(1-mu);  # CASAL's m and n
-      if(Bprior<=1.0 | Aprior <=1.0) {print(" bad Beta prior ");}
+      if(Bprior<=1.0 | Aprior <=1.0) {cat(" bad Beta prior\n");}
       Prior_Like <- (1.0-Bprior)*log(Pconst+Pval-Pmin) + (1.0-Aprior)*log(Pconst+Pmax-Pval)
         -(1.0-Bprior)*log(Pconst+Pr-Pmin) - (1.0-Aprior)*log(Pconst+Pmax-Pr);
     }
-    if(Ptype==3){  # lognormal
+    if(Ptype2==3){  # lognormal
       Prior_Like <- 0.5*((log(Pval)-Pr)/Psd)^2
     }
     return(Prior_Like)
@@ -99,20 +106,38 @@ SSplotPars <-
   ## get posteriors
   if(showpost & !is.na(postfileinfo) & postfileinfo>0){
     posts <- read.table(fullpostfile,head=T)
-    posts <- posts[seq(burn+1,nrow(posts),thin), ] # remove burn-in and thin the posteriors
+    names(posts)[names(posts)=="SR_LN.R0."] <- "SR_LN(R0)"
+    # some stuff specific to Vlada and Ian's dogfish model.
+    # a more permanent solution would be good
+    names(posts)[names(posts)=="SizeSel_4P_1_A.SHOP"] <- "SizeSel_4P_1_A-SHOP"
+    names(posts)[names(posts)=="SizeSel_4P_2_A.SHOP"] <- "SizeSel_4P_2_A-SHOP"
+    names(posts)[names(posts)=="SizeSel_4P_3_A.SHOP"] <- "SizeSel_4P_3_A-SHOP"
+    names(posts)[names(posts)=="SizeSel_4P_4_A.SHOP"] <- "SizeSel_4P_4_A-SHOP"
+    names(posts)[names(posts)=="SizeSel_4P_5_A.SHOP"] <- "SizeSel_4P_5_A-SHOP"
+    # remove burn-in and thin the posteriors if requested
+    posts <- posts[seq(burn+1,nrow(posts),thin), ] 
   }
   ## get parameter estimates
   if(!is.na(repfileinfo) & repfileinfo>0){
     replines <- readLines(fullrepfile,n=2000)
     parstart <- grep("PARAMETERS",replines)[2]
     parend <- grep("DERIVED_QUANTITIES",replines)[2]
-    partable <- read.table(fullrepfile,head=T,nrows=parend-parstart-3,skip=parstart,as.is=T,fill=T)
+    nrows2 <- parend-parstart-3
+    partable <- read.table(fullrepfile,head=F,nrows=nrows2,skip=parstart,as.is=T,
+                           fill=T,row.names=paste(1:nrows2),col.names=1:60)
+    partable <- partable[,1:15]
+    temp <- as.character(partable[1,])
+    temp <- c(temp[1:12],"PR_type_code",temp[13:14])
+    names(partable) <- temp
+    partable <- partable[-1,]
+    rownames(partable) <- 1:nrow(partable)
     partable[partable=="_"] <- NA
     partable$Active_Cnt <- as.numeric(as.character(partable$Active_Cnt))
     partable$Label <- as.character(partable$Label)
-    for(i in (1:ncol(partable))[!names(partable) %in% c("Label","Status")] ){
+    for(i in (1:ncol(partable))[!names(partable) %in% c("Label","Status","PR_type")] ){
       partable[,i] <- as.numeric(as.character(partable[,i]))
     }
+    #return(partable)    
   }
   # subset for only active parameters
   allnames <- partable$Label[!is.na(partable$Active_Cnt)]
@@ -133,7 +158,8 @@ SSplotPars <-
   }else{
     goodnames <- allnames
   }
-
+  badpars <- grep("Impl_err_",goodnames)
+  if(length(badpars)>0) goodnames <- goodnames[-badpars]
   stds <- partable$Parm_StDev[partable$Label %in% goodnames]
   if(showmle & (min(is.na(stds))==1 || min(stds, na.rm=TRUE) <= 0)){
     print("Some parameters have std. dev. values in Report.sso equal to 0.",quote=F)
@@ -196,6 +222,7 @@ SSplotPars <-
   for(ipar in 1:npars){
     # grab name and full parameter line
     parname <- goodnames[ipar]
+    if(verbose) print(parname)
     parline <- partable[partable$Label==parname,]
 
     # grab values
@@ -221,7 +248,7 @@ SSplotPars <-
     x <- seq(Pmin,Pmax,length=5000) # x vector for subsequent calcs
 
     # make empty holders for future information
-    ymax <- NULL # upper y-limit in plot
+    ymax <- 0 # upper y-limit in plot
     xmin <- NULL # lower x-limit in plot
     xmax <- NULL # upper x-limit in plot
 
@@ -229,11 +256,11 @@ SSplotPars <-
     negL_prior <- GetPrior(Ptype=Ptype,Pmin=Pmin,Pmax=Pmax,Pr=Pr,Psd=Psd,Pval=x)
     prior <- exp(-1*negL_prior)
     # prior likelihood at initial and final values
-    priorinit <- exp(-1*GetPrior(Ptype=Ptype,Pmin=Pmin,Pmax=Pmax,Pr=Pr,Psd=Psd,Pval=initval))
-    priorfinal <- exp(-1*GetPrior(Ptype=Ptype,Pmin=Pmin,Pmax=Pmax,Pr=Pr,Psd=Psd,Pval=finalval))
+    ## priorinit <- exp(-1*GetPrior(Ptype=Ptype,Pmin=Pmin,Pmax=Pmax,Pr=Pr,Psd=Psd,Pval=initval))
+    ## priorfinal <- exp(-1*GetPrior(Ptype=Ptype,Pmin=Pmin,Pmax=Pmax,Pr=Pr,Psd=Psd,Pval=finalval))
     if(showprior){
       prior <- prior/(sum(prior)*mean(diff(x)))
-      ymax <- max(ymax,max(prior)) # update ymax
+      ymax <- max(ymax,max(prior),na.rm=TRUE) # update ymax
     }
 
     # get normal distribution associated with ADMB's estimate
@@ -243,7 +270,7 @@ SSplotPars <-
         mle <- dnorm(x,finalval,parsd)
         mlescale <- 1/(sum(mle)*mean(diff(x)))
         mle <- mle*mlescale
-        ymax <- max(ymax,max(mle)) # update ymax
+        ymax <- max(ymax,max(mle),na.rm=TRUE) # update ymax
         # update x range
         xmin <- qnorm(0.001,finalval,parsd)
         xmax <- qnorm(0.999,finalval,parsd)
@@ -302,7 +329,6 @@ SSplotPars <-
     # make plot
     if(is.null(newheaders)) header <- parname else header <- newheaders[ipar]
     if(is.null(ylim)) ylim2 <- c(0,1.1*ymax) else ylim2 <- ylim
-
     plot(0,type="n",xlim=xlim2,ylim=ylim2,xaxs=xaxs,yaxs="i",
          xlab="",ylab="",main=header,cex.main=1,axes=F)
     axis(1)

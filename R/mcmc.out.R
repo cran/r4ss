@@ -72,6 +72,7 @@ mcmc.out <- function (
    }
 
   ##### change to mcmc object for coda #####
+print(head(mcmcdata))  
    mcmcfirst <- mcmc(mcmcdata)					# make the mcmc object from the data table
    mcmctemp <- window(mcmcfirst,thin=thin,start=(1+burn))       # thin the chain  and remove burn in
    mcthinned  <- as.matrix(mcmctemp)        			# get rid of iteration labels

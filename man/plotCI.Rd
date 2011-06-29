@@ -10,16 +10,13 @@
   modified to add access to ylim and contents.
 }
 \usage{
-plotCI(x, z = x, y = NULL, uiw, liw = uiw, ylo = NULL, yhi = NULL, ...,
-sfrac = 0.01, ymax = NULL, add = FALSE)
+plotCI(x, y = NULL, uiw, liw = uiw, ylo = NULL, yhi = NULL, ...,
+sfrac = 0.01, ymax = NULL, add = FALSE, col = "black")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
     The x coordinates of points in the plot
-  }
-  \item{z}{
-    Not sure.
   }
   \item{y}{
     The y coordinates of the points in the plot.
@@ -48,6 +45,9 @@ sfrac = 0.01, ymax = NULL, add = FALSE)
   \item{add}{
     Add points and intervals to existing plot? Default=FALSE.
   }
+  \item{col}{
+    Color for the points and lines.
+  }
 }
 \details{
   %%  ~~ If necessary, more details than the description above ~~
@@ -63,7 +63,7 @@ sfrac = 0.01, ymax = NULL, add = FALSE)
   %% ~put references to the literature/web site here ~
 }
 \author{
-  Bill Venables, Ian Stewart, Ian Taylor
+  Bill Venables, Ian Stewart, Ian Taylor, John Wallace
 }
 \note{
   %%  ~~further notes~~

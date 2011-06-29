@@ -27,9 +27,6 @@ SSplotBiology <-
 
   # get objects from replist
   nseasons     <- replist$nseasons
-  if(!seas %in% 1:nseasons) stop("'seas' input should be within 1:nseasons")
-  if(nseasons>1) labels[6] <- gsub("middle of the year", paste("middle of season",seas), labels[6])
-    
   growdat      <- replist$endgrowth[replist$endgrowth$Seas==seas,]
   biology      <- replist$biology
   startyr      <- replist$startyr
@@ -42,8 +39,18 @@ SSplotBiology <-
   nsexes       <- replist$nsexes
   mainmorphs   <- replist$mainmorphs
   accuage      <- replist$accuage
+  growthvaries <- replist$growthvaries
   growthseries <- replist$growthseries
   ageselex     <- replist$ageselex
+
+  if(!seas %in% 1:nseasons) stop("'seas' input should be within 1:nseasons")
+  # trying to fix error when spawning not in season 1:
+  ## if(nrow(growdat[growdat$Gender==1 & growdat$Morph==mainmorphs[1],])==0){
+  ##   seas <- replist$spawnseas
+  ##   growdat      <- replist$endgrowth[replist$endgrowth$Seas==seas,]
+  ##   cat("Note: growth will be shown for spawning season =",seas,"\n")
+  ## }
+  if(nseasons>1) labels[6] <- gsub("middle of the year", paste("middle of season",seas), labels[6])
   
   if(plotdir=="default") plotdir <- replist$inputs$dir
   # check dimensions
@@ -234,14 +241,14 @@ SSplotBiology <-
   }
 
   # Time-varying growth (formerly plot #2)
-  if(nseasons > 1){
-    if(verbose) cat("No check for time-varying growth in multi-season models yet\n")
+  if(is.null(growthvaries)){
+    if(verbose) cat("No check for time-varying growth for this type of model (not sure why)\n")
   }else{ # temporarily disable multi-season plotting of time-varying growth
     if(is.null(growthseries))
     {
       cat("! Warning: no time-varying growth info because 'detailed age-structured reports' turned off in starter file.\n")
     }else{
-      if(replist$growthvaries) # if growth is time varying
+      if(growthvaries) # if growth is time varying
       for(i in 1:nsexes)
       {
         growdatuse <- growthseries[growthseries$Yr >= startyr-2 &
