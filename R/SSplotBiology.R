@@ -17,9 +17,16 @@ SSplotBiology <-
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
            verbose=TRUE)
 {
-  pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-
-  ians_blues <- c("white","grey","lightblue","skyblue","steelblue1","slateblue",topo.colors(6),"blue","blue2","blue3","blue4","black")
+  pngfun <- function(file,caption=NA){
+    png(filename=file,width=pwidth,height=pheight,
+        units=punits,res=res,pointsize=ptsize)
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+    return(plotinfo)
+  }
+  plotinfo <- NULL
+  
+  ians_blues <- c("white","grey","lightblue","skyblue","steelblue1","slateblue",
+                  topo.colors(6),"blue","blue2","blue3","blue4","black")
   ians_contour <- c("white",rep("blue",100))
 
   #### plot function 1
@@ -28,6 +35,7 @@ SSplotBiology <-
   # get objects from replist
   nseasons     <- replist$nseasons
   growdat      <- replist$endgrowth[replist$endgrowth$Seas==seas,]
+  growthCVtype <- replist$growthCVtype
   biology      <- replist$biology
   startyr      <- replist$startyr
   FecType      <- replist$FecType
@@ -78,14 +86,25 @@ SSplotBiology <-
   # Midle of season 1 (or specified season) mean length at age with 95% range of lengths (by sex if applicable)
   growdatF <- growdat[growdat$Gender==1 & growdat$Morph==mainmorphs[1],]
   growdatF$Sd_Size <- growdatF$SD_Mid
-  growdatF$high <- growdatF$Len_Mid + 1.96*growdatF$Sd_Size
-  growdatF$low <- growdatF$Len_Mid - 1.96*growdatF$Sd_Size
-  if(nsexes > 1){
+  if(growthCVtype=="logSD=f(A)"){ # lognormal distribution of length at age
+    growdatF$high <- qlnorm(0.975, meanlog=log(growdatF$Len_Mid), sdlog=growdatF$Sd_Size)
+    growdatF$low  <- qlnorm(0.025, meanlog=log(growdatF$Len_Mid), sdlog=growdatF$Sd_Size)
+  }else{                        # normal distribution of length at age
+    growdatF$high <- qnorm(0.975, mean=growdatF$Len_Mid, sd=growdatF$Sd_Size)
+    growdatF$low  <- qnorm(0.025, mean=growdatF$Len_Mid, sd=growdatF$Sd_Size)
+  }
+  
+  if(nsexes > 1){ # do males if 2-sex model
     growdatM <- growdat[growdat$Gender==2 & growdat$Morph==mainmorphs[2],]
     xm <- growdatM$Age
     growdatM$Sd_Size <- growdatM$SD_Mid
-    growdatM$high <- growdatM$Len_Mid + 1.96*growdatM$Sd_Size
-    growdatM$low <- growdatM$Len_Mid - 1.96*growdatM$Sd_Size
+    if(growthCVtype=="logSD=f(A)"){ # lognormal distribution of length at age
+      growdatM$high <- qlnorm(0.975, meanlog=log(growdatM$Len_Mid), sdlog=growdatM$Sd_Size)
+      growdatM$low  <- qlnorm(0.025, meanlog=log(growdatM$Len_Mid), sdlog=growdatM$Sd_Size)
+    }else{                        # normal distribution of length at age
+      growdatM$high <- qnorm(0.975, mean=growdatM$Len_Mid, sd=growdatM$Sd_Size)
+      growdatM$low  <- qnorm(0.025, mean=growdatM$Len_Mid, sd=growdatM$Sd_Size)
+    }
   }
 
   gfunc1 <- function(){ # weight
@@ -117,7 +136,7 @@ SSplotBiology <-
       plot(FecX, FecY, xlab=fec_xlab, ylab=fec_ylab, ylim=c(0,ymax), col=col2, pch=19)
       lines(FecX, rep(FecPar1, length(FecX)), col=col1)
       text(mean(range(FecX)), FecPar1-0.05*ymax,"Egg output proportional to spawning biomass")
-   }else{
+    }else{
       points(FecX, FecY,col=col2,pch=19)
     }
   }
@@ -160,29 +179,47 @@ SSplotBiology <-
   }
   if(print){ # print to PNG files
     if(1 %in% subplots){
-      pngfun(file=paste(plotdir,"/bio1_weightatsize.png",sep=""))
+      file <- paste(plotdir,"/bio1_weightatsize.png",sep="")
+      caption <- "Weight-length relationship"
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc1()
-      dev.off()}
+      dev.off()
+    }
     if(2 %in% subplots){
-      pngfun(file=paste(plotdir,"/bio2_maturity.png",sep=""))
+      file <- paste(plotdir,"/bio2_maturity.png",sep="")
+      caption <- paste("Maturity at",ifelse(min(biology$Mat_len)<1,"length","age"))
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc2()
-      dev.off()}
+      dev.off()
+    }
     if(3 %in% subplots & FecType==1){
-      pngfun(file=paste(plotdir,"/bio3_fecundity.png",sep=""))
+      file <- paste(plotdir,"/bio3_fecundity.png",sep="")
+      caption <- "Fecundity"
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc3a()
-      dev.off()}
+      dev.off()
+    }
     if(4 %in% subplots & fecundityOK){
-      pngfun(file=paste(plotdir,"/bio4_fecundity_wt.png",sep=""))
+      file <- paste(plotdir,"/bio4_fecundity_wt.png",sep="")
+      caption <- "Fecundity as a function of weight"
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc3b()
-      dev.off()}
+      dev.off()
+    }
     if(5 %in% subplots & fecundityOK){
-      pngfun(file=paste(plotdir,"/bio5_fecundity_len.png",sep=""))
+      file <- paste(plotdir,"/bio5_fecundity_len.png",sep="")
+      caption <- "Fecundity as a function of length"
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc3c()
-      dev.off()}
+      dev.off()
+    }
     if(6 %in% subplots){
-      pngfun(file=paste(plotdir,"/bio6_spawningoutput.png",sep=""))
+      file <- paste(plotdir,"/bio6_spawningoutput.png",sep="")
+      caption <- "Spawning output at length"
+      plotinfo <- pngfun(file=file, caption=caption)
       gfunc4()
-      dev.off()}
+      dev.off()
+    }
   }
 
   ymax <- max(growdatF$high)
@@ -212,9 +249,13 @@ SSplotBiology <-
   }
   if(plot & 7 %in% subplots) gfunc5()
   if(print & 7 %in% subplots){
-    pngfun(file=paste(plotdir,"/bio7_sizeatage.png",sep=""))
+    file <- paste(plotdir,"/bio7_sizeatage.png",sep="")
+    caption <- "Length at age"
+    plotinfo <- pngfun(file=file, caption=caption)
     gfunc5()
-    dev.off()}
+    dev.off()
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+  }
 
   # Natural mortality (if time or sex varying)
   M <- growdatF$M
@@ -235,9 +276,12 @@ SSplotBiology <-
     }
     if(plot & 8 %in% subplots) mfunc()
     if(print & 8 %in% subplots){
-      pngfun(file=paste(plotdir,"/bio8_natmort.png",sep=""))
+      file <- paste(plotdir,"/bio8_natmort.png",sep="")
+      caption <- "Natural mortality"
+      plotinfo <- pngfun(file=file, caption=caption) 
       mfunc()
-      dev.off()}
+      dev.off()
+    }
   }
 
   # Time-varying growth (formerly plot #2)
@@ -246,7 +290,8 @@ SSplotBiology <-
   }else{ # temporarily disable multi-season plotting of time-varying growth
     if(is.null(growthseries))
     {
-      cat("! Warning: no time-varying growth info because 'detailed age-structured reports' turned off in starter file.\n")
+      cat("! Warning: no time-varying growth info because\n",
+          "          'detailed age-structured reports' turned off in starter file.\n")
     }else{
       if(growthvaries) # if growth is time varying
       for(i in 1:nsexes)
@@ -266,17 +311,29 @@ SSplotBiology <-
           if(i==2){main <- "Male time-varying growth"}
           if(nseasons > 1){main <- paste(main," season 1",sep="")}
           if(plot){
-            if(9 %in% subplots) persp(x,y,z,col="white",xlab=labels[2],ylab="",zlab=labels[1],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
-            if(10 %in% subplots) contour(x,y,z,nlevels=12,xlab=labels[2],main=main,cex.main=cex.main,col=ians_contour,lwd=2)}
+            if(9 %in% subplots)
+              persp(x,y,z,col="white",xlab=labels[2],ylab="",zlab=labels[1],expand=0.5,
+                    box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",
+                    phi=35,theta=-10)
+            if(10 %in% subplots)
+              contour(x,y,z,nlevels=12,xlab=labels[2],
+                      main=main,cex.main=cex.main,col=ians_contour,lwd=2)}
           if(print){
             if(9 %in% subplots){
-              pngfun(file=paste(plotdir,"/bio9_timevarygrowthsurf_sex",i,".png",sep=""))
-              persp(x,y,z,col="white",xlab=labels[2],ylab="",zlab=labels[1],expand=0.5,box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",phi=35,theta=-10)
+              file <- paste(plotdir,"/bio9_timevarygrowthsurf_sex",i,".png",sep="")
+              caption <- "Perspective plot of time-varying growth"
+              plotinfo <- pngfun(file=file, caption=caption)
+              persp(x,y,z,col="white",xlab=labels[2],ylab="",zlab=labels[1],expand=0.5,
+                    box=TRUE,main=main,cex.main=cex.main,ticktype="detailed",
+                    phi=35,theta=-10)
               dev.off()
             }
             if(10 %in% subplots){
-              pngfun(file=paste(plotdir,"/bio10_timevarygrowthcontour_sex",i,".png",sep=""))
-              contour(x,y,z,nlevels=12,xlab=labels[2],main=main,cex.main=cex.main,col=ians_contour,lwd=2)
+              file <- paste(plotdir,"/bio10_timevarygrowthcontour_sex",i,".png",sep="")
+              caption <- "Contour plot of time-varying growth"
+              plotinfo <- pngfun(file=file, caption=caption)
+              contour(x,y,z,nlevels=12,xlab=labels[2],
+                      main=main,cex.main=cex.main,col=ians_contour,lwd=2)
               dev.off()
             }
           } # end print
@@ -284,4 +341,6 @@ SSplotBiology <-
       } # end loop over sexes
     } # end of if data available for time varying growth
   }# end disable of time-varying growth for multi-season models
+  if(!is.null(plotinfo)) plotinfo$category <- "Bio"
+  return(invisible(plotinfo))
 }

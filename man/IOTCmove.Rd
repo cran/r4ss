@@ -13,7 +13,10 @@
   might be written for any other model.
 }
 \usage{
-IOTCmove(replist=NULL, moveage=5, moveseas=1, legend=FALSE, title=NULL)
+IOTCmove(replist = NULL, moveage = 5, moveseas = 1,
+         legend = FALSE, title = NULL,
+         areanames = c("R1","R2","R3","R4","R5"),
+         ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,38 +34,44 @@ IOTCmove(replist=NULL, moveage=5, moveseas=1, legend=FALSE, title=NULL)
     arrows
   }
   \item{title}{
-    optional title to be added above map
+    optional title to add at top of figure
+  }
+  \item{areanames}{
+    vector of names for each area
+  }
+  \item{...}{
+    Additional arguments can get passed to \code{\link{SSplotMovementMap}}
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
-\note{
-}
+% \note{
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
-\seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
-}
-\examples{
-  % \dontrun{
-  %   IOTCmove(myreplist)
-  % }
-}
+% \seealso{
+%   %% ~~objects to See Also as \code{\link{help}}, ~~~
+% }
+% \examples{
+%   % \dontrun{
+%   %   IOTCmove(myreplist)
+%   % }
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

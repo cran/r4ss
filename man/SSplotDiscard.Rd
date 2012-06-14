@@ -11,7 +11,8 @@
 SSplotDiscard(replist, add = FALSE, plot = TRUE, print = FALSE,
 plotdir = "default", fleets = "all", fleetnames = "default",
 labels = c("Year", "Discard fraction", "Total discards", "for"),
-yhi = 1, pwidth = 7, pheight = 7, punits = "in", res = 300,
+yhi = 1, col1="blue", col2="red",
+pwidth = 7, pheight = 7, punits = "in", res = 300,
 ptsize = 12, cex.main = 1, verbose = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -44,6 +45,12 @@ ptsize = 12, cex.main = 1, verbose = TRUE)
   \item{yhi}{
     maximum y-value to include in plot (all data included regardless). Default = 1.
   }
+  \item{col1}{
+    first color to use in plot (for expected values)
+  }
+  \item{col2}{
+    second color to use in plot (for observations and intervals)
+  }
   \item{pwidth}{
     width of plot written to PNG file
   }
@@ -66,33 +73,33 @@ ptsize = 12, cex.main = 1, verbose = TRUE)
     report progress to R GUI?
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor, Ian Stewart
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{SS_plots}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

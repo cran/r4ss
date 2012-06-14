@@ -1,7 +1,7 @@
 mcmc.out <- function (
           directory="c:/mydirectory/",
           run="mymodel/",			# folder with ADMB run files
-          file="keyposteriors.sso",		# the file name of the posteriors
+          file="keyposteriors.csv",		# the file name of the posteriors
           namefile="postplotnames.sso",		# the (optional) file name of the dimension and names of posteriors
           names=FALSE, 				# read in names file (T) or use generic naming (F)
           headernames=TRUE,                     # use the names in the header of 'file'
@@ -15,8 +15,8 @@ mcmc.out <- function (
           surf2=2, 				# the second parameter for the surface plot
           stats=FALSE, 				# print stats if desired
           plots=TRUE, 				# show plots or not
-          header=F,				# data file with header?
-          sep="",				# sep for data file
+          header=TRUE,				# data file with header?
+          sep=",",				# sep for data file
           print=FALSE 				# send to screen unless asked to print
          )
  
@@ -32,6 +32,8 @@ mcmc.out <- function (
 ##############################################################################################################
 {
   require(coda) || stop("package coda is required")
+  geterrmessage()
+  require(gtools) || stop("package gtools is required")
   geterrmessage()
      
   # add section to set up for printing or display to screen (default)
@@ -72,7 +74,6 @@ mcmc.out <- function (
    }
 
   ##### change to mcmc object for coda #####
-print(head(mcmcdata))  
    mcmcfirst <- mcmc(mcmcdata)					# make the mcmc object from the data table
    mcmctemp <- window(mcmcfirst,thin=thin,start=(1+burn))       # thin the chain  and remove burn in
    mcthinned  <- as.matrix(mcmctemp)        			# get rid of iteration labels

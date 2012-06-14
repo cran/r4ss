@@ -39,8 +39,7 @@ SS_writedat <- function(datlist,outfile,overwrite=FALSE,verbose=TRUE){
   }
 
   # write a header
-  writeLines("#C data file created using the SS_writedat function")
-  writeLines("#C function is available at http://code.google.com/p/r4ss/source/browse/#svn/branches/input_file_objects")
+  writeLines("#C data file created using the SS_writedat function in the R package r4ss")
   writeLines(paste("#C should work with SS version:",datlist$SSversion))
   writeLines(paste("#C file write time:",Sys.time()))
   writeLines("#")
@@ -112,6 +111,7 @@ SS_writedat <- function(datlist,outfile,overwrite=FALSE,verbose=TRUE){
   if(!is.null(datlist$MeanSize_at_Age)) printdf(datlist$MeanSize_at_Age_obs)
   wl("N_environ_variables")
   wl("N_environ_obs")
+  if(!is.null(datlist$envdat)) printdf(datlist$envdat)
   wl("N_sizefreq_methods")
   wl("do_tags")
   if(datlist$do_tags != 0){

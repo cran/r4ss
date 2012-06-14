@@ -26,33 +26,37 @@ SS_writedat(datlist, outfile, overwrite = FALSE, verbose = TRUE)
     Should there be verbose output while running the file?
   }
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
+% \details{
+% %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+% %%  ~Describe the value returned
+% %%  If it is a LIST, use
+% %%  \item{comp1 }{Description of 'comp1'}
+% %%  \item{comp2 }{Description of 'comp2'}
+% %% ...
+% }
+% \references{
+% %% ~put references to the literature/web site here ~
+% }
 \author{
-%%  ~~who you are~~
+  Ian Taylor
 }
-\note{
-%%  ~~further notes~~
-}
+% \note{
+% %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+ \code{\link{SS_makedatlist}},
+ \code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
+ \code{\link{SS_readctl}},
+ \code{\link{SS_writestarter}}, \code{\link{SS_writeforecast}},
+ \code{\link{SS_writedat}}, \code{\link{SS_writectl}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ data }

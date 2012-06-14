@@ -9,13 +9,13 @@
   measures related to bias adjustment.
 }
 \usage{
-SSplotRecdevs(replist, subplots = 1:4,
+SSplotRecdevs(replist, subplots = 1:3,
 plot = TRUE, print = FALSE, add = FALSE,
 uncertainty = TRUE, forecastplot = FALSE,
 col1 = "black", col2 = "blue",
 col3 = "green3", col4 = "red", legendloc = "topleft",
 labels = c("Year", "Asymptotic standard error estimate",
-"Log recruitment deviation", "Bias adjustment check",
+"Log recruitment deviation",
 "Bias adjustment fraction, 1 - stddev^2 / sigmaR^2"),
 pwidth = 7, pheight = 7, punits = "in", res = 300, ptsize = 12,
 cex.main = 1, plotdir = "default", verbose = TRUE)
@@ -87,33 +87,33 @@ cex.main = 1, plotdir = "default", verbose = TRUE)
     report progress to R GUI?
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor, Ian Stewart
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{SS_plots}},  \code{\link{SS_fitbiasramp}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

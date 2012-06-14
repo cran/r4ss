@@ -1,6 +1,7 @@
 SS_fitbiasramp <-
 function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
-         transform=FALSE, png=FALSE, pdf=FALSE, oldctl=NULL, newctl=NULL,
+         transform=FALSE, plot=TRUE, print=FALSE, plotdir="default",
+         oldctl=NULL, newctl=NULL, nlminb=TRUE,
          pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1){
   ##################
   # function to estimate bias adjustment ramp
@@ -15,9 +16,16 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
 
   # note, method is choices that go into optim:
   #  method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN")
+  pngfun <- function(file,caption=NA){
+    png(filename=file,width=pwidth,height=pheight,
+        units=punits,res=res,pointsize=ptsize)
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+    return(plotinfo)
+  }
+  plotinfo <- NULL
 
-  if(!is.list(replist) | !(substr(replist$SS_version,1,8) %in% c("SS-V3.11","SS-V3.20","SS-V3.21"))){
-    stop("this function needs an input object created by SS_output from SS v3.11 through v3.21")
+  if(!is.list(replist) | !(as.numeric(substr(replist$SS_version,5,8)) > 3.11)){
+    stop("this function needs an input object created by SS_output from SS version 3.11 or greater")
   }
   if(replist$inputs$covar==FALSE){
     stop("you need to have covar=TRUE in the input to the SS_output function")
@@ -27,6 +35,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   recruit    <- replist$recruit
   sigma_R_in <- replist$sigma_R_in
   rmse_table <- replist$rmse_table
+  if(plotdir=="default") plotdir <- replist$inputs$dir
 
   if(max(rmse_table$RMSE)==0) stop("No bias adjustment needed. Root mean squared error of recruit devs is 0.")
   
@@ -63,7 +72,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   }
 
   if(transform){
-      startvalues <- makeoffsets(startvalues)
+    startvalues <- makeoffsets(startvalues)
   }
   if(verbose & transform) cat("transformed startvalues =",paste(startvalues,collapse=", "),"\n")
 
@@ -124,9 +133,16 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
 
   optimfun <- function(yr,std,startvalues){
     # run the optimizationt to find best fit values
-    biasopt <- optim(par=startvalues,fn=biasadjfit,yr=yr,std=std,
-                     sigmaR=sigma_R_in,transform=transform,
-                     method=method,control=list(maxit=1000))
+    if(nlminb){
+      biasopt <- nlminb(start=startvalues, objective=biasadjfit, gradient = NULL,
+                        hessian = NULL, scale = 1, control = list(maxit=1000),
+                        lower = c(-Inf,-Inf,-Inf,-Inf,0), upper = Inf,
+                        yr=yr,std=std,sigmaR=sigma_R_in,transform=transform)
+    }else{
+      biasopt <- optim(par=startvalues,fn=biasadjfit,yr=yr,std=std,
+                       sigmaR=sigma_R_in,transform=transform,
+                       method=method,control=list(maxit=1000))
+    }
     return(biasopt)
   }
 
@@ -167,21 +183,23 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   val <- recdevs$val
   std <- recdevs$std
 
-  
+  # test for presence of estimated recruitment deviations
   if(max(val)==0 | length(val)==0){
     if(verbose) cat("no rec devs estimated in this model\n")
     return()
-  }else{
-    recdev_hi <- val + 1.96*std
-    recdev_lo <- val - 1.96*std
+  }
 
-    ylim <- range(recdev_hi,recdev_lo)
+  recdev_hi <- val + 1.96*std
+  recdev_lo <- val - 1.96*std
 
-    if(png!=FALSE & pdf!=FALSE) stop("must have either png or pdf equal to FALSE")
-    if(png!=FALSE) png(file=png,width=pwidth,height=pheight,
-                   units=punits,res=res,pointsize=ptsize)
-    if(pdf!=FALSE) pdf(file=pdf,width=pwidth,height=pheight,
-                   pointsize=ptsize)
+  ylim <- range(recdev_hi,recdev_lo)
+  cat("Note: the default optimizer has been changed to 'nlminb' from 'optim'\n",
+      "     if you have problems with this, set input 'nlminb' to FALSE\n",
+      "     and write to Ian.Taylor@noaa.gov to let me know of the issue.\n")
+  cat('Now estimating alternative recruitment bias adjustment fraction...\n')
+  newbias <- optimfun(yr=yr,std=std,startvalues=startvalues)
+
+  plotbiasadj <- function(){
     if(twoplots){
       par(mfrow=c(2,1),mar=c(2,5,1,1),oma=c(3,0,0,0))
       plot(yr,yr,type='n',xlab="Year",
@@ -190,18 +208,22 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
       arrows(yr,recdev_lo,yr,recdev_hi,length=0.03,code=3,angle=90,lwd=1.2)
       points(yr,val,pch=16)
     }
+
+    yvals <- 1-(std/sigma_R_in)^2
+    plot(yr,yvals,xlab="Year",
+         ylab='',
+         ylim=range(min(yvals,0),1,1.3),type="b",yaxs='i')
+    abline(h=0,col="grey")
+    abline(h=1,col="grey")
+    mtext(side=2,line=2.5,expression(1 - italic(SE(hat(r[y]))^2 / sigma[R])^2))
+    
+    # bias correction (2nd axis, scaled by ymax)
+    lines(biasadjfun(yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
+    lines(recruit$year,recruit$biasadj,col=2,lwd=3,lty=2)
+    legend('topleft',col=c(2,4),lwd=3,lty=2:1,inset=.01,cex=.9,bg=rgb(1,1,1,.8),box.col=NA,
+           legend=c('bias adjust in model','estimated alternative'))
+    mtext(side=1,line=3,'Year')
   }
-
-  cat('estimating alternative recruitment bias adjustment fraction...\n')
-  newbias <- optimfun(yr=yr,std=std,startvalues=startvalues)
-
-  yvals <- 1-(std/sigma_R_in)^2
-  plot(yr,yvals,xlab="Year",
-       ylab='',
-       ylim=range(0,1,1.3),type="b",yaxs='i')
-  abline(h=0,col="grey")
-  abline(h=1,col="grey")
-  mtext(side=2,line=2.5,expression(1 - italic(SE(hat(r[y]))^2 / sigma[R])^2))
 
   #names
   names <- c(
@@ -210,16 +232,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   "#_last_yr_fullbias_adj_in_MPD",
   "#_first_recent_yr_nobias_adj_in_MPD",
   "#_max_bias_adj_in_MPD (1.0 to mimic pre-2009 models)")
-
-  # bias correction (2nd axis, scaled by ymax)
-  lines(biasadjfun(yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
-  lines(recruit$year,recruit$biasadj,col=2,lwd=3,lty=2)
-  legend('topleft',col=c(2,4),lwd=3,lty=2:1,inset=.01,cex=.9,bg=rgb(1,1,1,.8),box.col=NA,
-         leg=c('bias adjust in model','estimated alternative'))
-  mtext(side=1,line=3,'Year')
-
-  if(pdf!=FALSE | png!=FALSE) dev.off()
-
+  
   newvals <- newbias[[1]]
   if(transform) newvals <- removeoffsets(newvals)
   newvals <- round(newvals,4)
@@ -232,10 +245,35 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
       cat("##############################\n")
   }
 
-
   cat('Estimated values:\n')
   print(format(df,justify="left"),row.names=FALSE)
 
+  if(plot) plotbiasadj()
+  if(print){
+    file <- paste(plotdir,"/recruit_fit_bias_adjust.png",sep="")
+    caption <-
+      paste("Least squares estimate of alternative bias adjustment relationship ",
+            "for recruitment deviations. For more information, see<br> \n",
+            "<blockquote>Methot, R.D. and Taylor, I.G., 2011. Adjusting for bias ",
+            "due to variability of estimated recruitments in fishery assessment ",
+            "models. <i>Can. J. Fish. Aquat. Sci.</i>, 68:1744-1760.",
+            "</blockquote><br> \n",
+            "Estimated alternative inputs to SS control file associated ",
+            "with blue line in figure: \n<pre>",
+            sep="")
+    for(iline in 1:4){
+      caption <- paste(caption, format(round(df$value[iline],1),nsmall=1), "   ",
+                       df$label[iline], " \n", sep="")
+    }
+    caption <- paste(caption, df$value[5], "   ", df$label[5], sep="")
+    caption <- paste(caption,"  </pre>")
+    
+    plotinfo <- pngfun(file=file, caption=caption)
+    plotbiasadj()
+    dev.off()
+  }
+
+  
   if(!is.null(oldctl) & !is.null(newctl)){
     # modify a control file to include estimates if file names are provided
     ctlfile <- readLines(oldctl)
@@ -249,6 +287,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
     writeLines(ctlfile,newctl)
     cat('wrote new file to',newctl,'with values',paste(newvals,collapse=" "),"\n")
   }
-  return(invisible(newbias))
+  if(!is.null(plotinfo)) plotinfo$category <- "RecDev"
+  return(invisible(list(newbias=newbias, df=df, plotinfo=plotinfo)))
 }
 

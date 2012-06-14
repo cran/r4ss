@@ -27,21 +27,27 @@ SSplotComparisons <-
            btarg=0.4, minbthresh=0.25,
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
            plotdir=NULL,
-           densitynames=c("SPB_Virgin","SPB_2011","Bratio_2011","SR_R0","SR_LN(R0)","TotYield_MSY"),
-           densityxlabs=c("B0 (mt)","Spawning Biomass in 2011 (mt)","depletion in 2011","log(R0)","MSY (mt)"),
+           densitynames=c("SPB_Virgin","R0"),
+           densityxlabs="default",
            densityscalex=1,
            densityscaley=1,
+           densityadjust=1,
            fix0=TRUE,
            new=TRUE,
            verbose=TRUE,
            mcmcVec="default")
 {
   # subfunction to write png files
-  pngfun <- function(file) png(file=paste(plotdir,file,sep="/"),width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-  if(print & is.null(plotdir)) stop("to print PNG files, you must supply a directory as 'plotdir'")
+  pngfun <- function(file)
+    png(filename=paste(plotdir,file,sep="/"),
+        width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+  if(print & is.null(plotdir))
+    stop("to print PNG files, you must supply a directory as 'plotdir'")
   
   # subfunction to add legend
-  legendfun <- function(legendlabels) legend(legendloc, legend=legendlabels, col=col, lty=lty, lwd=lwd, pch=pch, bty="n")
+  legendfun <- function(legendlabels)
+    legend(legendloc, legend=legendlabels,
+           col=col, lty=lty, lwd=lwd, pch=pch, bty="n")
 
   rc <- function(n,alpha=1){
     # a subset of rich.colors by Arni Magnusson from the gregmisc package
@@ -96,12 +102,14 @@ SSplotComparisons <-
       SpawnBioUpper[,i]  <- SpawnBioUpper[,i]/2
     }
   }
-  
+
+  # check number of models to be plotted
   if(models[1]=="all") models <- 1:n
   nlines <- length(models)
   if(mcmcVec[1]=="default") mcmcVec <- rep(FALSE,nlines)
   if(length(models)!=length(mcmcVec)) cat("WARNING: the number of models is not equal to the number of mcmcVec elements\n")
-  
+
+  # setup colors, points, and line types
   if(col[1]=="default" & nlines>3) col <- rc(nlines+1)[-1]
   if(col[1]=="default" & nlines<3) col <- rc(nlines)
   if(col[1]=="default" & nlines==3) col <- c("blue","red","green3")
@@ -109,13 +117,13 @@ SSplotComparisons <-
   if(shadecol[1]=="default" & nlines<3) shadecol <- rc(nlines,alpha=shadealpha)
   if(shadecol[1]=="default" & nlines==3) shadecol <- rgb(red=c(0,1,0),green=c(0,0,0.8),blue=c(1,0,0),alpha=shadealpha)
 
-  if(pch[1]=="default") pch <- 1:nlines
+  if(pch[1]=="default") pch <- rep(1:25,10)[1:nlines]
   if(lty[1]=="default") lty <- 1:nlines
 
-  if(length(col) < nlines) col <- rep(col,nlines)
-  if(length(pch) < nlines) pch <- rep(pch,nlines)
-  if(length(lty) < nlines) lty <- rep(lty,nlines)
-  if(length(lwd) < nlines) lwd <- rep(lwd,nlines)
+  if(length(col) < nlines) col <- rep(col,nlines)[1:nlines]
+  if(length(pch) < nlines) pch <- rep(pch,nlines)[1:nlines]
+  if(length(lty) < nlines) lty <- rep(lty,nlines)[1:nlines]
+  if(length(lwd) < nlines) lwd <- rep(lwd,nlines)[1:nlines]
   
   if(legendlabels[1]=="default") legendlabels <- paste("model",1:nlines)
 
@@ -334,7 +342,7 @@ SSplotComparisons <-
     # add axes
     axis(1)
     yticks <- pretty(ylim)
-    axis(2,at=yticks,lab=format(yticks/yunits),las=1)
+    axis(2,at=yticks,labels=format(yticks/yunits),las=1)
     box()
   }
 
@@ -474,7 +482,7 @@ SSplotComparisons <-
     if(legend) legendfun(legendlabels)
     axis(1)
     yticks <- pretty(ylim)
-    axis(2,at=yticks,lab=format(yticks/yunits),las=1)
+    axis(2,at=yticks,labels=format(yticks/yunits),las=1)
     box()
   }
 
@@ -627,19 +635,19 @@ SSplotComparisons <-
   
   plotDensities <- function(parname,xlab,limit0=TRUE){
     if(any(!mcmcVec)) { 
-        vals <- rbind(pars[grep(parname,pars$Label),],
-                  quants[grep(parname,quants$Label),])
-        if(nrow(vals)!=1){
-            cat("problem getting values for parameter:",parname,"\n")
-            if(nrow(vals)==0) cat("no Labels matching in either parameters or derived quantities\n")
-            if(nrow(vals)>0){
-                cat("Too many matching Labels:")
-                print(vals)
-            }
-            return(NULL)  #previous versions had an else statement, but this will end the function here instead and saves indenting
+      vals <- rbind(pars[grep(parname,pars$Label,fixed=TRUE),],
+                    quants[grep(parname,quants$Label,fixed=TRUE),])
+      if(nrow(vals)!=1){
+        cat("problem getting values for parameter:",parname,"\n")
+        if(nrow(vals)==0) cat("no Labels matching in either parameters or derived quantities\n")
+        if(nrow(vals)>0){
+          cat("Too many matching Labels:")
+          print(vals[,models])
         }
-        valSDs <- rbind(parsSD[grep(parname,pars$Label),],
-                      quantsSD[grep(parname,quants$Label),])
+        return(NULL)  #previous versions had an else statement, but this will end the function here instead and saves indenting
+      }
+      valSDs <- rbind(parsSD[grep(parname,pars$Label,fixed=TRUE),],
+                      quantsSD[grep(parname,quants$Label,fixed=TRUE),])
     }
 
     xmax <- xmin <- ymax <- NULL # placeholder for limits
@@ -650,7 +658,7 @@ SSplotComparisons <-
       imodel <- models[iline]
       if(mcmcVec[iline]) {
         
-        mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]))
+        mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]),fixed=TRUE)
         if(length(mcmcColumn)==0) {
             cat("No columns selected from MCMC for '",parname,"' in model ",imodel,".\n",sep="")
             good[iline] <- FALSE 
@@ -663,12 +671,12 @@ SSplotComparisons <-
         }
         if(good[iline]){
           mcmcVals <- mcmc[[imodel]][,mcmcColumn]
-          if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
+          if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for female only spawning biomass
             mcmcVals <- mcmcVals/2
           }
-          xmin <- min(xmin, quantile(mcmcVals,0.001))
-          xmax <- max(xmax, quantile(mcmcVals,0.999))
-          z <- density(mcmcVals,from=0)      #density estimate of mcmc sample (posterior)
+          xmin <- min(xmin, quantile(mcmcVals,0.005))
+          xmax <- max(xmax, quantile(mcmcVals,0.995))
+          z <- density(mcmcVals,cut=0,adjust=densityadjust)  #density estimate of mcmc sample (posterior)
           z$x <- z$x[c(1,1:length(z$x),length(z$x))]
           z$y <- c(0,z$y,0)           #just to make sure that a good looking polygon is created
           ymax <- max(ymax,max(z$y))  #update ymax
@@ -679,20 +687,22 @@ SSplotComparisons <-
         parSD <- valSDs[1,imodel]
         if(!is.numeric(parval)) parval <- -1     #do this in case models added without the parameter
         if(!is.na(parSD) && parSD>0){ # if non-zero SD available
-          if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
+          if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for female only spawning biomass
             parval <- parval/2
             parSD <- parSD/2
           }
           # update x range
-          xmin <- min(xmin, qnorm(0.001,parval,parSD))
-          xmax <- max(xmax, qnorm(0.999,parval,parSD))
+          xmin <- min(xmin, qnorm(0.005,parval,parSD))
+          if(limit0) xmin <- max(0,xmin) # by default no plot can go below 0 
+          if(fix0 & !grepl("R0",parname)) xmin <- 0 # include 0 if requested (except for log(R0) plots)
+          xmax <- max(xmax, qnorm(0.995,parval,parSD))
           # calculate density to get y range
           x <- seq(xmin,xmax,length=500)
           mle <- dnorm(x,parval,parSD)
           mlescale <- 1/(sum(mle)*mean(diff(x)))
           mle <- mle*mlescale
           # update ymax
-          ymax <- max(ymax,max(mle)) 
+          ymax <- max(ymax,max(mle))
         }else{ # if no SD, at least make sure interval includes MLE estimate
           xmin <- min(xmin, parval)
           xmax <- max(xmax, parval)
@@ -701,7 +711,7 @@ SSplotComparisons <-
     }
     if(grepl("Bratio",parname)) xmin <- 0 # xmin=0 for depletion plots
     if(limit0) xmin <- max(0,xmin) # by default no plot can go below 0 
-    if(fix0 & !grepl("SR_LN(R0)",parname) & !grepl("SR_R0",parname)) xmin <- 0 # include 0 if requested (except for log(R0) plots)
+    if(fix0 & !grepl("R0",parname)) xmin <- 0 # include 0 if requested (except for log(R0) plots)
     
     # calculate x-limits and vector of values for densities
     xlim <- c(xmin,xmin+(xmax-xmin)*densityscalex)
@@ -711,17 +721,20 @@ SSplotComparisons <-
     xunits <- 1
     if(xmax > 1e3 & xmax < 1e6){
       xunits <- 1e3
-      xlab <- gsub("mt","x1000 mt",xlab)
+      #xlab <- gsub("mt","x1000 mt",xlab)
+      xlab2 <- "1000 mt"
     }
     if(xmax > 1e6){
       xunits <- 1e6
-      xlab <- gsub("mt","million mt",xlab)
+      #xlab <- gsub("mt","million mt",xlab)
+      xlab2 <- "million mt"
     }
     # make empty plot
-    if(!is.null(ymax)){
+    if(is.null(ymax)){
+      cat("  skipping plot of",parname,"because it seems to not be estimated in any model\n")
+    }else{
       plot(0,type="n",xlim=xlim,axes=FALSE,xaxs="i",
            ylim=c(0,1.1*ymax*densityscaley),xlab=xlab,ylab="")
-
       # add vertical lines for target and threshold depletion values
       if(grepl("Bratio",parname)){
         if(btarg>0){
@@ -739,7 +752,7 @@ SSplotComparisons <-
       for(iline in (1:nlines)[good]){
         imodel <- models[iline]
         if(mcmcVec[iline]) {
-          mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]))
+          mcmcColumn <- grep(parname,colnames(mcmc[[imodel]]),fixed=TRUE)
           mcmcVals <- mcmc[[imodel]][,mcmcColumn]
           if(nsexes[imodel]==1 &&  grepl("SPB",parname)) {   #divide by 2 for feamle only spawning biomass
             mcmcVals <- mcmcVals/2
@@ -752,8 +765,11 @@ SSplotComparisons <-
           y <- y*yscale
           y2 <- NULL
           for(ii in x2) {
-            y2 <- c(y2,y[abs(x-ii)==min(abs(x-ii))])
+            # find y-value associated with closest matching x-value
+            # "min" was added for a rare case where two values were equally close
+            y2 <- c(y2,min(y[abs(x-ii)==min(abs(x-ii))]))
           }
+          
           polygon(c(x[1],x,rev(x)[1]),c(0,y,0),col=shadecol[iline],border=NA)
           lines(x,y,col=col[iline],lwd=2)
           points(x2,y2,col=col[iline],pch=pch[iline])
@@ -782,13 +798,14 @@ SSplotComparisons <-
             abline(v=parval,col=col[iline])
           }
         }
-        abline(h=0,col="grey")
-        xticks <- pretty(xlim)
-        axis(1,at=xticks,lab=format(xticks/xunits))
-        mtext(side=2,line=1,labels[8])
-        box()
-        legendfun(legendlabels)
       }
+      abline(h=0,col="grey")
+      xticks <- pretty(xlim)
+      axis(1,at=xticks,labels=format(xticks/xunits))
+      if(xunits!=1) cat("  note: x-axis for ",parname," has been divided by ",xunits," (so may be in units of ",xlab2,")\n",sep="")
+      mtext(side=2,line=1,labels[8])
+      box()
+      legendfun(legendlabels)
     }
   } # end plotDensities function
   
@@ -965,16 +982,43 @@ SSplotComparisons <-
   if(13 %in% subplots){
     if(uncertainty){
       if(verbose) cat("subplot 13: densities\n")
-      ndensities <- length(densitynames)
-      for(iplot in 1:ndensities){
-        name <- densitynames[iplot]
-        if(plot) {
-          plotDensities(parname=name,xlab=densityxlabs[iplot])
+      # look for all parameters or derived quantities matching the input list of names
+      expandednames <- NULL
+      for(i in 1:length(densitynames)){
+        matchingnames <- c(pars$Label,quants$Label)[grep(densitynames[i],c(pars$Label,quants$Label),fixed=TRUE)]
+        expandednames <- c(expandednames,matchingnames)
+      }
+      if(length(expandednames)==0){
+        cat("  No parameter/quantity names matching 'densitynames' input.\n")
+      }else{
+        cat("  parameter/quantity names matching 'densitynames' input:\n")
+        print(expandednames)
+        ndensities <- length(expandednames)
+        # make a table to store associated x-labels
+        densitytable <- data.frame(name=expandednames,label=expandednames,stringsAsFactors=FALSE)
+        if(length(densityxlabs)==ndensities & densityxlabs[1]!="default"){
+          densitytable$label <- densityxlabs
+          cat("  table of parameter/quantity labels with associated x-axis label:\n")
+          print(densitytable)
+        }else{
+          if(densityxlabs[1]!="default"){
+            cat("  length of 'densityxlabs' doesn't match the number of values matching 'densitynames'\n",
+                "    parameter labels will be used instead\n")
+          }
         }
-        if(print){
-          pngfun(paste("compare13_densities_",name,".png"))
-          plotDensities(parname=name,xlab=densityxlabs[iplot])
-          dev.off()
+        for(iplot in 1:ndensities){
+          # find matching parameter
+          name <- densitytable[iplot,1]
+          xlab <- densitytable[iplot,2]
+          #if(verbose) cat("  quantity name=",name,"\n",sep="")
+          if(plot) {
+            plotDensities(parname=name,xlab=xlab)
+          }
+          if(print){
+            pngfun(paste("compare13_densities_",name,".png"))
+            plotDensities(parname=name,xlab=xlab)
+            dev.off()
+          }
         }
       }
     }

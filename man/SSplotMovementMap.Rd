@@ -11,7 +11,8 @@
 \usage{
 SSplotMovementMap(replist=NULL, xlim, ylim,
            polygonlist, colvec, land="grey", xytable=NULL,
-           moveage=5,moveseas=1,lwdscale=5,legend=TRUE,title=NULL)
+           moveage=5,moveseas=1,lwdscale=5,legend=TRUE,title=NULL,
+           areanames=NULL,cex=1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -59,20 +60,27 @@ SSplotMovementMap(replist=NULL, xlim, ylim,
   \item{title}{
     optional title to be added above map
   }
+  \item{areanames}{
+    optional vector of names to be shown on map at coordinates matching
+    xytable values
+  }
+  \item{cex}{
+    character expansion to apply to text shown by areanames (if used)
+  }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
@@ -84,12 +92,14 @@ SSplotMovementMap(replist=NULL, xlim, ylim,
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{SS_output}},
+  \code{\link{SSplotMovementRates}},
+  \code{\link{IOTCmove}}
 }
-\examples{
-  % \dontrun{
-  % }
-}
+% \examples{
+%   % \dontrun{
+%   % }
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

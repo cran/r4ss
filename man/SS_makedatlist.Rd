@@ -14,14 +14,15 @@ SS_makedatlist(styr = 1971, endyr = 2001, nseas = 1, months_per_seas =
 12, spawn_seas = 1, Nfleet = 1, Nsurveys = 1, N_areas = 1, fleetnames =
 c("fishery1", "survey1"), surveytiming = 0.5, areas = 1, units_of_catch
 = 1, se_log_catch = 0.01, Ngenders = 2, Nages = 40, init_equil = 0,
-catch = NULL, CPUE = NULL, discard_units = 2, discard_data = NULL,
-meanbodywt = NULL, lbin_method = 2, binwidth = 2, minimum_size = 2,
+catch = NULL, CPUE = NULL, N_discard_fleets = 0, discard_data = NULL,
+meanbodywt = NULL, DF_for_meanbodywt = 30, lbin_method = 2,
+binwidth = 2, minimum_size = 2,
 maximum_size = 90, comp_tail_compression = -1e-04, add_to_comp = 1e-04,
 max_combined_lbin = 0, lbin_vector = seq(22, 90, 2), lencomp = NULL,
 agebin_vector = 1:25, ageerror = data.frame(rbind(0:40 + 0.5, 0.001,
 0:40 + 0.5, seq(0.525, 2.525, 0.05))), agecomp = NULL, Lbin_method = 3,
 max_combined_age = 1, MeanSize_at_Age_obs = NULL, N_environ_variables =
-0, N_environ_obs = 0, N_sizefreq_methods = 0, tag_data = 0,
+0, N_environ_obs = 0, N_sizefreq_methods = 0, do_tags = 0,
 morphcomp_data = 0)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -63,119 +64,125 @@ morphcomp_data = 0)
     units of catch for each fleet
   }
   \item{se_log_catch}{
-    ... description to be added ...
+    Uncertainty in catch (standard error in log space).
   }
   \item{Ngenders}{
-    ... description to be added ...
+    Number of genders.
   }
   \item{Nages}{
-    ... description to be added ...
+    Number of ages.
   }
   \item{init_equil}{
-    ... description to be added ...
+    Initial equilibrium catch.
   }
   \item{catch}{
-    ... description to be added ...
+    Catch data
   }
   \item{CPUE}{
-        ... description to be added ... %%     ~~Describe \code{CPUE} here~~
+    Indices of abundance (if present).
   }
-  \item{discard_units}{
-        ... description to be added ... %%     ~~Describe \code{discard_units} here~~
+  \item{N_discard_fleets}{
+    Number of fleets with discard data.
   }
   \item{discard_data}{
-        ... description to be added ... %%     ~~Describe \code{discard_data} here~~
+    Discard data (if exists).
   }
   \item{meanbodywt}{
-        ... description to be added ... %%     ~~Describe \code{meanbodywt} here~~
+    Mean body weight data (if exists)
+  }
+  \item{DF_for_meanbodywt}{
+    Degrees of freedom for mean body weight t-distribution.
   }
   \item{lbin_method}{
-        ... description to be added ... %%     ~~Describe \code{lbin_method} here~~
+    Method for entering length bins. (1=use databins; 2=generate from
+    binwidth,min,max below; 3=read vector). Not sure if all options
+    implemented.
   }
   \item{binwidth}{
-        ... description to be added ... %%     ~~Describe \code{binwidth} here~~
+    Bin width for length bins.
   }
   \item{minimum_size}{
-        ... description to be added ... %%     ~~Describe \code{minimum_size} here~~
+    Lower bound of length bins.
   }
   \item{maximum_size}{
-        ... description to be added ... %%     ~~Describe \code{maximum_size} here~~
+    Upper bound of length bins.
   }
   \item{comp_tail_compression}{
-        ... description to be added ... %%     ~~Describe \code{comp_tail_compression} here~~
+    Value below which tails of composition data will be compressed
+    (negative to turn off).
   }
   \item{add_to_comp}{
-        ... description to be added ... %%     ~~Describe \code{add_to_comp} here~~
+    Robustifying constant added to multinomial composition likelihoods.
   }
   \item{max_combined_lbin}{
-        ... description to be added ... %%     ~~Describe \code{max_combined_lbin} here~~
+    Maximum length bin below which length composition data will have genders combined.
   }
   \item{lbin_vector}{
-        ... description to be added ... %%     ~~Describe \code{lbin_vector} here~~
+    Vector of length bins.
   }
   \item{lencomp}{
-        ... description to be added ... %%     ~~Describe \code{lencomp} here~~
+    Length composition data (if exists).
   }
   \item{agebin_vector}{
-        ... description to be added ... %%     ~~Describe \code{agebin_vector} here~~
+    Vector of age bins.
   }
   \item{ageerror}{
-        ... description to be added ... %%     ~~Describe \code{ageerror} here~~
+    Ageing error matrices.
   }
   \item{agecomp}{
-        ... description to be added ... %%     ~~Describe \code{agecomp} here~~
+    Age composition data (if exists).
   }
   \item{Lbin_method}{
-        ... description to be added ... %%     ~~Describe \code{Lbin_method} here~~
+    Method of specifying length bins in conditional age-at-length data.
   }
   \item{max_combined_age}{
-        ... description to be added ... %%     ~~Describe \code{max_combined_age} here~~
+    Maximum age below which age composition data will have genders combined.
   }
   \item{MeanSize_at_Age_obs}{
-        ... description to be added ... %%     ~~Describe \code{MeanSize_at_Age_obs} here~~
+    Data on mean size at age (if exists).
   }
   \item{N_environ_variables}{
-        ... description to be added ... %%     ~~Describe \code{N_environ_variables} here~~
+    Number of environmental variables.
   }
   \item{N_environ_obs}{
-        ... description to be added ... %%     ~~Describe \code{N_environ_obs} here~~
+    Number of environmental observations.
   }
   \item{N_sizefreq_methods}{
-        ... description to be added ... %%     ~~Describe \code{N_sizefreq_methods} here~~
+    Number of size frequency methods.
   }
-  \item{tag_data}{
-        ... description to be added ... %%     ~~Describe \code{tag_data} here~~
+  \item{do_tags}{
+    Include tag data? NOT IMPLEMENTED YET.
   }
   \item{morphcomp_data}{
-        ... description to be added ... %%     ~~Describe \code{morphcomp_data} here~~
+    Morph composition data. NOT IMPLEMENTED YET.
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
   \code{\link{SS_readdat}}, \code{\link{SS_writedat}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

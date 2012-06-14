@@ -28,6 +28,7 @@ SS_plots <-
   #
   ################################################################################
 
+
   codedate <- "April 13, 2011"
 
   if(verbose) cat("R function updated:",codedate,
@@ -84,10 +85,10 @@ SS_plots <-
 
   if(verbose) cat("Finished defining objects\n")
   
-  if(nareas>1){
-    cat("! Warning: some plots are not configured for mult-area models (nareas=",nareas,")\n",sep="")
-    if(areanames[1]=="default") areanames <- paste("area",1:nareas)
-  }
+  ## if(nareas>1){
+  ##   cat("! Warning: some plots are not configured for mult-area models (nareas=",nareas,")\n",sep="")
+  ##   if(areanames[1]=="default") areanames <- paste("area",1:nareas)
+  ## }
   
   if(fleetnames[1]=="default") fleetnames <- FleetNames
   if(fleetcols[1]=="default"){
@@ -176,7 +177,8 @@ SS_plots <-
   # Length selex and retention
   if(length(intersect(c(3,4), c(plot,print)))>0)
   {
-    SSplotSelex(replist=replist, selexlines=selexlines, fleets=fleets,
+    SSplotSelex(replist=replist, selexlines=selexlines,
+                fleets=fleets, fleetnames=fleetnames,
                 plot=(3 %in% plot), print=(3 %in% print),
                 pwidth=pwidth, pheight=pheight, punits=punits,
                 ptsize=ptsize, res=res, cex.main=cex.main,
@@ -199,7 +201,7 @@ SS_plots <-
                              areas=areas,
                              areacols=areacols,
                              areanames=areanames,
-                             forecast=doforecast,
+                             forecastplot=doforecast,
                              uncertainty=douncertainty,
                              plot=(5 %in% plot),
                              print=(5 %in% print),
@@ -217,7 +219,7 @@ SS_plots <-
                              areas=areas,
                              areacols=areacols,
                              areanames=areanames,
-                             forecast=doforecast,
+                             forecastplot=doforecast,
                              uncertainty=FALSE,
                              plot=(5 %in% plot),
                              print=(5 %in% print),
@@ -240,6 +242,9 @@ SS_plots <-
     SSplotCatch(replist=replist,
                 plot=(6 %in% plot),print=(6 %in% print),
                 fleetnames=fleetnames,
+                fleetlty=fleetlty,
+                fleetpch=fleetpch,
+                fleetcols=fleetcols, 
                 minyr=minyr,maxyr=maxyr,
                 pwidth=pwidth, pheight=pheight, punits=punits,
                 ptsize=ptsize, res=res,cex.main=cex.main,
@@ -308,7 +313,8 @@ SS_plots <-
   if(26 %in% c(plot, print) & uncertainty){
     if(max(rmse_table$RMSE)>0){
       SS_fitbiasramp(replist=replist,
-                     png=ifelse(26 %in% print,paste(plotdir,"recdevs_fitbiasramp.png",sep="/"),FALSE),
+                     plot=(26 %in% plot),
+                     print=(26 %in% print),
                      twoplots=FALSE,
                      pwidth=pwidth, pheight=pheight, punits=punits,
                      ptsize=ptsize, res=res,cex.main=cex.main)
@@ -341,7 +347,9 @@ SS_plots <-
                   datplot=datplot,
                   pwidth=pwidth, pheight=pheight, punits=punits,
                   ptsize=ptsize, res=res,cex.main=cex.main,
-                  plotdir=plotdir)
+                  plotdir=plotdir,
+                  minyr=minyr,
+                  maxyr=maxyr)
   } # end if 13 in plot or print
 
   ### Plot 14: numbers at age ###
@@ -536,7 +544,7 @@ SS_plots <-
     # plot 20: conditional age at length plot with fits, sample size, etc.
     if(20 %in% c(plot,print)){
       if(aalresids==TRUE){
-        SSplotComps(replist=replist,subplot=3,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+        SSplotComps(replist=replist,subplots=3,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                     fleetnames=fleetnames,
                     samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
                     minnbubble=minnbubble, pntscalar=pntscalar,
@@ -550,7 +558,7 @@ SS_plots <-
       }
       # conditional age at length for a given year
       if(length(intersect(aalyear, unique(timeseries$Yr)))>0){
-        SSplotComps(replist=replist,subplot=4:5,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+        SSplotComps(replist=replist,subplots=4:5,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                     fleetnames=fleetnames,
                     aalbin=aalbin,aalyear=aalyear,
                     samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
@@ -565,7 +573,7 @@ SS_plots <-
       }
       # conditional age at length for a given length bin
       if(length(intersect(aalbin, unique(lbins)))>0){
-        SSplotComps(replist=replist,subplot=6,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+        SSplotComps(replist=replist,subplots=6,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                     fleetnames=fleetnames,
                     aalbin=aalbin,
                     samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
@@ -583,7 +591,7 @@ SS_plots <-
     
     if(21 %in% c(plot,print)){
       # plot 21: Andre's new conditional age-at-length plots
-      SSplotComps(replist=replist,subplot=8,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
+      SSplotComps(replist=replist,subplots=8,datonly=FALSE,kind="cond",bub=TRUE,verbose=verbose,fleets=fleets,
                   fleetnames=fleetnames,
                   aalbin=aalbin,aalyear=aalyear,
                   samplesizeplots=samplesizeplots,showsampsize=showsampsize,showeffN=showeffN,
@@ -642,9 +650,11 @@ SS_plots <-
   # Yield curve
   if(23 %in% c(plot, print)){
     SSplotYield(replist=replist,
-                cex.main=cex.main,
                 plot=(23 %in% plot),
-                print=(23 %in% print))
+                print=(23 %in% print),
+                pwidth=pwidth, pheight=pheight, punits=punits,
+                ptsize=ptsize, res=res, cex.main=cex.main,
+                plotdir=plotdir)
   } # close plot section 23
 
   ### Plot 24: Tag plots ###
@@ -679,6 +689,9 @@ SS_plots <-
   
   if(pdf) dev.off() # close PDF file if it was open
   if(verbose) cat("Finished all requested plots in SS_plots function\n")
+
+  cat("\nNote: an update to 'SS_plots' is available in test version called 'SS_plots_test'.\n",
+      "     Please try it out and report any issues you might find\n")
   ### end of SS_plots function
   return(invisible(999))
 }
