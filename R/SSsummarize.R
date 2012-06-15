@@ -1,9 +1,10 @@
 SSsummarize <- function(biglist,
                         keyvec=NULL,
                         numvec=NULL,
-                        selfactor="Lsel",
+                        sizeselfactor="Lsel",
+                        ageselfactor="Asel",
                         selfleet=NULL,
-                        selyr="min",
+                        selyr="startyr",
                         selgender=1,
                         lowerCI=0.025,
                         upperCI=0.975){
@@ -60,16 +61,15 @@ SSsummarize <- function(biglist,
   allyears <- sort(allyears) # not actually getting any timeseries stuff yet
 
   # objects to store quantities
-  sel        <- NULL
-  selexlist  <- list()
   pars <- parsSD <- parphases <- as.data.frame(matrix(NA,nrow=length(parnames),ncol=n))
   quants <- quantsSD <- as.data.frame(matrix(NA,nrow=length(dernames),ncol=n))
   growth     <- NULL
   maxgrad    <- NULL
   nsexes     <- NULL
   likelihoods <- likelambdas <- as.data.frame(matrix(NA,nrow=length(likenames),ncol=n))
-  indices <- NULL
-  
+  indices    <- NULL
+  sizesel    <- NULL
+  agesel     <- NULL
   # notes about what runs were used
   sim        <- NULL
   keyvec2    <- NULL
@@ -95,36 +95,40 @@ SSsummarize <- function(biglist,
     # nsexes
     nsexes <- c(nsexes, stats$nsexes)
 
-    # selex
-    if(FALSE){
-      seltemp <- stats$sizeselex
-      if(is.null(selfactor)) selfactor <- unique(seltemp$Factor)
-      if(is.null(selfleet))  selfleet  <- unique(seltemp$Fleet)
-      if(is.null(selgender)) selgender <- unique(seltemp$gender)
-      if(is.null(selyr))   selyr   <- unique(seltemp$year)
-      if(selyr[1]=="min")  selyr   <- min(seltemp$year)
-      if(selyr[1]=="max")  selyr   <- max(seltemp$year)
-
-      for(iselfactor in 1:length(selfactor)){
-        for(iselfleet in 1:length(selfleet)){
-          for(iselyr in 1:length(selyr)){
-            for(iselgender in 1:length(selgender)){
-              seltemp_i <- seltemp[seltemp$Factor==selfactor[iselfactor] &
-                                   seltemp$Fleet==selfleet[iselfleet] &
-                                   seltemp$gender==selgender[iselgender] &
-                                   seltemp$year==selyr[iselyr],]
-              mylabel <- seltemp_i$label
-              myname <- paste("sizeselex_",mylabel,sep="")
-              seltemp_i2 <- as.numeric(seltemp_i[-(1:5)])
-              selexlist[[myname]] <- rbind(selexlist[[myname]],seltemp_i2)
-              rownames(selexlist[[myname]])[nrow(selexlist[[myname]])] <- key
-            }
-          }
-        }
+    # size selectivity
+    sizeseltemp <- stats$sizeselex
+    if(is.null(sizeselfactor)) sizeselfactor <- unique(sizeseltemp$Factor)
+    for(iselfactor in 1:length(sizeselfactor)){
+      seltemp_i <- sizeseltemp[sizeseltemp$Factor==sizeselfactor[iselfactor],]
+      seltemp_i$imodel <- imodel
+      seltemp_i$key <- key
+      # if sizesel is not NULL, then check for whether columns of new addition match existing file
+      if(is.null(sizesel) || (ncol(seltemp_i)==ncol(sizesel) && all(names(seltemp_i)==names(sizesel)))){
+        sizesel <- rbind(sizesel,seltemp_i)
+      }else{
+        cat("problem summarizing size selectivity due to mismatched columns (perhaps different bins)\n")
       }
     }
+    rownames(sizesel) <- 1:nrow(sizesel)
+
+    # age selectivity
+    ageseltemp  <- stats$ageselex
+    if(is.null(ageselfactor)) ageselfactor <- unique(ageseltemp$Factor)
+    for(iselfactor in 1:length(ageselfactor)){
+      seltemp_i <- ageseltemp[ageseltemp$factor==ageselfactor[iselfactor],]
+      seltemp_i$imodel <- imodel
+      seltemp_i$key <- key
+      # if agesel is not NULL, then check for whether columns of new addition match existing file
+      if(is.null(agesel) || (ncol(seltemp_i)==ncol(agesel) && all(names(seltemp_i)==names(agesel)))){
+        agesel <- rbind(agesel,seltemp_i)
+      }else{
+        cat("problem summarizing age selectivity due to mismatched columns (perhaps different bins)\n")
+      }
+    }
+    rownames(agesel) <- 1:nrow(agesel)
+
     
-    ## growth
+    ## growth (females only)
     growthtemp <- stats$growthseries
     imorphf <- ifelse(max(stats$morph_indexing$Index)==10,3,1)
     growthtemp <- growthtemp[growthtemp$Morph==imorphf,-(1:4)]
@@ -207,7 +211,6 @@ SSsummarize <- function(biglist,
 
   SpawnBio <- SpawnBio[order(SpawnBio$Yr),]
   SpawnBioSD <- SpawnBioSD[order(SpawnBioSD$Yr),]
-
   if(any(is.na(SpawnBio[3,]))){
     cat("Models have different start years, so SpawnBio values in VIRG & INIT yrs are shifted to correct year\n")
     SpawnBio$Label[1:2] <- c("SPB_Virgin*","SPB_Initial*")
@@ -253,17 +256,19 @@ SSsummarize <- function(biglist,
   
   # identify recruitment parameters and their uncertainty
   recruits <- quants[grep("^Recr_",quants$Label), ]
-  recruits <- recruits[-grep("Recr_Unfished",recruits$Label),]
   recruitsSD <- quantsSD[grep("^Recr_",quantsSD$Label), ]
-  recruitsSD <- recruitsSD[-grep("Recr_Unfished",recruitsSD$Label),]
+  if(length(grep("Recr_Unfished",recruits$Label))>0)
+    recruits <- recruits[-grep("Recr_Unfished",recruits$Label),]
+  if(length(grep("Recr_Unfished",recruitsSD$Label))>0)
+    recruitsSD <- recruitsSD[-grep("Recr_Unfished",recruitsSD$Label),]
   minyr <- min(recruits$Yr,na.rm=TRUE)
+  
   recruits$Yr[grep("Recr_Virgin",recruits$Label)] <- minyr - 2
   recruits$Yr[grep("Recr_Initial",recruits$Label)] <- minyr - 1
   recruitsSD$Yr[grep("Recr_Virgin",recruitsSD$Label)] <- minyr - 2
   recruitsSD$Yr[grep("Recr_Initial",recruitsSD$Label)] <- minyr - 1
   recruits <- recruits[order(recruits$Yr),]
   recruitsSD <- recruitsSD[order(recruitsSD$Yr),]
-
   if(any(is.na(recruits[3,]))){
     cat("Models have different start years, so recruits values in VIRG & INIT yrs are shifted to correct year\n")
     recruits$Label[1:2] <- c("Recr_Virgin*","Recr_Initial*")
@@ -284,7 +289,6 @@ SSsummarize <- function(biglist,
                                sd=as.matrix(recruitsSD[,1:n]))
   recruitsUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(recruits[,1:n]),
                                sd=as.matrix(recruitsSD[,1:n]))
-
 
   # identify parameters that are recruitment deviations
   pars$recdev <- FALSE
@@ -314,19 +318,21 @@ SSsummarize <- function(biglist,
   }else{
     InitAgeYrs <- NA
   }
-  recdevs <- pars[pars$recdev,]
-  recdevsSD <- parsSD[pars$recdev,]
-  myorder <- order(recdevs$Yr) # save order for use in both values and SDs
-  recdevs <- recdevs[myorder,1:(n+2)]
-  recdevsSD <- recdevsSD[myorder,1:(n+1)]
-  recdevsSD$Yr <- recdevs$Yr
-  recdevsLower <- recdevsUpper <- recdevsSD
-  recdevsLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(recdevs[,1:n]),
-                              sd=as.matrix(recdevsSD[,1:n]))
-  recdevsUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(recdevs[,1:n]),
-                              sd=as.matrix(recdevsSD[,1:n]))
-
-  
+  if(any(pars$recdev)){
+    recdevs <- pars[pars$recdev,]
+    recdevsSD <- parsSD[pars$recdev,]
+    myorder <- order(recdevs$Yr) # save order for use in both values and SDs
+    recdevs <- recdevs[myorder,1:(n+2)]
+    recdevsSD <- recdevsSD[myorder,1:(n+1)]
+    recdevsSD$Yr <- recdevs$Yr
+    recdevsLower <- recdevsUpper <- recdevsSD
+    recdevsLower[,1:n] <- qnorm(p=lowerCI, mean=as.matrix(recdevs[,1:n]),
+                                sd=as.matrix(recdevsSD[,1:n]))
+    recdevsUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(recdevs[,1:n]),
+                                sd=as.matrix(recdevsSD[,1:n]))
+  }else{
+    recdevs <- recdevsSD <- recdevsLower <- recdevsUpper <- NULL
+  }
   mylist <- list()
   mylist$n              <- n
   mylist$npars          <- npars
@@ -334,7 +340,6 @@ SSsummarize <- function(biglist,
   mylist$keyvec         <- keyvec
   mylist$maxgrad        <- maxgrad
   mylist$nsexes         <- nsexes
-  #mylist                <- c(mylist,selexlist)
   mylist$pars           <- pars
   mylist$parsSD         <- parsSD
   mylist$parphases      <- parphases
@@ -363,6 +368,8 @@ SSsummarize <- function(biglist,
   mylist$recdevsLower   <- recdevsLower
   mylist$recdevsUpper   <- recdevsUpper
   mylist$growth         <- growth
+  mylist$sizesel        <- sizesel
+  mylist$agesel         <- agesel
   mylist$indices        <- indices
   mylist$InitAgeYrs     <- InitAgeYrs
   mylist$lowerCI        <- lowerCI

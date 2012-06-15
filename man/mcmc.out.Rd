@@ -11,10 +11,10 @@
 }
 \usage{
 mcmc.out(directory = "c:/mydirectory/", run = "mymodel/",
-file = "keyposteriors.sso", namefile = "postplotnames.sso",
+file = "keyposteriors.csv", namefile = "postplotnames.sso",
 names = FALSE, headernames = TRUE, numparams = 1, closeall = TRUE,
 burn = 0, thin = 1, scatter = FALSE, surface = FALSE, surf1 = 1,
-surf2 = 2, stats = FALSE, plots = TRUE, header = F, sep = "",
+surf2 = 2, stats = FALSE, plots = TRUE, header = TRUE, sep = ",",
 print = FALSE)
 }
 \arguments{
@@ -75,39 +75,39 @@ print = FALSE)
     Data file with header?
   }
   \item{sep}{
-    Separator for data file passed to the \code{\link{read.table}} function.
+    Separator for data file passed to the \code{read.table} function.
   }
   \item{print}{
     Send to screen unless asked to print.
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Stewart
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
   \code{\link{mcmc.nuisance}}, \code{\link{SSgetMCMC}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

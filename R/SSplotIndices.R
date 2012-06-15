@@ -19,15 +19,23 @@ function(replist,subplots=1:9,
          pch1=1, pch2=16, cex=1,
          legend=TRUE, legendloc="topright", seasnames=NULL,
          pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
-         addmain=TRUE,plotdir="default", verbose=TRUE)
+         addmain=TRUE,plotdir="default", minyr=NULL, maxyr=NULL,
+         verbose=TRUE)
 {
-  pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
-
   cpue        <- replist$cpue
   if(is.null(dim(cpue))){
     cat("skipping index plots: no CPUE data in this model\n")
     return()
   }
+
+  pngfun <- function(filename,caption=NA){
+    png(filename=file,width=pwidth,height=pheight,
+        units=punits,res=res,pointsize=ptsize)
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+    return(plotinfo)
+  }
+  plotinfo <- NULL
+
   if(length(grep("supr_per",cpue$Supr_Per))){
     cat("Note: some indices have superperiods. Values will be plotted in year/season associated with data in report file.\n")
     cpue <- cpue[!is.na(cpue$Dev),]
@@ -49,7 +57,7 @@ function(replist,subplots=1:9,
   if(fleets[1]=="all"){
     fleets <- 1:nfleets
   }else{ if(length(intersect(fleets,1:nfleets))!=length(fleets)){
-      return("Input 'fleets' should be 'all' or a vector of values between 1 and nfleets.")
+    return("Input 'fleets' should be 'all' or a vector of values between 1 and nfleets.")
   }}
   
   # subset fleets as requested
@@ -83,11 +91,11 @@ function(replist,subplots=1:9,
 
 
   if(datplot){
-   allcpue <- data.frame(NA)
-   names(allcpue) <- "Index"
-   allcpue$year <- NA
-   allcpue$value <- NA
-   allcpue$stdvalue <- NA}
+    allcpue <- data.frame(NA)
+    names(allcpue) <- "Index"
+    allcpue$year <- NA
+    allcpue$value <- NA
+    allcpue$stdvalue <- NA}
 
   # loop over fleets
   for(ifleet in fleetvec){
@@ -125,9 +133,11 @@ function(replist,subplots=1:9,
     
     cpuefun1 <- function(addexpected=TRUE){
       # plot of time-series of observed and expected (if requested)
-      if(!add) plot(x=x,y=y,type='n',xlab=labels[1],ylab=labels[2],
-                    main=main,cex.main=cex.main,ylim=c(0,max(y+uiw,na.rm=TRUE)))
-      plotCI(x=x,y=y,z=z,sfrac=0.001,uiw=uiw,liw=liw,ylo=0,col=colvec1[s],
+      xlim <- c(max(minyr,min(x)),min(maxyr,max(x)))
+      if(!add) plot(x=x, y=y, type='n', xlab=labels[1], ylab=labels[2],
+                    main=main, cex.main=cex.main,
+                    xlim=xlim, ylim=c(0,max(y+uiw,na.rm=TRUE)))
+      plotCI(x=x,y=y,sfrac=0.001,uiw=uiw,liw=liw,ylo=0,col=colvec1[s],
              main=main,cex.main=cex.main,lty=1,add=TRUE,pch=pch1,cex=cex)
       abline(h=0,col="grey")
       if(addexpected) lines(x,z,lwd=2,col=col3)
@@ -142,11 +152,11 @@ function(replist,subplots=1:9,
       abline(h=0,col="grey")
       lines(x=c(0,max(z)),y=c(0,max(z)))
       if(smooth && npoints > 6 && diff(range(y))>0)
-      {
-        psmooth <- loess(z~y,degree=1)
-        lines(psmooth$x[order(psmooth$x)],psmooth$fit[order(psmooth$x)],
-              lwd=1.2,col=col4,lty="dashed")
-      }
+          {
+            psmooth <- loess(z~y,degree=1)
+            lines(psmooth$x[order(psmooth$x)],psmooth$fit[order(psmooth$x)],
+                  lwd=1.2,col=col4,lty="dashed")
+          }
       if(legend & length(colvec2)>1) legend(x=legendloc, legend=seasnames,
                                             pch=pch2, col=colvec2, cex=cex)
     }
@@ -157,18 +167,24 @@ function(replist,subplots=1:9,
       if(3 %in% subplots) cpuefun2()
     }
     if(print){
-      if(1 %in% subplots){
-        pngfun(file=paste(plotdir,"/index1_cpuedata",Fleet,".png",sep=""))
+      if(1 %in% subplots & datplot){
+        file <- paste(plotdir,"/index1_cpuedata_",Fleet,".png",sep="")
+        caption <- paste("Index data for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun1(addexpected=FALSE)
         dev.off()
       }
       if(2 %in% subplots){
-        pngfun(file=paste(plotdir,"/index2_cpuefit",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index2_cpuefit_",Fleet,".png",sep="")
+        caption <- paste("Fit to index data for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun1()
         dev.off()
       }
       if(3 %in% subplots){
-        pngfun(file=paste(plotdir,"/index3_cpuecheck",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index3_cpuecheck_",Fleet,".png",sep="")
+        caption <- paste("Observed vs. expected index values with smoother for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun2()
         dev.off()
       }
@@ -181,9 +197,11 @@ function(replist,subplots=1:9,
     liw <- log(y) - qnorm(.025,mean=log(y),sd=cpueuse$SE)
     cpuefun3 <- function(addexpected=TRUE){
       # plot of time-series of log(observed) and log(expected) (if requested)
-      if(!add) plot(x=x,y=log(y),type='n',xlab=labels[1],ylab=labels[5],
-                    main=main,cex.main=cex.main,ylim=range(log(y)-liw,log(y)+uiw,na.rm=TRUE))
-      plotCI(x=x,y=log(y),z=log(z),sfrac=0.001,uiw=uiw,liw=liw,
+      xlim <- c(max(minyr,min(x)),min(maxyr,max(x)))
+      if(!add) plot(x=x, y=log(y), type='n', xlab=labels[1], ylab=labels[5],
+                    main=main, cex.main=cex.main,
+                    xlim=xlim, ylim=range(log(y)-liw,log(y)+uiw,na.rm=TRUE))
+      plotCI(x=x,y=log(y),sfrac=0.001,uiw=uiw,liw=liw,
              col=colvec1[s],lty=1,add=TRUE,pch=pch1,cex=cex)
       if(addexpected) lines(x,log(z),lwd=2,col=col3)
       if(length(colvec1)>1) legend(x=legendloc, legend=seasnames,
@@ -224,35 +242,49 @@ function(replist,subplots=1:9,
                     col=colvec2[1],pch=pch2)
     }
     if(plot){
-      if(4 %in% subplots) cpuefun3(addexpected=FALSE)
+      if(4 %in% subplots & datplot) cpuefun3(addexpected=FALSE)
       if(5 %in% subplots) cpuefun3()
       if(6 %in% subplots) cpuefun4()
       if(7 %in% subplots & time) cpuefun5()
       if(8 %in% subplots & time2) cpuefun6()
     }
+    
     if(print){
       if(4 %in% subplots & datplot){
-        pngfun(file=paste(plotdir,"/index4_logcpuedata",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index4_logcpuedata_",Fleet,".png",sep="")
+        caption <- paste("Log index data for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun3(addexpected=FALSE)
         dev.off()
       }
       if(5 %in% subplots){
-        pngfun(file=paste(plotdir,"/index5_logcpuefit",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index5_logcpuefit_",Fleet,".png",sep="")
+        caption <- paste("Fit to index data on log scale for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun3()
         dev.off()
       }
       if(6 %in% subplots){
-        pngfun(file=paste(plotdir,"/index6_logcpuecheck",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index6_logcpuecheck_",Fleet,".png",sep="")
+        caption <- paste("log(observed) vs. log(expected) index values with smoother for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun4()
         dev.off()
       }
       if(7 %in% subplots & time){
-        pngfun(file=paste(plotdir,"/index7_timevaryingQ",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index7_timevaryingQ_",Fleet,".png",sep="")
+        caption <- paste("Timeseries of catchability for",Fleet)
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun5()
         dev.off()
       }
       if(8 %in% subplots & time){
-        pngfun(file=paste(plotdir,"/index8_Q_vs_Vuln_bio",Fleet,".png",sep=""))
+        file <- paste(plotdir,"/index8_Q_vs_Vuln_bio_",Fleet,".png",sep="")
+        caption <- paste("Catchability vs. vulnerable biomass for fleet ",Fleet,"<br> \n",
+                         "This plot should illustrate curvature of nonlinear catchability relationship<br> \n",
+                         "Or reveal patterns associated with random-walk catchability<br> \n",
+                         "It was inspired by Jim Thorson, so blame him if you don't like it.",sep="")
+        plotinfo <- pngfun(file=file, caption=caption)
         cpuefun6()
         dev.off()
       }
@@ -265,6 +297,11 @@ function(replist,subplots=1:9,
       main="All cpue plot"
       if(!addmain) main <- ""
       xlim <- c(min(allcpue$year,na.rm=TRUE)-1,max(allcpue$year,na.rm=TRUE)+1)
+
+      # change range if requested
+      xlim[1] <- max(xlim[1],minyr)
+      xlim[2] <- min(xlim[2],maxyr)
+      
       ylim <- c(range(allcpue$stdvalue,na.rm=TRUE))
       usecols <- rich.colors.short(max(allcpue$Index,na.rm=TRUE))
       if(max(allcpue$Index,na.rm=TRUE) >= 2){
@@ -279,12 +316,13 @@ function(replist,subplots=1:9,
     } # end all_cpue_fun
     if(plot & (9 %in% subplots)){all_cpue_fun()}
     if(print & (9 %in% subplots)){
-      pngfun(file=paste(plotdir,"/index9_standcpueall",".png",sep=""))
+      file <- paste(plotdir,"/index9_standcpueall",".png",sep="")
+      caption <- "Standardized indices overlaid"
+      plotinfo <- pngfun(file=file, caption=caption)
       all_cpue_fun()
       dev.off()}
   } # end datplot
 
-  if(verbose) cat("Finished plot 13: CPUE plots\n")
-  flush.console()
-
+  if(!is.null(plotinfo)) plotinfo$category <- "Index"
+  return(invisible(plotinfo))
 } # end function

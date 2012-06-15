@@ -6,11 +6,13 @@
   Iteratively changes the control file using SS_changepars.
 }
 \usage{
-SS_profile(dir = "C:/myfiles/mymodels/myrun/",
-  masterctlfile = "control.ss_new", newctlfile = "control_modified.ss",
+SS_profile(dir = "C:/myfiles/mymodels/myrun/", masterctlfile =
+  "control.ss_new", newctlfile = "control_modified.ss",
   linenum = NULL, string = NULL, profilevec = NULL,
-  command = "SS3 -nox", model = "ss3", systemcmd = F,
-  saveoutput = T, verbose = T)
+  usepar = TRUE, dircopy = TRUE, exe.delete = FALSE,
+  command = "SS3 -nox", model = "ss3", systemcmd =
+  FALSE, saveoutput = TRUE, overwrite = FALSE, verbose =
+  TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,15 +24,21 @@ SS_profile(dir = "C:/myfiles/mymodels/myrun/",
     Default = NULL. }
   \item{string}{ Optional string partially matching name of parameter
     to be changed. Default = NULL.}
+  \item{usepar}{ Use PAR file from previous profile step for starting
+    values? NOT IMPLEMENTED YET.}
+  \item{dircopy}{ Copy directories for each run? NOT IMPLEMENTED YET.}
+  \item{exe.delete}{ Delete exe files in each directory?
+    NOT IMPLEMENTED YET. }
   \item{profilevec}{ Vector of values to profile over.  Default = NULL.}
   \item{command}{ Call to executable. Default = "SS3 -nox".}
   \item{model}{ Name of executable. Default = "ss3".}
   \item{systemcmd}{ Should R call SS using "system" function intead of
-    "shell". This may be required when running R in Emacs. Default = F.}
+    "shell". This may be required when running R in Emacs. Default = FALSE.}
   \item{saveoutput}{ Copy output .SSO files to unique names.
-    Default = T.}
+    Default = TRUE.}
+  \item{overwrite}{ Overwrite any existing .SSO files. Default = FALSE.}
   \item{verbose}{ Controls amount of info output to command line.
-    Default = T.}
+    Default = TRUE.}
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~

@@ -28,8 +28,8 @@ SSplotIndices(replist,subplots=1:9,
   pch1=1, pch2=16, cex=1,
   legend=TRUE, legendloc="topright", seasnames=NULL,
   pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
-  addmain=TRUE, plotdir="default", verbose=TRUE)
-
+  addmain=TRUE, plotdir="default",
+  minyr = NULL, maxyr = NULL, verbose=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -126,37 +126,43 @@ SSplotIndices(replist,subplots=1:9,
     directory where PNG files will be written. by default it will
     be the directory where the model was run.
   }
+  \item{minyr}{
+    First year to show in plot (for zooming in on a subset of values)
+  }
+  \item{maxyr}{
+    Last year to show in plot (for zooming in on a subset of values)
+  }
   \item{verbose}{
     report progress to R GUI?
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Stewart, Ian Taylor
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }

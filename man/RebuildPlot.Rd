@@ -10,7 +10,8 @@ DoProjectPlots(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",
   ncols=200,Plots=list(1:25),Options=list(c(1:9)),LegLoc="bottomright",
   yearmax=-1,Outlines=c(2,2),OutlineMulti=c(2,2),AllTraj=c(1,2,3,4),
   AllInd=c(1,2,3,4,5,6,7),BioType="Spawning biomass",CatchUnit="(mt)",
-  BioUnit="(mt)",BioScalar=1,ColorsUsed="default",Labels="default")
+  BioUnit="(mt)",BioScalar=1,ColorsUsed="default",Labels="default",
+  pdf=FALSE,pwidth=7,pheight=7,lwd=2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -37,6 +38,11 @@ DoProjectPlots(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",
   \item{BioScalar}{ Scalar for biomass plot. Default=1. }
   \item{ColorsUsed}{ Optional vector for alternative line colors. Default="default". }
   \item{Labels}{ Optional vector for alternative legend labels. Default="default". }
+  \item{pdf}{ Option to send figures to pdf file instead of plot window
+    in Rgui. Default=FALSE. }
+  \item{pwidth}{ Width of the plot window or PDF file (in inches). Default=7. }
+  \item{pheight}{ Height of the plot window or PDF file (in inches). Default=7. }
+  \item{lwd}{ Line width for many of the plot elements. Default=2. }
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~

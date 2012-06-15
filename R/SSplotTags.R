@@ -1,11 +1,11 @@
 SSplotTags <-
-  function(replist=replist, subplots=1:8,
+  function(replist=replist, subplots=1:8, latency=0,
            rows=1, cols=1,
            tagrows=3, tagcols=3,
            plot=TRUE, print=FALSE,
            pntscalar=2.6,minnbubble=8,
            pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1,
-           col1="blue",col2="red",col3="grey80",
+           col1="blue",col2="red",col3="grey95",col4="grey70",
            labels = c("Year",                                   #1
            "Frequency",                                         #2
            "Tag Group",                                         #3
@@ -17,13 +17,24 @@ SSplotTags <-
            plotdir="default",
            verbose=TRUE)
 {
-  pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+  pngfun <- function(file,caption=NA){
+    png(filename=file,width=pwidth,height=pheight,
+        units=punits,res=res,pointsize=ptsize)
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+    return(plotinfo)
+  }
+  plotinfo <- NULL
+
   if(plotdir=="default") plotdir <- replist$inputs$dir
 
   tagdbase2 <- replist$tagdbase2
   if(is.null(tagdbase2) || nrow(tagdbase2)==0){
-    cat("skipping tag plots because there's no tagging data\n")
+    if(verbose) cat("skipping tag plots because there's no tagging data\n")
   }else{
+    if(verbose) cat("Running tag plot code.\n",
+                    "  Tag latency (mixing period) is set to ",latency,".\n",
+                    "  To change value, use the 'latency' input to the SSplotTags function.\n",sep="")
+    
     # calculations needed for printing to multiple PNG files
     grouprange     <- unique(tagdbase2$Rep)
     ngroups        <- length(unique(tagdbase2$Rep))
@@ -34,8 +45,9 @@ SSplotTags <-
     tagrecap       <- replist$tagrecap
     tagsalive      <- replist$tagsalive
     tagtotrecap    <- replist$tagtotrecap
-    
+
     tagfun1 <- function(ipage=0){
+      if(verbose) cat("Note: lighter colored bars in tag plot indicate latency period excluded from likelihood\n")
       # obs & exp recaps by tag group
       par(mfcol=c(tagrows,tagcols),mar=c(2.5,2.5,2,1),cex.main=cex.main,oma=c(2,2,2,0))
       if(npages > 1 & ipage!=0) grouprange <- intersect(grouprange, 1:(tagrows*tagcols) + tagrows*tagcols*(ipage-1))
@@ -47,10 +59,12 @@ SSplotTags <-
         for (iy in 1:length(tagtemp$Yr)){
           xx <- c(tagtemp$Yr[iy]-width,tagtemp$Yr[iy]-width,tagtemp$Yr[iy]+width,tagtemp$Yr[iy]+width)
           yy <- c(0,tagtemp$Obs[iy],tagtemp$Obs[iy],0)
-          polygon(xx,yy,col=col3)
+          polygon(xx,yy,col=ifelse(iy<=latency,col3,col4))
         }
         points(tagtemp$Yr,tagtemp$Exp,type="o",lty=1,pch=16)
-
+        if(latency>0) points(tagtemp$Yr[1:latency],tagtemp$Exp[1:latency],type="o",lty=1,pch=21,bg="white")
+        box()
+        
         # add labels in left and lower outer margins once per page
         mfg <- par("mfg")
         if(mfg[1]==1 & mfg[2]==1){
@@ -66,24 +80,33 @@ SSplotTags <-
 
     cat("Calculated tagging related quantities...\n")
     # reconfiguring tagdbase2
-    # why? to exclude the first year for each group?
-    XRep <- -1
-    x <- NULL
-    for (irow in 1:length(tagdbase2[,1])){
-      if (tagdbase2$Rep[irow] != XRep){
-        XRep <- tagdbase2$Rep[irow]
-      }else{
-        x <- rbind(x,tagdbase2[irow,])
-      }
-    }
-    # alternatively, don't reconfigure by using:
-    #x <- tagdbase
+    ## # old system from Andre which exclude exactly 1 year for each group as the latency period
+    ## XRep <- -1
+    ## x <- NULL
+    ## for (irow in 1:length(tagdbase2[,1])){
+    ##   if (tagdbase2$Rep[irow] != XRep){
+    ##     XRep <- tagdbase2$Rep[irow]
+    ##   }else{
+    ##     x <- rbind(x,tagdbase2[irow,])
+    ##   }
+    ## }
+    ## # alternatively, don't reconfigure by using:
+    ## #x <- tagdbase
 
+    # new system which takes latency value as input
+    tgroups <- sort(unique(tagdbase2$Rep))
+    x <- NULL
+    for(igroup in tgroups){
+      temp <- tagdbase2[tagdbase2$Rep==igroup,] # subset results for only 1 tag group
+      temp <- temp[-(1:latency),] # remove the first rows corresponding to the latency period
+      x <- rbind(x, temp)
+    }
+    
     #obs vs exp tag recaptures by year aggregated across group
     tagobs <- aggregate(x$Obs,by=list(x$Yr,x$Rep),FUN=sum,na.rm=TRUE)
     tagexp <- aggregate(x$Exp,by=list(x$Yr,x$Rep),FUN=sum,na.rm=TRUE)
     Recaps <- data.frame(Yr=tagobs[,1],Group=tagobs[,2],Obs=tagobs[,3],Exp=tagexp[,3])
-
+    
     xlim <- range(Recaps[,1])
     xx2 <- aggregate(Recaps[,3],by=list(Recaps$Yr),FUN=sum,na.rm=TRUE)
     xx3 <- aggregate(Recaps[,4],by=list(Recaps$Yr),FUN=sum,na.rm=TRUE)
@@ -96,12 +119,14 @@ SSplotTags <-
       for (iy in 1:nrow(RecAg)){
         xx <- c(RecAg[iy,1]-width,RecAg[iy,1]-width,RecAg[iy,1]+width,RecAg[iy,1]+width)
         yy <- c(0,RecAg[iy,2],RecAg[iy,2],0)
-        polygon(xx,yy,col=col3)
+        polygon(xx,yy,col=col4)
       }
       lines(RecAg[,1],RecAg[,3],type="o",pch=16,lty=1,lwd=2)
     }
 
     Recaps$Pearson <- (Recaps$Obs-Recaps$Exp)/sqrt(Recaps$Exp)
+    Recaps$Pearson[Recaps$Exp==0] <- NA
+
     tagfun3 <- function(){
       # bubble plot of observed recapture data
       plottitle <- labels[6]
@@ -137,7 +162,7 @@ SSplotTags <-
       barplot(height=tagreportrates$Init_Reporting,
               names.arg=tagreportrates$Fleet,ylim=c(0,1),yaxs='i',
               ylab="Reporting rate",xlab="Fleet number",
-              main="Intial reporting rate")
+              main="Initial reporting rate")
       box()
 
       # second plot shows any decay in reporting rate over time
@@ -172,7 +197,7 @@ SSplotTags <-
               col=rich.colors.short(nrow(tagsalive)),
               xlab="Period at liberty",
               ylab="Estimated number of alive tagged fish",
-              main="Tags alive' by tag group")
+              main="'Tags alive' by tag group")
       abline(h=0,col='grey')
     }
     tagfun8 <- function(){
@@ -199,53 +224,71 @@ SSplotTags <-
     }
     # send to files if requested
     if(print){
-      filenamestart <- "24_tags_by_group"
+      filenamestart <- "tags_by_group"
       if(1 %in% subplots){
         for(ipage in 1:npages){
           if(npages>1) pagetext <- paste("_page",ipage,sep="") else pagetext <- ""
-          filename <- paste(plotdir,filenamestart,pagetext,".png",sep="")
-          pngfun(file=filename)
+          file <- paste(plotdir,filenamestart,pagetext,".png",sep="")
+          caption <- paste(labels[4],"(lighter colored bars indicate latency period excluded from likelihood)")
+          if(npages>1) caption <- paste(caption, ", (plot ",ipage,"of ",npages,")",sep="")
+          plotinfo <- pngfun(file=file, caption=caption)
           tagfun1(ipage=ipage)
           dev.off() # close device if png
         }
       }
       if(2 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tags_aggregated.png",sep=""))
+        file <- paste(plotdir,"tags_aggregated.png",sep="")
+        caption <- labels[5]
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun2()
         dev.off()
       }
       if(3 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tags_data_bubbleplot.png",sep=""))
+        file <- paste(plotdir,"tags_data_bubbleplot.png",sep="")
+        caption <- labels[6]
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun3()
         dev.off()
       }
       if(4 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tags_residuals.png",sep=""))
+        file <- paste(plotdir,"tags_residuals.png",sep="")
+        caption <- labels[7]
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun4()
         dev.off()
       }
       if(5 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tags_lines.png",sep=""))
+        file <-paste(plotdir,"tags_lines.png",sep="")
+        caption <- labels[8]
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun5()
         dev.off()
       }
       if(6 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tag_parameters.png",sep=""))
+        file <-paste(plotdir,"tags_parameters.png",sep="")
+        caption <- "Tag-related parameters"
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun6()
         dev.off()
       }
       if(7 %in% subplots){
-        pngfun(file=paste(plotdir,"24_tags_alive.png",sep=""))
+        file <-paste(plotdir,"tags_alive.png",sep="")
+        caption <- "'Tags alive' by tag group"
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun7()
         dev.off()
       }
       if(8 %in% subplots){
-        pngfun(file=paste(plotdir,"24_total_recaptures.png",sep=""))
+        file <-paste(plotdir,"tags_total_recaptures.png",sep="")
+        caption <- "Total tag recaptures"
+        plotinfo <- pngfun(file=file, caption=caption)
         tagfun8()
         dev.off()
       }
     }
-    if(verbose) cat("Finished plot 24: tags\n")
     flush.console()
+    
   } # end if data
+  if(!is.null(plotinfo)) plotinfo$category <- "Tag"
+  return(invisible(plotinfo))
 } # end SSplotTags

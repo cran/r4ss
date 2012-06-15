@@ -11,7 +11,13 @@ SSplotYield <-
            plotdir="default",
            verbose=TRUE)
 {
-  pngfun <- function(file) png(file=file,width=pwidth,height=pheight,units=punits,res=res,pointsize=ptsize)
+  pngfun <- function(file,caption=NA){
+    png(filename=file,width=pwidth,height=pheight,
+        units=punits,res=res,pointsize=ptsize)
+    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+    return(plotinfo)
+  }
+  plotinfo <- NULL
 
   equil_yield <- replist$equil_yield
   nareas      <- replist$nareas
@@ -40,11 +46,12 @@ SSplotYield <-
     if(1 %in% subplots){
       if(plot){yieldfunc()}
       if(print){
-        pngfun(file=paste(plotdir,"23_yield.png",sep=""))
+        file <- paste(plotdir,"yield1_yield_curve.png",sep="")
+        caption <- "Yield curve"
+        plotinfo <- pngfun(file=file, caption=caption)
         yieldfunc()
         dev.off()}
     }
-    if(verbose) cat("Finished plot 23: yield curve\n")
   }else{
     cat("Skipped equilibrium yield plot: no equil_yield results in this model\n")
   }
@@ -95,9 +102,18 @@ SSplotYield <-
   if(2 %in% subplots){
     if(plot){sprodfunc()}
     if(print){
-      pngfun(file=paste(plotdir,"23_surplus_prod.png",sep=""))
+      file <- paste(plotdir,"yield2_Hilborn_surplus_production.png",sep="")
+      caption <-
+        paste("Surplus production plot. For interpretation, see<br>",
+              "<blockquote>Walters, Hilborn, and  Christensen, 2008,",
+              "Surplus production dynamics in declining and",
+              "recovering fish populations. <i>Can. J. Fish. Aquat. Sci.</i>",
+              "65: 2536-2551.</blockquote>")
+      plotinfo <- pngfun(file=file, caption=caption)
       sprodfunc()
-      dev.off()}
+      dev.off()
+    }
   }
-  if(verbose) cat("Finished plot 23: Surplus production\n")
+  if(!is.null(plotinfo)) plotinfo$category <- "Yield"
+  return(invisible(plotinfo))
 } # end function

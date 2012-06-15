@@ -10,11 +10,11 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
                           ipage=0,scalebins=FALSE){
   ################################################################################
   #
-  # make_multifig June 11, 2010
+  # make_multifig
   #
   # Purpose: To plot a multifigure environment similar to lattice but simpler
   #		 and with easier controls over some things
-  # Written: Ian Taylor, NWFSC/UW. Ian.Taylor-at-noaa.gov
+  # Written: Ian Taylor
   #
   ################################################################################
   bubble3 <- function (x,y,z,col=c(1,1),maxsize=3,do.sqrt=TRUE,
@@ -100,6 +100,7 @@ make_multifig <- function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
     yr_i <- yrvec[ipanel]
     ptsx_i <- ptsx[yr==yr_i]
     ptsy_i <- ptsy[yr==yr_i]
+    ptsy_i[ptsy_i < 0] <- NA
     if(doSD) ptsSD_i <- ptsSD[yr==yr_i]
       
     linesx_i <- linesx[yr==yr_i]

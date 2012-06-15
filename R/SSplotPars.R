@@ -1,12 +1,12 @@
 SSplotPars <-
   function(
     dir="c:/path/", repfile="Report.sso",
-    postfile="posteriors.sso", showpost=T, showprior=T,
-    showmle=T, showinit=T, showrecdev=T, priorinit=T,
-    priorfinal=T, showlegend=T, fitrange=F, xaxs="i",
-    xlim=NULL, ylim=NULL, verbose=T, nrows=3, ncols=3,
-    new=T, pdf=F, pwidth=7, pheight=7, punits="in",
-    ptsize=12, returntable=F, strings=c(), exact=F,
+    postfile="posteriors.sso", showpost=TRUE, showprior=TRUE,
+    showmle=TRUE, showinit=TRUE, showrecdev=TRUE, priorinit=TRUE,
+    priorfinal=TRUE, showlegend=TRUE, fitrange=FALSE, xaxs="i",
+    xlim=NULL, ylim=NULL, verbose=TRUE, nrows=3, ncols=3,
+    new=TRUE, pdf=FALSE, pwidth=7, pheight=7, punits="in",
+    ptsize=12, returntable=FALSE, strings=c(), exact=FALSE,
     newheaders=NULL, burn=0, thin=1,
     ctlfile="control.ss_new")
 {
@@ -24,23 +24,30 @@ SSplotPars <-
   #
   ################################################################################
 
-  codedate <- "June 17, 2011"
-
   if(verbose){
-    print(paste("R function updated:",codedate),quote=F)
-    print("Check for new code and report problems at http://code.google.com/p/r4ss/",quote=F)
+    cat("Check for new code and report problems at http://code.google.com/p/r4ss/\n")
   }
 
   # define subfunction
   GetPrior <- function(Ptype,Pmin,Pmax,Pr,Psd,Pval){
     # function to calculate prior values is direct translation of code in SSv3
+
+    # Ptype used to be a numeric value and is now a character string
+    # hopefully this function is robust to either option
+    Ptype2 <- NA
     if(is.character(Ptype)){
       if(Ptype=="No_prior") Ptype2 <- -1
       if(Ptype=="Normal") Ptype2 <- 0
       if(Ptype=="Sym_Beta") Ptype2 <- 1
       if(Ptype=="Full_Beta") Ptype2 <- 2
       if(Ptype=="Log_Norm") Ptype2 <- 3
+    }else{
+      Ptype2 <- Ptype
     }
+    # fix cases where numeric value was read as character (from older SS versions, I think)
+    if(is.na(Ptype2)) Ptype2 <- as.numeric(Ptype)
+    if(is.na(Ptype2)) cat("problem with prior type interpretation. Ptype:",Ptype," Ptype2:",Ptype2,"\n")
+    
     Pconst <- 0.0001
     if(Ptype2==-1){ # no prior
       Prior_Like <- rep(0.,length(Pval));
@@ -74,70 +81,66 @@ SSplotPars <-
   repfileinfo  <- file.info(fullrepfile)$size
   ctlfileinfo  <- file.info(fullctlfile)$size
 
-  if(is.na(repfileinfo)){
-    print(paste("Error! Missing rep file:",fullrepfile),quote=F)
-    return()
-  }
-  if(repfileinfo==0){
-    print(paste("Error! Empty rep file:",fullrepfile),quote=F)
-    return()
-  }
-  goodctl <- T
+  if(is.na(repfileinfo)) stop("Missing rep file:",fullrepfile)
+  if(repfileinfo==0) stop("Empty rep file:",fullrepfile)
+  
+  goodctl <- TRUE
   if(is.na(ctlfileinfo)){
-    print("Error! Missing control.ss_new file. Assuming recdev limits are -5 & 5.",quote=F)
-    goodctl <- F
+    cat("Missing control.ss_new file. Assuming recdev limits are -5 & 5.\n")
+    goodctl <- FALSE
+  }else{
+    if(ctlfileinfo==0){
+      cat("Empty control.ss_new file. Assuming recdev limits are -5 & 5.\n")
+      goodctl <- FALSE
+    }
   }
-  if(ctlfileinfo==0){
-    print("Error! Empty control.ss_new file. Assuming recdev limits are -5 & 5.",quote=F)
-    goodctl <- F
-  }
-
   if(showpost & is.na(postfileinfo)){
-    print(paste("Error! Missing post file:",fullpostfile),quote=F)
-    print(      "       changing input to 'showpost=F'",quote=F)
-    showpost <- F
+    cat("Missing posteriors file: ",postfile,", changing input to 'showpost=FALSE'\n",sep="")
+    showpost <- FALSE
   }
   if(showpost & !is.na(postfile) & postfileinfo==0){
-    print(paste("Error! Empty post file:",fullpostfile),quote=F)
-    print(      "       changing input to 'showpost=F'",quote=F)
-    showpost <- F
+    cat("Empty posteriors file: ",postfile,", changing input to 'showpost=FALSE'\n",sep="")
+    showpost <- FALSE
   }
 
   ## get posteriors
   if(showpost & !is.na(postfileinfo) & postfileinfo>0){
-    posts <- read.table(fullpostfile,head=T)
-    names(posts)[names(posts)=="SR_LN.R0."] <- "SR_LN(R0)"
-    # some stuff specific to Vlada and Ian's dogfish model.
-    # a more permanent solution would be good
-    names(posts)[names(posts)=="SizeSel_4P_1_A.SHOP"] <- "SizeSel_4P_1_A-SHOP"
-    names(posts)[names(posts)=="SizeSel_4P_2_A.SHOP"] <- "SizeSel_4P_2_A-SHOP"
-    names(posts)[names(posts)=="SizeSel_4P_3_A.SHOP"] <- "SizeSel_4P_3_A-SHOP"
-    names(posts)[names(posts)=="SizeSel_4P_4_A.SHOP"] <- "SizeSel_4P_4_A-SHOP"
-    names(posts)[names(posts)=="SizeSel_4P_5_A.SHOP"] <- "SizeSel_4P_5_A-SHOP"
-    # remove burn-in and thin the posteriors if requested
-    posts <- posts[seq(burn+1,nrow(posts),thin), ] 
+    test <- readLines(fullpostfile,n=10) # test for presence of file with at least 10 rows
+    if(length(test)>5){
+      posts <- read.table(fullpostfile,header=TRUE)
+      names(posts)[names(posts)=="SR_LN.R0."] <- "SR_LN(R0)"
+      # remove burn-in and thin the posteriors if requested
+      posts <- posts[seq(burn+1,nrow(posts),thin), ]
+    }else{
+      cat("Posteriors file has too few rows, changing input to 'showpost=FALSE'\n")
+      showpost <- FALSE
+    }
   }
   ## get parameter estimates
   if(!is.na(repfileinfo) & repfileinfo>0){
     replines <- readLines(fullrepfile,n=2000)
     parstart <- grep("PARAMETERS",replines)[2]
     parend <- grep("DERIVED_QUANTITIES",replines)[2]
-    nrows2 <- parend-parstart-3
-    partable <- read.table(fullrepfile,head=F,nrows=nrows2,skip=parstart,as.is=T,
-                           fill=T,row.names=paste(1:nrows2),col.names=1:60)
+    nrows2 <- parend - parstart - 3
+    partable <- read.table(fullrepfile,header=FALSE,nrows=nrows2,skip=parstart,as.is=TRUE,
+                           fill=TRUE,row.names=paste(1:nrows2),col.names=1:60)
     partable <- partable[,1:15]
     temp <- as.character(partable[1,])
-    temp <- c(temp[1:12],"PR_type_code",temp[13:14])
+    # this command was necessary for some intermediate version of SS (but I forget which)
+    #temp <- c(temp[1:12],"PR_type_code",temp[13:14])
     names(partable) <- temp
     partable <- partable[-1,]
     rownames(partable) <- 1:nrow(partable)
+    # check for presence of line which would represent the end of the table
+    test <- grep("Number_of_active_parameters",partable$Num)
+    if(length(test)>0) partable <- partable[1:(test-1),]
+    # clean up contents of the table and make certain columns numeric or character
     partable[partable=="_"] <- NA
     partable$Active_Cnt <- as.numeric(as.character(partable$Active_Cnt))
     partable$Label <- as.character(partable$Label)
     for(i in (1:ncol(partable))[!names(partable) %in% c("Label","Status","PR_type")] ){
       partable[,i] <- as.numeric(as.character(partable[,i]))
     }
-    #return(partable)    
   }
   # subset for only active parameters
   allnames <- partable$Label[!is.na(partable$Active_Cnt)]
@@ -149,10 +152,10 @@ SSplotPars <-
     else for(i in 1:length(strings))
        goodnames <- c(goodnames,grep(strings[i],allnames,value=TRUE))
     goodnames <- unique(goodnames)
-    print("parameters matching input vector 'strings':",quote=F)
+    cat("parameters matching input vector 'strings':\n")
     print(goodnames)
     if(length(goodnames)==0){
-      print("No active parameters match input vector 'strings'.",quote=F)
+      cat("No active parameters match input vector 'strings'.\n")
       return()
     }
   }else{
@@ -161,13 +164,14 @@ SSplotPars <-
   badpars <- grep("Impl_err_",goodnames)
   if(length(badpars)>0) goodnames <- goodnames[-badpars]
   stds <- partable$Parm_StDev[partable$Label %in% goodnames]
+
   if(showmle & (min(is.na(stds))==1 || min(stds, na.rm=TRUE) <= 0)){
-    print("Some parameters have std. dev. values in Report.sso equal to 0.",quote=F)
-    print("  Asymptotic uncertainty estimates will not be shown.",quote=F)
-    print("  Try re-running the model with the Hessian but no MCMC.",quote=F)
+    cat("Some parameters have std. dev. values in Report.sso equal to 0.\n",
+        "  Asymptotic uncertainty estimates will not be shown.\n",
+        "  Try re-running the model with the Hessian but no MCMC.\n")
   }
 
-  # remove RecrDevs temporarily until I add code to fill in the prior stuff
+  # Recruitment Devs
   recdevmin <- -5
   recdevmin <- 5
   recdevlabels <- c("Early_RecrDev_","Early_InitAge_","Main_InitAge_",
@@ -181,7 +185,7 @@ SSplotPars <-
       recdevmax  <- as.numeric(strsplit(ctllines[iline+1]," #")[[1]][1])
       readrecdev <- as.numeric(strsplit(ctllines[iline+2]," #")[[1]][1])
       if(is.na(readrecdev) | readrecdev==1)
-        print("This function does not yet display recdev values read from ctl file",quote=F)
+        cat("This function does not yet display recdev values read from ctl file.\n")
     }
   }else{
     goodnames <- goodnames[!substr(goodnames,1,9) %in% substr(recdevlabels,1,9)]
@@ -194,11 +198,11 @@ SSplotPars <-
   # make plot
   if(verbose & is.null(xlim)){
     if(fitrange){
-      print("Plotting range is scaled to fit parameter estimates.",quote=F)
-      print("  Change input to 'fitrange=F' to get full parameter range.",quote=F)
+      cat("Plotting range is scaled to fit parameter estimates.\n",
+          "  Change input to 'fitrange=FALSE' to get full parameter range.\n")
     }else{
-      print("Plotting range is equal to input limits on parameters.",quote=F)
-      print("  Range can be scaled to fit estimates by setting input 'fitrange=T'.",quote=F)
+      cat("Plotting range is equal to input limits on parameters.\n",
+          "  Range can be scaled to fit estimates by setting input 'fitrange=TRUE'.\n")
     }
   }
 
@@ -215,14 +219,15 @@ SSplotPars <-
   if(pdf){
     pdffile <- paste(dir,"/SSplotPars_",format(Sys.time(),'%d-%h-%Y_%H.%M' ),".pdf",sep="")
     pdf(file=pdffile,width=pwidth,height=pheight)
-    if(verbose) print(paste("PDF file with plots will be: ",pdffile,sep=""),quote=F)
+    if(verbose) cat("PDF file with plots will be: ",pdffile,"\n")
   }
 
   par(mfcol=c(nrows,ncols),mar=c(2,1,2,1),oma=c(2,2,0,0))
+  if(verbose) cat("Making plots of parameters:\n")
   for(ipar in 1:npars){
     # grab name and full parameter line
     parname <- goodnames[ipar]
-    if(verbose) print(parname)
+    if(verbose) cat("    ",parname,"\n")
     parline <- partable[partable$Label==parname,]
 
     # grab values
@@ -280,16 +285,16 @@ SSplotPars <-
     }
 
     # get posterior
-    goodpost <- F
+    goodpost <- FALSE
     if(showpost){
       jpar <- (1:ncol(posts))[names(posts)==parname]
       if(length(jpar)==1){
         post <- posts[,jpar]
         xmin <- min(xmin, quantile(post,0.001)) # update x range
         xmax <- max(xmax, quantile(post,0.999)) # update x range
-        goodpost <- T
+        goodpost <- TRUE
       }else{
-        print(paste("Error! parameter '",parname,"', not found in '",postfile,"'.",sep=""))
+        cat("Error! parameter '",parname,"', not found in '",postfile,"'.\n",sep="")
       }
     }
 
@@ -322,21 +327,21 @@ SSplotPars <-
       breakvec <- seq(xmin,xmax,length=50)
       if(min(breakvec) > min(post)) breakvec <- c(min(post),breakvec)
       if(max(breakvec) < max(post)) breakvec <- c(breakvec,max(post))
-      posthist <- hist(post,plot=F,breaks=breakvec)
-      ymax <- max(ymax,max(posthist$density),na.rm=F) # update ymax
+      posthist <- hist(post,plot=FALSE,breaks=breakvec)
+      ymax <- max(ymax,max(posthist$density),na.rm=FALSE) # update ymax
     }
 
     # make plot
     if(is.null(newheaders)) header <- parname else header <- newheaders[ipar]
     if(is.null(ylim)) ylim2 <- c(0,1.1*ymax) else ylim2 <- ylim
     plot(0,type="n",xlim=xlim2,ylim=ylim2,xaxs=xaxs,yaxs="i",
-         xlab="",ylab="",main=header,cex.main=1,axes=F)
+         xlab="",ylab="",main=header,cex.main=1,axes=FALSE)
     axis(1)
     # axis(2) # don't generally show y-axis values because it's just distracting
 
     # add stuff to plot
     colval <- "grey"
-    if(showpost & goodpost) plot(posthist,add=T,freq=F,col=colval,border=colval)
+    if(showpost & goodpost) plot(posthist,add=TRUE,freq=FALSE,col=colval,border=colval)
     if(showprior) lines(x,prior,lwd=2,lty=1)
     if(showmle){
       if(!is.na(parsd) && parsd>0){
@@ -349,15 +354,15 @@ SSplotPars <-
     if(showinit){
       par(xpd=NA) # stop clipping
       points(initval,-0.02*ymax,col="red",pch=17,cex=1.2)
-      par(xpd=F)  # restore original value
+      par(xpd=FALSE)  # restore original value
     }
     ##     if(printlike) mtext(side=3,line=0.2,cex=.8,adj=0,paste("prob@init =",round(priorinit,3)))
     ##     if(printlike) mtext(side=3,line=0.2,cex=.8,adj=1,paste("prob@final =",round(priorfinal,3)))
     box()
 
     if(max(par("mfg")[1:2])==1){ # first panel on page
-      mtext("Parameter value",side=1,line=0.5,outer=T)
-      mtext("Density",side=2,line=0.5,outer=T)
+      mtext("Parameter value",side=1,line=0.5,outer=TRUE)
+      mtext("Density",side=2,line=0.5,outer=TRUE)
       if(showlegend){
         showvec <- c(showprior,showmle,showpost,showinit)
         legend("topleft",cex=1.2,bty="n",pch=c(NA,NA,15,17)[showvec],

@@ -26,13 +26,14 @@ SStableComparisons(summaryoutput,
              "VonBert_K",
              "RecrDev_2008",
              "SPB_Virg",
-             "Bratio_2011",
-             "SPRratio_2010"),
+             "Bratio_2012",
+             "SPRratio_2011"),
            modelnames="default",
            csv=FALSE,
            csvdir="workingdirectory",
            csvfile="parameter_comparison_table.csv",
-           verbose=TRUE)
+           verbose=TRUE,
+           mcmc=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -69,26 +70,29 @@ SStableComparisons(summaryoutput,
   \item{verbose}{
     report progress to R GUI?
   }
+  \item{mcmc}{
+    summarize MCMC output in table?
+  }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -96,8 +100,8 @@ SStableComparisons(summaryoutput,
   \code{\link{SSsummarize}}, \code{\link{SSplotComparisons}},
   \code{\link{SS_output}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ data }

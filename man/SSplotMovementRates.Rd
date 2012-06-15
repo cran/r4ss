@@ -9,17 +9,31 @@
   movement rates between cells.
 }
 \usage{
-SSplotMovementRates(replist, subplots=1:2, colvec="default",
-  ylim="default", legend=TRUE, legendloc="topleft", moveseas="all",
-  cex.main=1, verbose=TRUE)
+SSplotMovementRates(replist, plot=TRUE, print=FALSE, subplots=1:2,
+           plotdir="default",
+           colvec="default", ylim="default", 
+           legend=TRUE, legendloc="topleft",
+           moveseas="all",
+           pwidth=7,pheight=7,punits="in",res=300,
+           ptsize=12,cex.main=1,
+           verbose=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{replist}{
     list created by \code{\link{SS_output}}
   }
+  \item{plot}{
+    plot to active plot device?
+  }
+  \item{print}{
+    print to PNG files?
+  }
   \item{subplots}{
     which subplots to create
+  }
+  \item{plotdir}{
+    where to put the plots (uses model directory by default)
   }
   \item{colvec}{
     vector of colors for each movement rate in the plot
@@ -38,6 +52,21 @@ SSplotMovementRates(replist, subplots=1:2, colvec="default",
   \item{moveseas}{
     choice of season for which movemement rates are shown
   }
+  \item{pwidth}{
+    width of plot written to PNG file
+  }
+  \item{pheight}{
+    height of plot written to PNG file
+  }
+  \item{punits}{
+    units for PNG file
+  }
+  \item{res}{
+    resolution for PNG file
+  }
+  \item{ptsize}{
+    ptsize for PNG file
+  }
   \item{cex.main}{
     Character expansion parameter for plot titles
   }
@@ -45,29 +74,31 @@ SSplotMovementRates(replist, subplots=1:2, colvec="default",
     Print information on function progress.
   }
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
-\note{
-}
+% \note{
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  %% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{SS_output}},
+  \code{\link{SSplotMovementRates}},
+  \code{\link{IOTCmove}}
 }
 \examples{
   \dontrun{

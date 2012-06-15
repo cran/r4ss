@@ -38,18 +38,11 @@ SSplotComparisons(summaryoutput,subplots=1:14,
   pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
   plotdir=NULL,
   densitynames=c("SPB_Virgin",
-                 "SPB_2011",
-                 "Bratio_2011",
-                 "SR_R0",
-                 "SR_LN(R0)",
-                 "TotYield_MSY"),
-  densityxlabs=c("B0 (mt)",
-                 "Spawning Biomass in 2011 (mt)",
-                 "depletion in 2011",
-                 "log(R0)",
-                 "MSY (mt)"),
+                 "R0"),
+  densityxlabs="default",
   densityscalex=1,
   densityscaley=1,
+  densityadjust=1,
   fix0=TRUE,
   new=TRUE,
   verbose=TRUE,
@@ -193,13 +186,14 @@ SSplotComparisons(summaryoutput,subplots=1:14,
     be the directory where the model was run.
   }
   \item{densitynames}{
-    vector of names of parameters or derived quantities contained in
-    summaryoutput$pars$Label or summaryoutput$quants$Label for which to
-    make density plots
+    vector of names (or subset of names) of parameters or derived
+    quantities contained in summaryoutput$pars$Label or
+    summaryoutput$quants$Label for which to make density plots
   }
   \item{densityxlabs}{
-    vector of x-axis labels to use in the density plots (must be equal
-    in length to \code{densitynames})
+    optional vector of x-axis labels to use in the density plots (must
+    be equal in length to the printed vector of quantities that match
+    the \code{densitynames} input)
   }
   \item{densityscalex}{
     scalar for upper x-limit in density plots (values below 1 will cut
@@ -210,6 +204,10 @@ SSplotComparisons(summaryoutput,subplots=1:14,
     scalar for upper y-limit in density plots (values below 1 will cut
     off top of highest peaks to provide better contrast among broader
     distributions
+  }
+  \item{densityadjust}{
+    multiplier on bandwidth of kernel in density function used for
+    smoothing MCMC posteriors. See 'adjust' in ?density for details.
   }
   \item{fix0}{
     always include 0 in the density plots?
@@ -226,25 +224,25 @@ SSplotComparisons(summaryoutput,subplots=1:14,
   }
   
 }
-\details{
-  %%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  %%  ~Describe the value returned
-  %%  If it is a LIST, use
-  %%  \item{comp1 }{Description of 'comp1'}
-  %%  \item{comp2 }{Description of 'comp2'}
-  %% ...
-}
-\references{
-  %% ~put references to the literature/web site here ~
-}
+% \details{
+%   %%  ~~ If necessary, more details than the description above ~~
+% }
+% \value{
+%   %%  ~Describe the value returned
+%   %%  If it is a LIST, use
+%   %%  \item{comp1 }{Description of 'comp1'}
+%   %%  \item{comp2 }{Description of 'comp2'}
+%   %% ...
+% }
+% \references{
+%   %% ~put references to the literature/web site here ~
+% }
 \author{
   Ian Taylor
 }
-\note{
-  %%  ~~further notes~~
-}
+% \note{
+%   %%  ~~further notes~~
+% }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -252,8 +250,8 @@ SSplotComparisons(summaryoutput,subplots=1:14,
   \code{\link{SS_plots}}, \code{\link{SSsummarize}},
   \code{\link{SS_output}}, \code{\link{SSgetoutput}}
 }
-\examples{
-}
+% \examples{
+% }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ hplot }
