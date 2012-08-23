@@ -193,11 +193,11 @@ SSplotTimeseries <-
     
     # sum up total across areas if needed
     if(nareas>1){
-      if(subplot %in% c(2,3,6,8,10,12,13)){
+      if(subplot %in% c(2,3,5,6,8,10,12,13)){
         # these plots have separate lines for each area
         main=paste(main,"by area")
       }
-      if(subplot %in% c(1,4,11,13)){
+      if(subplot %in% c(1,4,7,11,13)){
         # these plots have sum across areas
         yvals2 <- rep(NA,length(ts$YrSeas))
         for(iyr in 1:length(yvals)){
@@ -409,8 +409,13 @@ SSplotTimeseries <-
             if(subplot==7){
               plot1 <- stdtable$LABEL=="SPB_Virgin"
               stdtable$Yr[plot1] <- stdtable$Yr[plot1]+yrshift
-            }else{
-              plot1 <- stdtable$Yr %in% ts$Yr[plot1]
+            }
+            if(subplot==9){
+              plot1 <- stdtable$LABEL=="Bratio_Virgin" # note: this doesn't exist
+            }
+            if(subplot==11){
+              plot1 <- stdtable$LABEL=="Recr_Virgin"
+              stdtable$Yr[plot1] <- stdtable$Yr[plot1]+1 # shifting as in other cases to make Virgin year adjacent to first year of timeseries
             }
             plot2 <- stdtable$Yr %in% ts$Yr[plot2]
             plot3 <- stdtable$Yr %in% ts$Yr[plot3]

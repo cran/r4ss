@@ -130,7 +130,7 @@ SSplotData <- function(replist,
     # count number of unique combinations of fleet and data type
     ymax <- sum(as.data.frame(table(typetable2$fleet,typetable2$itype))$Freq>0)
     plot(0,xlim=xlim,ylim=c(0,ymax+ntypes+.5),axes=FALSE,xaxs='i',yaxs='i',
-         type="n",xlab="Year",ylab="",main="Data by type and year")
+         type="n",xlab="Year",ylab="",main="Data by type and year",cex.main=cex.main)
     xticks <- 5*round(xlim[1]:xlim[2]/5)
     abline(v=xticks,col='grey',lty=3)
     axistable <- data.frame(fleet=rep(NA,ymax),yval=NA)
@@ -156,8 +156,8 @@ SSplotData <- function(replist,
             if(is.na(y[n-1])) solo[n] <- TRUE
           }
           # add points and lines
-          points(x[solo], y[solo], pch=16, cex=2,col=fleetcol[ifleet])
-          lines(x, y, lwd=12, col=fleetcol[ifleet])
+          points(x[solo], y[solo], pch=16, cex=2,col=fleetcol[fleets==ifleet])
+          lines(x, y, lwd=12, col=fleetcol[fleets==ifleet])
           axistable[itick,] <- c(ifleet,yval)
           itick <- itick+1
         }
