@@ -9,7 +9,7 @@ SS_html <- function(replist=NULL,
                     verbose=TRUE){
   cat("Running 'SS_html':\n",
       "  By default, this function will look in the directory where PNG files were created\n",
-      "  for CSV files with the name 'plotInfoTable...' written by 'SS_plots_test.'\n",
+      "  for CSV files with the name 'plotInfoTable...' written by 'SS_plots.'\n",
       "  HTML files are written to link to these plots and put in the same directory.\n",
       "  Please provide feedback on any bugs, annoyances, or suggestions for improvement.\n\n")
   
@@ -275,14 +275,15 @@ SS_html <- function(replist=NULL,
   if(openfile){
     cat("Opening HTML file in your default web-browser.\n")
     if(.Platform$OS.type=="windows"){
-      if(length(grep(" ",htmlhome))==0){
-        shell(cmd=htmlhome, wait=FALSE)
-      }else{
-        cat("Sorry, the path has a space in it which causes problems for the DOS command.\n",
-            "      if you have a solution to this issue, let Ian T. know.\n",
-            "      Please go open this file by hand:\n",
-            htmlhome,"\n")
-      }
+      shell.exec(file=htmlhome)
+      ## if(length(grep(" ",htmlhome))==0){
+      ##   shell(cmd=htmlhome,wait=FALSE)
+      ## }else{
+      ##   cat("Sorry, the path has a space in it which causes problems for the DOS command.\n",
+      ##       "      if you have a solution to this issue, let Ian T. know.\n",
+      ##       "      Please go open this file by hand:\n",
+      ##       htmlhome,"\n")
+      ## }
     }else{
       if(.Platform$GUI=="X11") system(paste("firefox",htmlhome), wait=FALSE)
       if(.Platform$GUI=="Aqua") system(paste("open",htmlhome), wait=FALSE)

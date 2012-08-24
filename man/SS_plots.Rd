@@ -11,8 +11,9 @@ plot many quantities related to output from Stock Synthesis
   separate functions to make all the plots.
 }
 \usage{
-SS_plots(replist = NULL, plot = 1:27, print = 0,
-pdf = FALSE, printfolder = "plots", dir = "default", fleets = "all",
+SS_plots(replist = NULL, plot = 1:24, print = NULL,
+pdf = FALSE, png=FALSE, html=png, printfolder = "plots",
+dir = "default", fleets = "all",
 areas = "all", fleetnames = "default", fleetcols = "default",
 fleetlty = 1, fleetpch = 1, lwd = 1, areacols = "default",
 areanames = "default", verbose = TRUE, uncertainty = TRUE,
@@ -25,8 +26,9 @@ showsampsize = TRUE, showeffN = TRUE, showlegend = TRUE, pwidth = 7,
 pheight = 7, punits = "in", ptsize = 12, res = 300, cex.main = 1,
 selexlines = 1:5, rows = 1, cols = 1, maxrows = 6, maxcols = 6,
 maxrows2 = 2, maxcols2 = 4, tagrows = 3, tagcols = 3, fixdims = TRUE,
-new = TRUE, SSplotDatMargin = 8, catchasnumbers = FALSE,
-legendloc = "topleft", minyr = NULL, maxyr = NULL, scalebins=FALSE, ...)
+new = TRUE, SSplotDatMargin = 8, filenotes=NULL, catchasnumbers = NULL,
+catchbars = TRUE, legendloc = "topleft", minyr = NULL, maxyr = NULL,
+scalebins=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -36,17 +38,12 @@ legendloc = "topleft", minyr = NULL, maxyr = NULL, scalebins=FALSE, ...)
   \item{plot}{ Plot sets to be created, see list of plots below.  Use to
     specify only those plot sets of interest, e.g., c(1,2,5,10). Plots
     for data not available in the model run will automatically be
-    skipped, whether called or not. Default=1:24.}
-  \item{print}{  Plot set to be printed to files?  PNG files are created
-    in the specified directory for one or more requested plots.  Each
-    plot has a unique name starting with the number of the set it comes
-    from and attempting to be mildly descriptive.  This argument is
-    independent of "plot" in that plots can be created on screen, or
-    printed to file or both.  Manual rescaling cannot be done after
-    printing, so this option may not be the best choice for each plot;
-    saving files from the screen allows more control. Default=0.}
-  \item{pdf}{ Send plots to PDF file instead of R GUI? Input \code{plot}
-    must be used and input \code{print} must be 0. Default=0.}
+    skipped, whether called or not.}
+  \item{print}{ Deprecated input for backward compatability, now replaced by \code{png = TRUE/FALSE}.}
+  \item{pdf}{ Send plots to PDF file instead of R GUI?}
+  \item{png}{ Send plots to PNG files instead of R GUI?}
+  \item{html}{ Run \code{\link{SS_html}} on completion? By default has
+    same value as \code{png}.}
   \item{printfolder}{ Name of subfolder to create within the working
     directory into which any PNG files specified by \code{print} will be
     saved. By default the working directory is used with no subfolder.
@@ -159,9 +156,13 @@ legendloc = "topleft", minyr = NULL, maxyr = NULL, scalebins=FALSE, ...)
   \item{new}{ Open a new window or add to existing plot windows.
     Default=T. }
   \item{SSplotDatMargin}{ Size of right-hand margin in data plot (may be
-    too small if fleet names are long) } 
+    too small if fleet names are long) }
+  \item{filenotes}{ Optional vector of character strings to be added to
+    intro HTML page (if created) with notes about the model. }
   \item{catchasnumbers}{ Is catch input in numbers instead of biomass?
     Default=F. }
+  \item{catchbars}{ show catch by fleet as barplot instead of stacked
+    polygons (default=TRUE)  }  
   \item{legendloc}{ Location for all legends. Default="topleft". }
   \item{minyr}{ First year to show in time-series plots
     (changes xlim parameters). }
