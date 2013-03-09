@@ -13,9 +13,10 @@ SSplotComps(replist, subplots=1:12,
   kind="LEN", sizemethod=1, aalyear=-1, aalbin=-1, plot=TRUE,
   print=FALSE, fleets="all", fleetnames="default", sexes="all",
   datonly=FALSE, samplesizeplots=TRUE, compresidplots=TRUE, bub=FALSE,
-  showsampsize=TRUE, showeffN=TRUE, minnbubble=8, pntscalar=2.6,
+  showsampsize=TRUE, showeffN=TRUE, minnbubble=8, pntscalar=NULL,
+  scalebubbles=FALSE,bub.scale.pearson=1.5,bub.scale.dat=3,
   pwidth=7, pheight=7, punits="in", ptsize=12, res=300,
-  plotdir="default", cex.main=1, linepos=1, fitbar=FALSE, maxsize=3,
+  plotdir="default", cex.main=1, linepos=1, fitbar=FALSE,
   do.sqrt=TRUE, smooth=TRUE, cohortlines=c(),
   labels = c("Length (cm)",            
              "Age (yr)",               
@@ -34,7 +35,7 @@ SSplotComps(replist, subplots=1:12,
   printmkt=TRUE,printsex=TRUE,
   maxrows=6,maxcols=6,maxrows2=2,maxcols2=4,rows=1,cols=1,
   fixdims=TRUE,fixdims2=FALSE,maxneff=5000,verbose=TRUE,
-  scalebins=FALSE,...)
+  scalebins=FALSE,addMeans=TRUE,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -102,11 +103,22 @@ SSplotComps(replist, subplots=1:12,
   \item{minnbubble}{
     number of unique x values before adding buffer. see ?bubble3 for more info.
   }
-  \item{pntscalar}{
-    maximum bubble size for bubble plots; each plot scaled independently
-    based on this maximum size and the values plotted. Often some plots
-    look better with one value and others with a larger or smaller
-    value. Default=2.6
+  \item{pntscalar}{ This scalar defines the maximum bubble size for
+    bubble plots. This option is still available but a better choice is
+    to use bub.scale.pearson and bub.scale.dat, which are allow the same
+    scaling throughout all plots.
+  }
+  \item{bub.scale.pearson}{
+    Character expansion (cex) value for a proportion of 1.0 in bubble plot of
+    Pearson residuals. Default=1.5.
+  }
+  \item{bub.scale.dat}{
+    Character expansion (cex) value for a proportion of 1.0 in bubble plot of
+    composition data. Default=3.
+  }
+  \item{scalebubbles}{
+    scale data-only bubbles by sample size, not just proportion within
+    sample? Default=FALSE.
   }
   \item{pwidth}{
     default width of plots printed to files in units of \code{punits}. Default=7.
@@ -135,9 +147,6 @@ SSplotComps(replist, subplots=1:12,
   }
   \item{fitbar}{
     show fit to bars instead of points
-  }
-  \item{maxsize}{
-    maximum size of bubble plots
   }
   \item{do.sqrt}{
     scale bubbles based on sqrt of size vector. see ?bubble3 for more info.
@@ -198,6 +207,10 @@ SSplotComps(replist, subplots=1:12,
     Rescale expected and observed proportions by dividing by bin width
     for models where bins have different widths? Caution!: May not work
     correctly in all cases.
+  }
+  \item{addMeans}{
+    Add parameter means in addition to medians for MCMC posterior
+    distributions in which the median and mean differ.
   }
   \item{\dots}{
     additional arguments that will be passed to the plotting.

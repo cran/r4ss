@@ -3,9 +3,10 @@ SSplotComps <-
            kind="LEN", sizemethod=1, aalyear=-1, aalbin=-1, plot=TRUE, print=FALSE,
            fleets="all", fleetnames="default", sexes="all",
            datonly=FALSE, samplesizeplots=TRUE, compresidplots=TRUE, bub=FALSE,
-           showsampsize=TRUE, showeffN=TRUE, minnbubble=8, pntscalar=2.6,
+           showsampsize=TRUE, showeffN=TRUE, minnbubble=8, pntscalar=NULL,
+           scalebubbles=FALSE,bub.scale.pearson=1.5,bub.scale.dat=3,
            pwidth=7, pheight=7, punits="in", ptsize=12, res=300,
-           plotdir="default", cex.main=1, linepos=1, fitbar=FALSE, maxsize=3,
+           plotdir="default", cex.main=1, linepos=1, fitbar=FALSE, 
            do.sqrt=TRUE, smooth=TRUE, cohortlines=c(),
            labels = c("Length (cm)",           #1
                       "Age (yr)",              #2
@@ -24,7 +25,7 @@ SSplotComps <-
            printmkt=TRUE,printsex=TRUE,
            maxrows=6,maxcols=6,maxrows2=2,maxcols2=4,rows=1,cols=1,
            fixdims=TRUE,fixdims2=FALSE,maxneff=5000,verbose=TRUE,
-           scalebins=FALSE,...)
+           scalebins=FALSE,addMeans=TRUE,...)
 {
   ################################################################################
   # SSplotComps
@@ -317,13 +318,16 @@ SSplotComps <-
             # some things related to the next two bubble plots (single or multi-panel)
             if(datonly){
               z <- dbase$Obs
-              col <- rep("black",2)
+              if(scalebubbles) z <- dbase$N*dbase$Obs # if requested, scale by sample sizes
+              col <- 1
+              cexZ1 <- bub.scale.dat
               titletype <- titledata
               filetype <- "bub"
               allopen <- TRUE
             }else{
               z <- dbase$Pearson
-              col <- rep("blue",2)
+              col <- "blue"
+              cexZ1 <- bub.scale.pearson
               titletype <- "Pearson residuals, "
               filetype <- "resids"
               allopen <- FALSE
@@ -344,8 +348,10 @@ SSplotComps <-
               titles <- c(ptitle,titles) # compiling list of all plot titles
 
               tempfun2 <- function(){
-                bubble3(x=dbase$Yr.S, y=dbase$Bin, z=z, xlab=labels[3],ylab=kindlab,col=col,
-                        las=1,main=ptitle,cex.main=cex.main,maxsize=pntscalar,allopen=allopen,minnbubble=minnbubble)
+                bubble3(x=dbase$Yr.S, y=dbase$Bin, z=z, xlab=labels[3],
+                        ylab=kindlab,col=col,cexZ1=cexZ1,
+                        las=1,main=ptitle,cex.main=cex.main,maxsize=pntscalar,
+                        allopen=allopen,minnbubble=minnbubble)
                 # add lines for growth of individual cohorts if requested
                 if(length(cohortlines)>0){
                   for(icohort in 1:length(cohortlines)){
@@ -371,6 +377,10 @@ SSplotComps <-
                 if(npages>1){
                   pagetext <- paste("_page",ipage,sep="")
                   caption <- paste(caption, " (plot ",ipage," of ",npages,")",sep="")
+                }
+                if(length(grep("Pearson",caption))>0){
+                  caption <- paste(caption,
+                                   "<br> \nClosed bubbles are positive residuals and open bubbles are negative residuals.")
                 }
                 file <- paste(plotdir,"/",filenamestart,filetype,
                               filename_fltsexmkt,pagetext,".png",sep="")
@@ -444,6 +454,10 @@ SSplotComps <-
                           pagetext <- paste("_page",ipage,sep="")
                           caption <- paste(caption, " (plot ",ipage," of ",npages,")",sep="")
                         }
+                        if(length(grep("Pearson",caption))>0){
+                          caption <- paste(caption,
+                                           "<br> \nClosed bubbles are positive residuals and open bubbles are negative residuals.")
+                        }
                         file <- paste(plotdir,"/",filenamestart,filename_fltsexmkt,
                                       "_",aalyr,"_",pagetext,".png",sep="")
                         plotinfo <- pngfun(file=file, caption=caption)
@@ -459,8 +473,11 @@ SSplotComps <-
                     ptitle <- paste(ptitle," (max=",round(abs(max(z)),digits=2),")",sep="")
                     titles <- c(ptitle,titles) # compiling list of all plot titles
                     tempfun5 <- function(){
-                      bubble3(x=ydbase$Bin,y=ydbase$Lbin_lo,z=z,xlab=labels[2],ylab=labels[1],col=rep("blue",2),
-                              las=1,main=ptitle,cex.main=cex.main,maxsize=pntscalar,allopen=FALSE,minnbubble=minnbubble)
+                      bubble3(x=ydbase$Bin,y=ydbase$Lbin_lo,z=z,xlab=labels[2],
+                              ylab=labels[1],col="blue",las=1,main=ptitle,
+                              cex.main=cex.main,maxsize=pntscalar,
+                              cexZ1=bub.scale.pearson,
+                              allopen=FALSE,minnbubble=minnbubble)
                     }
                     if(plot) tempfun5()
                     if(print){
@@ -469,6 +486,10 @@ SSplotComps <-
                       if(npages>1){
                         pagetext <- paste("_page",ipage,sep="")
                         caption <- paste(caption, " (plot ",ipage," of ",npages,")",sep="")
+                      }
+                      if(length(grep("Pearson",caption))>0){
+                        caption <- paste(caption,
+                                         "<br> \nClosed bubbles are positive residuals and open bubbles are negative residuals.")
                       }
                       file <- paste(plotdir,"/",filenamestart,"yearresids_",
                                     filename_fltsexmkt,"_",aalyr,pagetext,".png",sep="")
@@ -552,6 +573,10 @@ SSplotComps <-
                     psmooth <- loess(dbasegood$effN~dbasegood$N,degree=1)
                     options(warn=old_warn)  #returning to old value
                     lines(psmooth$x[order(psmooth$x)],psmooth$fit[order(psmooth$x)],lwd=1.2,col="red",lty="dashed")
+                  }
+                  if(addMeans){
+                    abline(v=mean(dbasegood$N),lty=3,col='green3')
+                    abline(h=1/mean(1/dbasegood$effN),lty=3,col='green3')
                   }
                 }
               }
@@ -1150,13 +1175,16 @@ SSplotComps <-
               # determine bubble size and colors
               if(datonly){
                 z <- dbase$Obs
-                col <- rep("black",2)
+                if(scalebubbles) z <- dbase$N*dbase$Obs # if requested, scale by sample sizes
+                col <- 1
+                cexZ1 <- bub.scale.dat
                 titletype <- titledata
                 filetype <- "bub"
                 allopen <- TRUE
               }else{
                 z <- dbase$Pearson
-                col <- rep("blue",2)
+                col <- "blue"
+                cexZ1 <- bub.scale.pearson
                 titletype <- "Pearson residuals, "
                 filetype <- "resids"
                 allopen <- FALSE
@@ -1166,7 +1194,7 @@ SSplotComps <-
               # this section is a modified version of tempfun2 above
               ylim <- range(dbase$Bin)
               ylim[2] <- ylim[2]+0.2*diff(ylim) # add buffer of 10% at the top for fleet name
-              bubble3(x=dbase$Yr.S, y=dbase$Bin, z=z, col=col,
+              bubble3(x=dbase$Yr.S, y=dbase$Bin, z=z, col=col, cexZ1=cexZ1,
                       las=1,main="",cex.main=cex.main,maxsize=pntscalar,allopen=allopen,
                       xlim=xlim,ylim=ylim,axis1=FALSE)
               #legend('top',title=fleetnames[f],legend=NA,bty='n') # old way with label within each panel
@@ -1213,6 +1241,10 @@ SSplotComps <-
               if(npages>1){
                 pagetext <- paste("_page",ipage,sep="")
                 caption <- paste(caption, " (plot ",ipage," of ",npages,")",sep="")
+              }
+              if(length(grep("Pearson",caption))>0){
+                caption <- paste(caption,
+                                 "<br> \nClosed bubbles are positive residuals and open bubbles are negative residuals.")
               }
               caption <- paste(caption,
                                "<br>Note: bubble sizes are scaled to maximum within each panel.",
