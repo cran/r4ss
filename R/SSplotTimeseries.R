@@ -13,7 +13,9 @@ SSplotTimeseries <-
              "Spawning depletion",        #6
              "Spawning output (eggs)",    #7
              "Age-0 recruits (1,000s)",  #8
-             "Fraction of total Age-0 recruits"),  #9
+             "Fraction of total Age-0 recruits",  #9
+             "Management target",       #10
+             "Minimum stock size threshold"), #11 
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1)
 {
 
@@ -334,17 +336,34 @@ SSplotTimeseries <-
       abline(h=0,col="grey")
     }
 
-    # add stuff to plot
+    # add references points to plot of depletion
     if(subplot %in% c(9,10))
     {
       addtarg <- function(){
-        if(btarg>0){
+        if(btarg>0 & btarg<1){
           abline(h=btarg,col="red")
-          text(max(startyr,minyr)+4,btarg+0.03,"Management target",adj=0)
+          text(max(startyr,minyr)+4,btarg+0.03,labels[10],adj=0)
         }
-        if(minbthresh>0){
+        if(minbthresh>0 & minbthresh<1){
           abline(h=minbthresh,col="red")
-          text(max(startyr,minyr)+4,minbthresh+0.03,"Minimum stock size threshold",adj=0)
+          text(max(startyr,minyr)+4,minbthresh+0.03,labels[11],adj=0)
+        }
+      }
+      addtarg()
+    }
+    # add references points to plot of abundance
+    if(subplot %in% 7:9)
+    {
+      addtarg <- function(){
+        if(btarg>1){
+          abline(h=btarg,col="red")
+          text(max(startyr,minyr)+4,btarg+0.02*diff(par()$usr[3:4]),
+               labels[10],adj=0)
+        }
+        if(minbthresh>1){
+          abline(h=minbthresh,col="red")
+          text(max(startyr,minyr)+4,minbthresh+0.02*diff(par()$usr[3:4]),
+               labels[11],adj=0)
         }
       }
       addtarg()

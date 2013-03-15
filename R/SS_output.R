@@ -62,13 +62,12 @@ SS_output <-
   }
 
   # get info on output files created by Stock Synthesis
-  dir <- paste(dir,"/",sep="")
   shortrepfile <- repfile
-  repfile <- paste(dir,repfile,sep="")
+  repfile <- file.path(dir,repfile)
 
   parfile <- dir(dir,pattern=".par$")
   if(length(parfile)>1){
-    filetimes <- file.info(paste(dir,parfile,sep="/"))$mtime
+    filetimes <- file.info(file.path(dir,parfile))$mtime
     parfile <- parfile[filetimes==max(filetimes)]
     if(verbose) cat("Multiple files in directory match pattern *.par\n",
                     "choosing most recently modified:",parfile,"\n")
@@ -77,7 +76,7 @@ SS_output <-
     if(!hidewarn) cat("Some stats skipped because the .par file not found:\n  ",parfile,"\n")
     parfile <- NA
   }else{
-    parfile <- paste(dir,parfile,sep="/")
+    parfile <- file.path(dir,parfile)
   }
 
   # read three rows to get start time and version number from rep file
@@ -97,12 +96,12 @@ SS_output <-
   # perhaps in the future we will use it to replace SS_versionshort throughout r4ss?
   SS_versionCode <- rephead[grep("#V",rephead)]
   SS_version <- rephead[grep("Stock_Synthesis",rephead)]
+  SS_version <- SS_version[substring(SS_version,1,2)!="#C"] # remove any version numbering in the comments
   SS_versionshort <- toupper(substr(SS_version,1,8))
   SS_versionNumeric <- as.numeric(substring(SS_versionshort,5))
-
   # rough limits on compatibility of this code
   SS_versionMax <- 3.24
-  SS_versionMin <- 3.11 # may no longer work
+  SS_versionMin <- 3.21 # a stab in the dark at which versions still work
 
   # test for version compatibility with this code
   if(SS_versionNumeric < SS_versionMin  | SS_versionNumeric > SS_versionMax){
@@ -133,7 +132,7 @@ SS_output <-
       }
     }
     # CoVar.sso file
-    covarfile <- paste(dir,covarfile,sep="")
+    covarfile <- file.path(dir,covarfile)
     if(!file.exists(covarfile)){
       stop("covar file not found. Change input to covar=FALSE, or modify 'covarfile' input.\n")
     }
@@ -163,7 +162,7 @@ SS_output <-
   }
 
   # time check for CompReport file
-  compfile <- paste(dir,compfile,sep="")
+  compfile <- file.path(dir,compfile)
   if(file.exists(compfile)){
     comphead <- readLines(con=compfile,n=30)
     compskip <- grep("Composition_Database",comphead)
@@ -183,9 +182,9 @@ SS_output <-
     }
     comp <- TRUE
   }else{
-    cat("Missing ",compfile,". Change the compfile input or rerun model to get the file.\n",sep="")
-    #return()
-    if(NoCompOK) comp <- FALSE else return()
+    if(!NoCompOK) stop("Missing ",compfile,
+                       ". Change the compfile input or rerun model to get the file.\n",sep="")
+    else comp <- FALSE
   }
 
   # read report file
@@ -212,7 +211,7 @@ SS_output <-
 
   # read forecast report file
   if(forecast){
-    forecastname <- paste(dir,forefile,sep="")
+    forecastname <- file.path(dir,forefile)
     temp <- file.info(forecastname)$size
     if(is.na(temp) | temp==0){
       stop("Forecase-report.sso file is empty.\n",
@@ -245,12 +244,16 @@ SS_output <-
     }else{
       if(SS_versionshort=="SS-V3.11"){
         yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),c(4,7)]
+        colnames(yielddat) <- c("Catch","Depletion")
       }else{
-        yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),c(5,8)]
+        names <- yieldraw[1,1:9]
+        names[names=="SSB/Bzero"] <- "Depletion"
+        yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),1:9]
+        names(yielddat) <- names #colnames(yielddat) <- c("Catch","Depletion","YPR")
       }
-      colnames(yielddat) <- c("Catch","Depletion")
-      yielddat$Catch <- as.numeric(yielddat$Catch)
-      yielddat$Depletion <- as.numeric(yielddat$Depletion)
+      for(icol in 1:ncol(yielddat)){
+        yielddat[,icol] <- as.numeric(yielddat[,icol])
+      }
       yielddat <- yielddat[order(yielddat$Depletion,decreasing = FALSE),]
     }
   }else{
@@ -284,13 +287,13 @@ SS_output <-
   logfile <- dir(dir,pattern=".log$")
   logfile <- logfile[logfile != "fmin.log"]
   if(length(logfile)>1){
-    filetimes <- file.info(paste(dir,logfile,sep="/"))$mtime
+    filetimes <- file.info(file.path(dir,logfile))$mtime
     logfile <- logfile[filetimes==max(filetimes)]
     if(verbose) cat("Multiple files in directory match pattern *.log\n",
                     "choosing most recently modified file:",logfile,"\n")
   }
-  if(length(logfile)==1 && file.info(paste(dir,logfile,sep='/'))$size>0){
-    logfile <- read.table(paste(dir,logfile,sep='/'))[,c(4,6)]
+  if(length(logfile)==1 && file.info(file.path(dir,logfile))$size>0){
+    logfile <- read.table(file.path(dir,logfile))[,c(4,6)]
     names(logfile) <- c("TempFile","Size")
     maxtemp <- max(logfile$Size)
     if(maxtemp==0){
@@ -308,7 +311,7 @@ SS_output <-
 
   # read warnings file
   if(warn){
-    warnname <- paste(dir,"warning.sso",sep="")
+    warnname <- file.path(dir,"warning.sso")
     if(!file.exists(warnname)){
       cat("warning.sso file not found\n")
       nwarn <- NA
@@ -402,7 +405,7 @@ SS_output <-
     lbinspop <- lbinspop[!is.na(lbinspop)]
     nlbinspop <- length(lbinspop)
     Lbin_method <- as.numeric(allbins[matchfun("Method_for_Lbin_definition",allbins[,1]),2])
-    if(compend==20){
+    if(compend==compskip+2){
       cat("It appears that there is no composition data in CompReport.sso\n")
       comp <- FALSE # turning off switch to function doesn't look for comp data later on
       agebins <- NA
@@ -414,14 +417,30 @@ SS_output <-
       rawcompdbase <- read.table(file=compfile, col.names=col.names, fill=TRUE, colClasses="character", skip=compskip, nrows=-1)
       names(rawcompdbase) <- rawcompdbase[1,]
       names(rawcompdbase)[names(rawcompdbase)=="Used?"] <- "Used"
-      compdbase <- rawcompdbase[2:(nrow(rawcompdbase)-4),] # subtract header line and last 4 lines
+      endfile <- grep("End_comp_data",rawcompdbase[,1])
+      compdbase <- rawcompdbase[2:(endfile-2),] # subtract header line and last 2 lines
+
+      # make correction to tag output associated with 3.24f (fixed in later versions)
+      if(substr(SS_version,1,9)=="SS-V3.24f"){
+        cat('Correcting for bug in tag data output associated with SSv3.24f\n')
+        tag1rows <- compdbase$Pick_gender=="TAG1"
+        if(any(tag1rows)){
+          tag1 <- compdbase[tag1rows,]
+          tag1new <- tag1
+          tag1new[,4:23] <- tag1new[,3:22] # shift columns over
+          tag1new$Yr.S <- tag1new$Yr # move Yr.S
+          tag1new$Yr <- floor(as.numeric(tag1new$Yr)) # turn Yr.S into Yr
+          compdbase[tag1rows,] <- tag1new
+        }
+      }
+
       compdbase <- compdbase[compdbase$Obs!="",]
       compdbase[compdbase=="_"] <- NA
       compdbase$Used[is.na(compdbase$Used)] <- "yes"
       if(!("SuprPer" %in% names(compdbase))) compdbase$SuprPer <- "No"
       compdbase$SuprPer[is.na(compdbase$SuprPer)] <- "No"
 
-      n <- sum(is.na(compdbase$N) & compdbase$Used!="skip")
+      n <- sum(is.na(compdbase$N) & compdbase$Used!="skip" & compdbase$Kind!="TAG2")
       if(n>0){
         cat("Warning:",n,"rows from composition database have NA sample size\n  but are not part of a super-period. (Maybe input as N=0?)\n")
       }
@@ -442,7 +461,6 @@ SS_output <-
         }
       }
 
-
       # deal with Lbins
       compdbase$Lbin_range <- compdbase$Lbin_hi - compdbase$Lbin_lo
       compdbase$Lbin_mid <- 0.5*(compdbase$Lbin_lo + compdbase$Lbin_hi)
@@ -456,6 +474,7 @@ SS_output <-
         notconditional <- !is.na(Lbin_range) & Lbin_range >  aalmaxbinrange
         conditional    <- !is.na(Lbin_range) & Lbin_range <= aalmaxbinrange
       }
+
       if(SS_versionNumeric >= 3.22){
         # new designation of ghost fleets from negative samp size to negative fleet
         lendbase         <- compdbase[compdbase$Kind=="LEN"  & compdbase$Used!="skip",]
@@ -754,7 +773,7 @@ SS_output <-
   # read weight-at-age file
   wtatage <- NULL
   if(readwt){
-    wtfile <- paste(dir,wtfile,sep="/")
+    wtfile <- file.path(dir,wtfile)
     if(!file.exists(wtfile) | file.info(wtfile)$size==0){
       if(verbose) cat("Skipping weight-at-age file. File missing or empty:",wtfile,"\n")
     }else{
@@ -973,6 +992,12 @@ if(FALSE){
   midmorphs <- c(c(0,nmorphs/nsexes)+ceiling(nmorphs/nsexes/2))
   returndat$endgrowth <- growdat
 
+
+  # test for use of empirical weight-at-age input file (wtatage.ss)
+  test <- matchfun2("MEAN_BODY_WT(begin)",0,"MEAN_BODY_WT(begin)",0,header=FALSE)
+  wtatage_switch <- length(grep("wtatage.ss",test))>0
+  returndat$wtatage_switch <- wtatage_switch
+  
   # mean body weight
   mean_body_wt <- matchfun2("MEAN_BODY_WT(begin)",1,"MEAN_SIZE_TIMESERIES",-1,header=TRUE)
   for(i in 1:ncol(mean_body_wt)) mean_body_wt[,i] <- as.numeric(mean_body_wt[,i])
@@ -1119,6 +1144,7 @@ if(FALSE){
       for(icol in (1:ncol(discard))[!(names(discard) %in% c("Fleet"))])
         discard[,icol] <- as.numeric(discard[,icol])
       discard$FleetNum <- NA
+      if(!"Name"%in%names(discard)) discard$Name <- discard$Fleet
       for(i in 1:nrow(discard)){
         discard$FleetNum[i] <- strsplit(discard$Name[i],"_")[[1]][1]
         discard$FleetName[i] <- substring(discard$Name[i],nchar(discard$FleetNum[i])+2)
@@ -1175,21 +1201,48 @@ if(FALSE){
     shift <- -3
     if(SS_versionNumeric < 3.23) shift <- -1
     spr <- matchfun2("SPR_series",5,"Kobe_Plot",shift,header=TRUE)
-    Kobe <- matchfun2("Kobe_Plot",2,"SPAWN_RECRUIT",-1,header=TRUE)
+    Kobe_head <- matchfun2("Kobe_Plot",0,"Kobe_Plot",3,header=TRUE)
+    if(length(grep("F_report_basis_is_not",Kobe_head[1,1]))>0){
+      shift <- 2
+      Kobe_warn <- Kobe_head[1,1]
+    }else{
+      shift <- 1
+      Kobe_warn <- NA
+    }
+    Kobe <- matchfun2("Kobe_Plot",shift,"SPAWN_RECRUIT",-1,header=TRUE)
+    Kobe_MSY_basis <- names(Kobe)[1]
+    names(Kobe) <- Kobe[1,]
+    Kobe <- Kobe[-1,]
+    Kobe[Kobe=="_"] <- NA
+    for(icol in 1:3){
+      names(Kobe)[icol] <- sub("/",".",names(Kobe)[icol],fixed=TRUE)
+      Kobe[,icol] <- as.numeric(Kobe[,icol])
+    }
   }else{
     Kobe <- NA
+    Kobe_warn <- NA
+    Kobe_MSY_basis <- NA
   }
+  returndat$Kobe_warn <- Kobe_warn
+  returndat$Kobe_MSY_basis <- Kobe_MSY_basis
+  returndat$Kobe <- Kobe
   spr[spr=="_"] <- NA
   spr[spr=="&"] <- NA
   for(i in (1:ncol(spr))[!(names(spr)%in%c("Actual:","More_F(by_morph):"))]) spr[,i] <- as.numeric(spr[,i])
-  spr <- spr[spr$Year <= endyr,]
+  #spr <- spr[spr$Year <= endyr,]
   spr$spr <- spr$SPR
   returndat$sprseries <- spr
-  returndat$Kobe <- Kobe
   stats$last_years_SPR <- spr$spr[nrow(spr)]
   stats$SPRratioLabel <- managementratiolabels[1,2]
   stats$last_years_SPRratio <- spr$SPR_std[nrow(spr)]
 
+  returndat$managementratiolabels <- managementratiolabels
+  returndat$F_report_basis <- managementratiolabels$Label[2]
+  returndat$B_ratio_denominator <- as.numeric(strsplit(managementratiolabels$Label[3],"%")[[1]][1])/100
+  returndat$sprtarg <- sprtarg
+  returndat$btarg <- btarg
+  returndat$minbthresh <- minbthresh
+  
   if(forecast){
    returndat$equil_yield <- yielddat
    # stats$spr_at_msy <- as.numeric(rawforecast[33,2])
@@ -1199,11 +1252,6 @@ if(FALSE){
   }else{if(verbose) cat("You skipped the equilibrium yield data\n")}
   flush.console()
 
-  returndat$managementratiolabels <- managementratiolabels
-  returndat$B_ratio_denominator <- as.numeric(strsplit(managementratiolabels$Label[3],"%")[[1]][1])/100
-  returndat$sprtarg <- sprtarg
-  returndat$btarg <- btarg
-  returndat$minbthresh <- minbthresh
 
 
   # Spawner-recruit curve
@@ -1249,7 +1297,11 @@ if(FALSE){
   }
 
   # Numbers at length
-  rawnatlen <- matchfun2("NUMBERS_AT_LENGTH",1,"CATCH_AT_AGE",-1,cols=1:(11+nlbinspop),substr1=FALSE)
+  if(length(grep("BIOMASS_AT_LENGTH",rawrep[,1]))==0){
+    rawnatlen <- matchfun2("NUMBERS_AT_LENGTH",1,"CATCH_AT_AGE",-1,cols=1:(11+nlbinspop),substr1=FALSE)
+  }else{
+    rawnatlen <- matchfun2("NUMBERS_AT_LENGTH",1,"BIOMASS_AT_LENGTH",-1,cols=1:(11+nlbinspop),substr1=FALSE)
+  }
   if(length(rawnatlen)>1){
     names(rawnatlen) <- rawnatlen[1,]
     rawnatlen <- rawnatlen[-1,]
@@ -1257,6 +1309,18 @@ if(FALSE){
     returndat$natlen <- rawnatlen
   }
 
+  # Biomass at length (first appeared in version 3.24l, 12-5-2012)
+  if(length(grep("BIOMASS_AT_LENGTH",rawrep[,1]))>0){
+    rawbatlen <- matchfun2("BIOMASS_AT_LENGTH",1,"CATCH_AT_AGE",-1,cols=1:(11+nlbinspop),substr1=FALSE)
+    if(length(rawbatlen)>1){
+      names(rawbatlen) <- rawbatlen[1,]
+      rawbatlen <- rawbatlen[-1,]
+      for(i in (1:ncol(rawbatlen))[!(names(rawbatlen) %in% c("Beg/Mid","Era"))]) rawbatlen[,i] = as.numeric(rawbatlen[,i])
+      returndat$batlen <- rawbatlen
+    }
+  }
+
+  
   # Movement
   movement <- matchfun2("MOVEMENT",1,"EXPLOITATION",-1,cols=1:(7+accuage),substr1=FALSE)
   names(movement) <- c(movement[1,1:6],paste("age",movement[1,-(1:6)],sep=""))
@@ -1345,7 +1409,7 @@ if(FALSE){
     returndat$N_ageerror_defs <- N_ageerror_defs <- length(starts)
     if(N_ageerror_defs > 0)
     {
-      nrowsAAK <- nrow(rawAAK)/nsexes - 3
+      nrowsAAK <- nrow(rawAAK)/N_ageerror_defs - 3
       AAK = array(NA,c(N_ageerror_defs,nrowsAAK,accuage+1))
       age_error_mean <- age_error_sd <- data.frame(age=0:accuage)
       for(i in 1:N_ageerror_defs){
@@ -1383,12 +1447,18 @@ if(FALSE){
   #No_fishery_for_Z=M_and_dynamic_Bzero
   Z_at_age <- matchfun2("Z_AT_AGE_Annual_2",1,"Spawning_Biomass_Report_1",-2,header=TRUE)
   M_at_age <- matchfun2("Z_AT_AGE_Annual_1",1,"-ln(Nt+1",-1,matchcol2=5, header=TRUE)
-  Z_at_age[Z_at_age=="_"] <- NA
-  M_at_age[M_at_age=="_"] <- NA
-  if(Z_at_age[[1]][1]!="absent"){
-    for(i in 1:ncol(Z_at_age)) Z_at_age[,i] <- as.numeric(Z_at_age[,i])
-    for(i in 1:ncol(M_at_age)) M_at_age[,i] <- as.numeric(M_at_age[,i])
+  if(nrow(Z_at_age)>0){  
+    Z_at_age[Z_at_age=="_"] <- NA
+    M_at_age[M_at_age=="_"] <- NA
+    if(Z_at_age[[1]][1]!="absent" && nrow(Z_at_age>0)){
+      for(i in 1:ncol(Z_at_age)) Z_at_age[,i] <- as.numeric(Z_at_age[,i])
+      for(i in 1:ncol(M_at_age)) M_at_age[,i] <- as.numeric(M_at_age[,i])
+    }else{
+      Z_at_age <- NA
+      M_at_age <- NA
+    }
   }else{
+    # this could be cleaned up
     Z_at_age <- NA
     M_at_age <- NA
   }

@@ -6,14 +6,16 @@ SS_plots <-
     lwd=1, areacols="default", areanames="default",
     verbose=TRUE, uncertainty=TRUE, forecastplot=FALSE,
     datplot=FALSE, Natageplot=TRUE, samplesizeplots=TRUE, compresidplots=TRUE,
-    sprtarg="default", btarg="default", minbthresh="default", pntscalar=2.6,
+    sprtarg="default", btarg="default", minbthresh="default", pntscalar=NULL,
+    bub.scale.pearson=1.5,bub.scale.dat=3,pntscalar.nums=2.6,
     minnbubble=8, aalyear=-1, aalbin=-1, aalresids=FALSE, maxneff=5000,
     cohortlines=c(), smooth=TRUE, showsampsize=TRUE, showeffN=TRUE,
     showlegend=TRUE, pwidth=7, pheight=7, punits="in", ptsize=12, res=300,
     cex.main=1,selexlines=1:5, rows=1, cols=1, maxrows=6, maxcols=6,
     maxrows2=2, maxcols2=4, tagrows=3, tagcols=3, fixdims=TRUE, new=TRUE,
     SSplotDatMargin=8, filenotes=NULL, catchasnumbers=NULL, catchbars=TRUE,
-    legendloc="topleft", minyr=NULL, maxyr=NULL, scalebins=FALSE, ...)
+    legendloc="topleft", minyr=NULL, maxyr=NULL, scalebins=FALSE,
+    scalebubbles=FALSE,...)
 {
   ################################################################################
   #
@@ -39,8 +41,8 @@ SS_plots <-
   ## if(verbose) cat("R function updated:",codedate,
   ##   "\nCheck for new code and report problems at http://code.google.com/p/r4ss/\n")
 
-  cat("Note: 'SS_plots' has reorganized plot groups and new HTML output option\n",
-      "     To get old code, you can find it in package version 1.17 and before.\n\n")
+  ## cat("Note: 'SS_plots' has reorganized plot groups and new HTML output option\n",
+  ##     "     To get old code, you can find it in package version 1.17 and before.\n\n")
 
   if(!is.null(print)) stop("The 'print' input has been replaced by 'png = TRUE/FALSE'\n",
                            "  which is combined with the vector of numbers input to 'plot'")
@@ -124,7 +126,9 @@ SS_plots <-
   if(length(grep("mingw",version$os)) > 0) OS <- "Windows"
 
   if(nplots>0 & !png & !pdf & new){
-    if(exists(".SavedPlots",where=1)) rm(.SavedPlots,pos=1)
+    ### Note: the following line has been commented out because it was identified
+    ###       by Brian Ripley as "against CRAN policies".
+    #if(exists(".SavedPlots",where=1)) rm(.SavedPlots,pos=1)
     if(OS=="Windows") windows(width=pwidth,height=pheight,pointsize=ptsize,record=TRUE)
     if(OS=="Linux") X11(width=pwidth,height=pheight,pointsize=ptsize)
     if(OS=="Mac") quartz(width=pwidth,height=pheight,pointsize=ptsize)
@@ -132,6 +136,7 @@ SS_plots <-
   if(nplots>0 & !new){
     if(verbose) cat("Adding plots to existing plot window. Plot history not erased.\n")
   }
+  
   if(dir=="default") dir <- inputs$dir
   plotdir <- paste(dir,"/",printfolder,"/",sep="")
   if(png){
@@ -149,7 +154,6 @@ SS_plots <-
     if(verbose) cat("PDF file with plots will be:",pdffile,'\n')
   }
   if(new & !png) par(mfcol=c(rows,cols)) # make multi-panel plot if requested
-
   if(pdf){
     mar0 <- par()$mar # current margins
     par(mar=rep(0,4))
@@ -454,7 +458,7 @@ SS_plots <-
                     areas=areas,
                     areanames=areanames,
                     areacols=areacols,
-                    pntscalar=pntscalar,
+                    pntscalar=pntscalar.nums,
                     plot=!png, print=png,
                     pwidth=pwidth, pheight=pheight, punits=punits,
                     ptsize=ptsize, res=res,cex.main=cex.main,
@@ -505,7 +509,7 @@ SS_plots <-
                         maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                         plot=!png, print=png,
                         plotdir=plotdir,cex.main=cex.main,
-                        scalebins=scalebins,
+                        scalebins=scalebins, scalebubbles=scalebubbles,
                         pwidth=pwidth, pheight=pheight, punits=punits,
                         ptsize=ptsize, res=res,
                         ...)
@@ -537,7 +541,7 @@ SS_plots <-
                       maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                       plot=!png, print=png,
                       plotdir=plotdir,cex.main=cex.main,
-                      scalebins=scalebins,
+                      scalebins=scalebins, scalebubbles=scalebubbles,
                       pwidth=pwidth, pheight=pheight, punits=punits,
                       ptsize=ptsize, res=res,
                       ...)
@@ -565,7 +569,7 @@ SS_plots <-
                       maxrows=maxrows,maxcols=maxcols,fixdims=fixdims,rows=rows,cols=cols,
                       plot=!png, print=png,
                       plotdir=plotdir,cex.main=cex.main,
-                      scalebins=scalebins,
+                      scalebins=scalebins, scalebubbles=scalebubbles,
                       pwidth=pwidth, pheight=pheight, punits=punits,
                       ptsize=ptsize, res=res,
                       ...)
@@ -584,7 +588,7 @@ SS_plots <-
                       fixdims=fixdims,rows=rows,cols=cols,
                       plot=!png, print=png,
                       plotdir=plotdir,cex.main=cex.main,
-                      scalebins=scalebins,
+                      scalebins=scalebins, scalebubbles=scalebubbles,
                       pwidth=pwidth, pheight=pheight, punits=punits,
                       ptsize=ptsize, res=res,
                       ...)
@@ -913,7 +917,7 @@ SS_plots <-
     csvname <- paste(plotdir,"/plotInfoTable_",format(png_time,'%d-%b-%Y_%H.%M.%S'),".csv",sep="")
     write.csv(plotInfoTable, csvname, row.names=FALSE)
     cat("Wrote table of info on PNG files to:\n   ",csvname,"\n")
-    if(html) SS_html(replist,filenotes=filenotes)
+    if(html) SS_html(replist,filenotes=filenotes,plotdir=printfolder)
     return(invisible(plotInfoTable))
   }else{
     return(invisible(999))

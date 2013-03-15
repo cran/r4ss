@@ -4,6 +4,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(verbose) cat("running SS_readdat\n")
   dat <- readLines(file,warn=FALSE)
 
+  # split apart any bootstrap or expected value sections in data.ss_new
   if(!is.null(section)){
     Nsections <- as.numeric(substring(dat[grep("Number_of_datafiles",dat)],24))
     if(!section %in% 1:Nsections) stop("The 'section' input should be within the 'Number_of_datafiles' in a data.ss_new file.\n")
@@ -17,12 +18,19 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
     }
   }
 
+  # parse all the numeric values into a long vector (allnums)
   temp <- strsplit(dat[2]," ")[[1]][1]
   if(!is.na(temp) && temp=="Start_time:") dat <- dat[-(1:2)]
   allnums <- NULL
   for(i in 1:length(dat)){
+    # split along blank spaces
     mysplit <- strsplit(dat[i],split="[[:blank:]]+")[[1]]
     mysplit <- mysplit[mysplit!=""]
+    # if final value is a number is followed immediately by a pound ("1#"),
+    # this needs to be split
+    nvals <- length(mysplit)
+    if(nvals>0) mysplit[nvals] <- strsplit(mysplit[nvals],"#")[[1]][1]
+    # convert to numeric
     nums <- suppressWarnings(as.numeric(mysplit))
     if(sum(is.na(nums)) > 0) maxcol <- min((1:length(nums))[is.na(nums)])-1
     else maxcol <- length(nums)
@@ -31,14 +39,18 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
       allnums <- c(allnums, nums)
     }
   }
+  # set initial position in the vector of numeric values
   i <- 1
+  # create empty list to store quantities
   datlist <- list()
 
+  # specifications
   datlist$sourcefile <- file
   datlist$type <- "Stock_Synthesis_data_file"
   datlist$SSversion <- NULL # "SSv3.21"
 
   if(verbose) cat("SSversion =",datlist$SSversion,"\n")
+
   # model dimensions
   datlist$styr  <- allnums[i]; i <- i+1
   datlist$endyr <- allnums[i]; i <- i+1
@@ -61,12 +73,19 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   }else{
     fleetnames <- "fleet1"
   }
-  if(verbose) cat("fleetnames:",fleetnames,'\n')
+  #if(verbose) cat("fleetnames:",fleetnames,'\n')
   datlist$fleetnames <- fleetnames
   datlist$surveytiming <- surveytiming <- allnums[i:(i+Ntypes-1)]; i <- i+Ntypes
   datlist$areas <- areas <- allnums[i:(i+Ntypes-1)]; i <- i+Ntypes
-  if(verbose) cat("areas:",areas,'\n')
-
+  cat("areas:",areas,'\n')
+  if(verbose){
+    cat("fleet info:\n")
+    print(data.frame(fleet  = 1:Ntypes,
+                     name   = fleetnames,
+                     area   = areas,
+                     timing = surveytiming,
+                     type   = c(rep("FISHERY",Nfleet), rep("FISHERY",Nsurveys))))
+  }
   # fleet info
   fleetinfo1 <- data.frame(rbind(surveytiming,areas))
   names(fleetinfo1) <- fleetnames
@@ -98,8 +117,8 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   datlist$N_catch <- N_catch <- allnums[i]; i <- i+1
   if(verbose) cat("N_catch =",N_catch,"\n")
   Nvals <- N_catch*(Nfleet+2)
-  catch <- data.frame(matrix(
-    allnums[i:(i+Nvals-1)],nrow=N_catch,ncol=(Nfleet+2),byrow=TRUE))
+  catch <- data.frame(matrix(allnums[i:(i+Nvals-1)],
+                             nrow=N_catch,ncol=(Nfleet+2),byrow=TRUE))
   names(catch) <- c(fleetnames[1:Nfleet],"year","seas")
   datlist$catch <- catch
   i <- i+Nvals
@@ -114,7 +133,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
     i <- i+Ntypes*3
     names(CPUEinfo) <- c("Fleet","Units","Errtype")
     CPUE <- data.frame(matrix(
-      allnums[i:(i+N_cpue*5-1)],nrow=N_cpue,ncol=5,byrow=TRUE))
+                              allnums[i:(i+N_cpue*5-1)],nrow=N_cpue,ncol=5,byrow=TRUE))
     i <- i+N_cpue*5
     names(CPUE) <- c('year','seas','index','obs','se_log')
   }else{
@@ -137,7 +156,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
     # fleet info
     Ncols <- 3
     discard_fleet_info <- data.frame(matrix(
-      allnums[i:(i+N_discard_fleets*Ncols-1)],nrow=N_discard_fleets,ncol=Ncols,byrow=TRUE))
+                                            allnums[i:(i+N_discard_fleets*Ncols-1)],nrow=N_discard_fleets,ncol=Ncols,byrow=TRUE))
     i <- i+N_discard_fleets*Ncols
     names(discard_fleet_info) <- c("Fleet","units","errtype")
   }else{
@@ -149,7 +168,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
     # discard data
     Ncols <- 5
     discard_data <- data.frame(matrix(
-      allnums[i:(i+N_discard*Ncols-1)],nrow=N_discard,ncol=Ncols,byrow=TRUE))
+                                      allnums[i:(i+N_discard*Ncols-1)],nrow=N_discard,ncol=Ncols,byrow=TRUE))
     i <- i+N_discard*Ncols
     names(discard_data) <- c('Yr','Seas','Flt','Discard','Std_in')
   }else{
@@ -168,7 +187,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(N_meanbodywt > 0){
     Ncols <- 6
     meanbodywt <- data.frame(matrix(
-      allnums[i:(i+N_meanbodywt*Ncols-1)],nrow=N_meanbodywt,ncol=Ncols,byrow=TRUE))
+                                    allnums[i:(i+N_meanbodywt*Ncols-1)],nrow=N_meanbodywt,ncol=Ncols,byrow=TRUE))
     i <- i+N_meanbodywt*Ncols
     names(meanbodywt) <- c('Year','Seas','Type','Partition','Value','CV')
   }else{
@@ -239,8 +258,8 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(N_ageerror_definitions > 0){
     Ncols <- Nages+1
     ageerror <- data.frame(matrix(
-      allnums[i:(i+2*N_ageerror_definitions*Ncols-1)],
-      nrow=2*N_ageerror_definitions,ncol=Ncols,byrow=TRUE))
+                                  allnums[i:(i+2*N_ageerror_definitions*Ncols-1)],
+                                  nrow=2*N_ageerror_definitions,ncol=Ncols,byrow=TRUE))
     i <- i+2*N_ageerror_definitions*Ncols
     names(ageerror) <- paste("age",0:Nages,sep="")
   }else{
@@ -257,8 +276,8 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(N_agecomp > 0){
     if(N_agebins==0) stop("N_agecomp =",N_agecomp," but N_agebins = 0")
     Ncols <- N_agebins*Ngenders+9
-    agecomp <- data.frame(matrix(
-      allnums[i:(i+N_agecomp*Ncols-1)],nrow=N_agecomp,ncol=Ncols,byrow=TRUE))
+    agecomp <- data.frame(matrix(allnums[i:(i+N_agecomp*Ncols-1)],
+                                 nrow=N_agecomp,ncol=Ncols,byrow=TRUE))
     i <- i+N_agecomp*Ncols
     names(agecomp) <- c("Yr","Seas","FltSvy","Gender","Part","Ageerr","Lbin_lo","Lbin_hi","Nsamp",
                         if(Ngenders==1){paste("a",agebin_vector,sep="")}else{NULL},
@@ -274,7 +293,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(N_MeanSize_at_Age_obs > 0){
     Ncols <- 2*N_agebins*Ngenders + 7
     MeanSize_at_Age_obs <- data.frame(matrix(
-      allnums[i:(i+N_MeanSize_at_Age_obs*Ncols-1)],nrow=N_MeanSize_at_Age_obs,ncol=Ncols,byrow=TRUE))
+                                             allnums[i:(i+N_MeanSize_at_Age_obs*Ncols-1)],nrow=N_MeanSize_at_Age_obs,ncol=Ncols,byrow=TRUE))
     i <- i+N_MeanSize_at_Age_obs*Ncols
     names(MeanSize_at_Age_obs) <- c('Yr','Seas','Fleet','Gender','Part','AgeErr','Ignore',
                                     if(Ngenders==1){paste("a",agebin_vector,sep="")}else{NULL},
@@ -292,7 +311,7 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   if(N_environ_obs > 0){
     Ncols <- 3
     envdat <- data.frame(matrix(
-      allnums[i:(i+Ncols*N_environ_obs-1)],nrow=N_environ_obs,ncol=Ncols,byrow=TRUE))
+                                allnums[i:(i+Ncols*N_environ_obs-1)],nrow=N_environ_obs,ncol=Ncols,byrow=TRUE))
     i <- i+N_environ_obs*Ncols
     names(envdat) <- c("Yr","Variable","Value")
   }else{
@@ -303,10 +322,68 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   datlist$N_sizefreq_methods <- N_sizefreq_methods <- allnums[i]; i <- i+1
   if(verbose) cat("N_sizefreq_methods =",N_sizefreq_methods,"\n")
   if(N_sizefreq_methods > 0){
-    print('no support for generalized size frequency data yet')
-  }
-    
+    # get details of generalized size frequency methods
+    datlist$nbins_per_method   <- nbins_per_method   <- allnums[i:(i+N_sizefreq_methods-1)]
+    i <- i+N_sizefreq_methods
+    datlist$units_per_method   <- units_per_method   <- allnums[i:(i+N_sizefreq_methods-1)]
+    i <- i+N_sizefreq_methods
+    datlist$scale_per_method   <- scale_per_method   <- allnums[i:(i+N_sizefreq_methods-1)]
+    i <- i+N_sizefreq_methods
+    datlist$mincomp_per_method <- mincomp_per_method <- allnums[i:(i+N_sizefreq_methods-1)]
+    i <- i+N_sizefreq_methods
+    datlist$Nobs_per_method    <- Nobs_per_method    <- allnums[i:(i+N_sizefreq_methods-1)]
+    i <- i+N_sizefreq_methods
+    if(verbose){
+      cat("details of generalized size frequency methods:\n")
+      print(data.frame(method  = 1:N_sizefreq_methods,
+                       nbins   = nbins_per_method,
+                       units   = units_per_method,
+                       scale   = scale_per_method,
+                       mincomp = mincomp_per_method,
+                       nobs    = Nobs_per_method))
+    }
+    # get list of bin vectors
+    sizefreq_bins_list <- list()
+    for(imethod in 1:N_sizefreq_methods){
+      sizefreq_bins_list[[imethod]] <- allnums[i:(i+nbins_per_method[imethod]-1)]
+      i <- i+nbins_per_method[imethod]
+    }
+    datlist$sizefreq_bins_list <- sizefreq_bins_list
+    # read generalized size frequency data
+    sizefreq_data_list <- list()
+    for(imethod in 1:N_sizefreq_methods){
+      Ncols <- 7+2*nbins_per_method[imethod]
+      Nrows <- Nobs_per_method[imethod]
+      sizefreq_data_tmp <- data.frame(matrix(allnums[i:(i+Nrows*Ncols-1)],
+                                             nrow=Nrows,ncol=Ncols,byrow=TRUE))
+      names(sizefreq_data_tmp) <- c("Method","Yr","Seas","FltSvy","Gender","Part","Nsamp",
+                                    paste("f",sizefreq_bins_list[[imethod]],sep=""),
+                                    paste("m",sizefreq_bins_list[[imethod]],sep=""))
+      if(verbose){
+        cat("Method =",imethod,"  (first two rows, ten columns):\n")
+        print(sizefreq_data_tmp[1:min(Nrows,2),1:min(Ncols,10)])
+      }
+      if(any(sizefreq_data_tmp$Method!=imethod))
+        stop("Problem with method in size frequency data:\n",
+             "Expecting method: ",imethod,"\n",
+             "Read method(s): ",paste(unique(sizefreq_data_tmp$Method),collapse=", "))
+      sizefreq_data_list[[i]] <- sizefreq_data_tmp
+      i <- i+Nrows*Ncols
+    }
+    datlist$sizefreq_data_list <- sizefreq_data_list
+  }else{
+    datlist$nbins_per_method   <- NULL
+    datlist$units_per_method   <- NULL
+    datlist$scale_per_method   <- NULL
+    datlist$mincomp_per_method <- NULL
+    datlist$Nobs_per_method    <- NULL
+    datlist$sizefreq_bins_list <- NULL
+    datlist$sizefreq_data_list <- NULL
+  }     
+  
   datlist$do_tags <- do_tags <- allnums[i]; i <- i+1
+  if(verbose) cat("do_tags =",do_tags,"\n")
+  
   if(do_tags != 0){
     datlist$N_tag_groups <- N_tag_groups <- allnums[i]; i <- i+1
     datlist$N_recap_events <- N_recap_events <- allnums[i]; i <- i+1
@@ -319,6 +396,10 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
       tag_releases <- data.frame(matrix(allnums[i:(i+N_tag_groups*Ncols-1)],nrow=N_tag_groups,ncol=Ncols,byrow=TRUE))
       i <- i+N_tag_groups*Ncols
       names(tag_releases) <- c('TG', 'Area', 'Yr', 'Season', 'tfill', 'Gender', 'Age', 'Nrelease')
+      if(verbose){
+        cat("Head of tag release data:\n")
+        print(head(tag_releases))
+      }
     }else{
       tag_releases <- NULL
     }
@@ -330,13 +411,18 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
       tag_recaps <- data.frame(matrix(allnums[i:(i+N_recap_events*Ncols-1)],nrow=N_recap_events,ncol=Ncols,byrow=TRUE))
       i <- i+N_recap_events*Ncols
       names(tag_recaps) <- c('TG', 'Yr', 'Season', 'Fleet', 'Nrecap')
+      if(verbose){
+        cat("Head of tag recapture data:\n")
+        print(head(tag_recaps))
+      }
     }else{
       tag_recaps <- NULL
     }
     datlist$tag_recaps <- tag_recaps
   }
   
-  datlist$morphcomp_data <- morphcomp_data <- allnums[i]; i <- i+1
+  datlist$morphcomp_data <- do_morphcomps <- allnums[i]; i <- i+1
+  if(verbose) cat("do_morphcomps =",do_morphcomps,"\n")
 
   if(allnums[i]==999){
     if(verbose) cat("read of data file complete (final value = 999)\n")
