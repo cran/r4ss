@@ -1,3 +1,19 @@
+#' write data file
+#' 
+#' write Stock Synthesis data file from list object in R which was probably
+#' created using \code{\link{SS_readdat}}
+#' 
+#' 
+#' @param datlist List object created by \code{\link{SS_readdat}}.
+#' @param outfile Filename for where to write new data file.
+#' @param overwrite Should existing files be overwritten? Default=FALSE.
+#' @param verbose Should there be verbose output while running the file?
+#' @author Ian Taylor
+#' @seealso \code{\link{SS_makedatlist}}, \code{\link{SS_readstarter}},
+#' \code{\link{SS_readforecast}}, \code{\link{SS_readctl}},
+#' \code{\link{SS_writestarter}}, \code{\link{SS_writeforecast}},
+#' \code{\link{SS_writedat}}, \code{\link{SS_writectl}}
+#' @keywords data manip
 SS_writedat <- function(datlist,outfile,overwrite=FALSE,verbose=TRUE){
   # function to write Stock Synthesis data files
 
@@ -80,10 +96,9 @@ SS_writedat <- function(datlist,outfile,overwrite=FALSE,verbose=TRUE){
   wl("N_discard")
   if(!is.null(datlist$discard_data)) printdf(datlist$discard_data)
   wl("N_meanbodywt")
+  wl("DF_for_meanbodywt", comment="#_DF_for_meanbodywt_T-distribution_like")
   if(!is.null(datlist$meanbodywt)) printdf(datlist$meanbodywt)
 
-  wl("DF_for_meanbodywt", comment="#_DF_for_meanbodywt_T-distribution_like")
-  
   # length data
   wl("lbin_method",comment="# length bin method: 1=use databins; 2=generate from binwidth,min,max below; 3=read vector")
   if(datlist$lbin_method==2){

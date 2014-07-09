@@ -1,3 +1,23 @@
+#' read data file
+#' 
+#' read Stock Synthesis data file into list object in R
+#' 
+#' 
+#' @param file Filename either with full path or relative to working directory.
+#' @param verbose Should there be verbose output while running the file?
+#' Default=TRUE.
+#' @param echoall Debugging tool (not fully implemented) of echoing blocks of
+#' data as it is being read.
+#' @param section Which data set to read. Only applies for a data.ss_new file
+#' created by Stock Synthesis. Allows the choice of either expected values
+#' (section=2) or bootstrap data (section=3+). Leaving default of section=NULL
+#' will read input data, (equivalent to section=1).
+#' @author Ian Taylor
+#' @seealso \code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
+#' \code{\link{SS_readctl}}, \code{\link{SS_writestarter}},
+#' \code{\link{SS_writeforecast}}, \code{\link{SS_writedat}},
+#' \code{\link{SS_writectl}}
+#' @keywords data
 SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   # function to read Stock Synthesis data files
 
@@ -63,12 +83,18 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   datlist$N_areas <- allnums[i]; i <- i+1
 
   # an attempt at getting the fleet names based on occurance of %-sign
+  fleetnames.good <- NULL
   if(Ntypes>1){
-    fleetnames <- dat[grep('%',dat)[1]]
-    fleetnames <- strsplit(fleetnames,'%')[[1]]
-    # strip any white space off the end of the fleetnames
-    fleetnames[length(fleetnames)] <- strsplit(fleetnames[length(fleetnames)],"[[:blank:]]+")[[1]][1]
-    if(length(fleetnames)!=Ntypes)
+    percentlines <- grep('%',dat)
+    for(iline in percentlines){
+      fleetnames <- dat[iline]
+      fleetnames <- strsplit(fleetnames,'%')[[1]]
+      # strip any white space off the end of the fleetnames
+      fleetnames[length(fleetnames)] <- strsplit(fleetnames[length(fleetnames)],"[[:blank:]]+")[[1]][1]
+      if(length(fleetnames)==Ntypes) fleetnames.good <- fleetnames
+    }
+    fleetnames <- fleetnames.good
+    if(is.null(fleetnames))
       fleetnames <- c(paste("fishery",1:Nfleet),paste("survey",1:Nsurveys))
   }else{
     fleetnames <- "fleet1"
@@ -77,8 +103,8 @@ SS_readdat <- function(file,verbose=TRUE,echoall=FALSE,section=NULL){
   datlist$fleetnames <- fleetnames
   datlist$surveytiming <- surveytiming <- allnums[i:(i+Ntypes-1)]; i <- i+Ntypes
   datlist$areas <- areas <- allnums[i:(i+Ntypes-1)]; i <- i+Ntypes
-  cat("areas:",areas,'\n')
   if(verbose){
+    cat("areas:",areas,'\n')
     cat("fleet info:\n")
     print(data.frame(fleet  = 1:Ntypes,
                      name   = fleetnames,

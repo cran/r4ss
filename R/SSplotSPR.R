@@ -1,7 +1,39 @@
+#' Plot SPR quantities.
+#' 
+#' Plot SPR quantities, including 1-SPR and phase plot.
+#' 
+#' 
+#' @param replist list created by \code{SSoutput}
+#' @param add add to existing plot (not yet implemented)
+#' @param plot plot to active plot device?
+#' @param print print to PNG files?
+#' @param uncertainty include plots showing uncertainty?
+#' @param subplots vector controlling which subplots to create
+#' @param forecastplot Include forecast years in plot?
+#' @param col1 first color used
+#' @param col2 second color used
+#' @param col3 third color used
+#' @param col4 fourth color used
+#' @param sprtarg F/SPR proxy target. "default" chooses based on model output.
+#' @param btarg target depletion to be used in plots showing depletion. May be
+#' omitted by setting to NA. "default" chooses based on model output.
+#' @param labels vector of labels for plots (titles and axis labels)
+#' @param pwidth width of plot written to PNG file
+#' @param pheight height of plot written to PNG file
+#' @param punits units for PNG file
+#' @param res resolution for PNG file
+#' @param ptsize ptsize for PNG file
+#' @param cex.main character expansion for plot titles
+#' @param plotdir directory where PNG files will be written. by default it will
+#' be the directory where the model was run.
+#' @param verbose report progress to R GUI?
+#' @author Ian Stewart, Ian Taylor
+#' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
+#' @keywords hplot
 SSplotSPR <-
   function(replist,add=FALSE,plot=TRUE,print=FALSE,
            uncertainty=TRUE,
-           subplots=1:4,
+           subplots=1:4,forecastplot=FALSE,
            col1="black",col2="blue",col3="green3",col4="red",
            sprtarg="default", btarg="default",
            labels=c("Year", #1
@@ -33,11 +65,15 @@ SSplotSPR <-
 
   if(sprtarg=="default") sprtarg <- replist$sprtarg
   if(btarg=="default") btarg <- replist$btarg
-    
+
+  # choose which points to plot
+  good <- sprseries$Year <= endyr
+  if(forecastplot) good <- rep(TRUE,nrow(sprseries))
+  
   sprfunc <- function(){
-    if(!add) plot(sprseries$Year,sprseries$spr,xlab=labels[1],ylab=labels[2],
+    if(!add) plot(0,xlab=labels[1],ylab=labels[2],xlim=range(sprseries$Year[good]),
                   ylim=c(0,max(1,max(sprseries$spr[!is.na(sprseries$spr)]))),type="n")
-    lines(sprseries$Year,sprseries$spr,type="o",col=col2)
+    lines(sprseries$Year[good],sprseries$spr[good],type="o",col=col2)
     if(sprtarg>0) abline(h=sprtarg,col=col4,lty=2)
     abline(h=0,col="grey")
     abline(h=1,col="grey")
@@ -58,9 +94,9 @@ SSplotSPR <-
   if(nseasons>1) cat("Skipped additional SPR plots because they're not yet configured for multi-season models\n")
   if(nseasons==1){ 
     sprfunc2 <- function(){
-      if(!add) plot(sprseries$Year,(1-sprseries$spr),
+      if(!add) plot(0,xlim=range(sprseries$Year[good]),
                     xlab=labels[1],ylab=labels[3],ylim=c(0,1),type="n")
-      lines(sprseries$Year,(1-sprseries$spr),type="o",col=col2)
+      lines(sprseries$Year[good],(1-sprseries$spr[good]),type="o",col=col2)
       if(sprtarg>0) abline(h=(1-sprtarg),col=col4,lty=2)
       abline(h=0,col="grey")
       abline(h=1,col="grey")}

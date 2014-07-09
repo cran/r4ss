@@ -1,5 +1,37 @@
+#' Plot mean weight data and fits.
+#' 
+#' Plot mean weight data and fits from Stock Synthesis output. Intervals are
+#' based on T-distributions as specified in model.
+#' 
+#' 
+#' @param replist list created by \code{SS_output}
+#' @param ymax Optional input to override default ymax value.
+#' @param subplots Vector of which plots to make (1 = data only, 2 = with fit).
+#' If \code{plotdat = FALSE} then subplot 1 is not created, regardless of
+#' choice of \code{subplots}.
+#' @param plot plot to active plot device?
+#' @param print print to PNG files?
+#' @param plotdir directory where PNG files will be written. by default it will
+#' be the directory where the model was run.
+#' @param fleets optional vector to subset fleets for which plots will be made
+#' @param fleetnames optional replacement for fleenames used in data file
+#' @param datplot Make data-only plot of discards? This can override the choice
+#' of \code{subplots}.
+#' @param labels vector of labels for plots (titles and axis labels)
+#' @param col1 first color to use in plot (for expected values)
+#' @param col2 second color to use in plot (for observations and intervals)
+#' @param pwidth width of plot written to PNG file
+#' @param pheight height of plot written to PNG file
+#' @param punits units for PNG file
+#' @param res resolution for PNG file
+#' @param ptsize ptsize for PNG file
+#' @param cex.main character expansion for plot titles
+#' @param verbose report progress to R GUI?
+#' @author Ian Taylor, Ian Stewart
+#' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
+#' @keywords hplot
 SSplotMnwt <-
-  function(replist, subplots=1:2,
+  function(replist, subplots=1:2, ymax=NULL,
            plot=TRUE, print=FALSE,
            fleets="all",
            fleetnames="default",
@@ -10,8 +42,8 @@ SSplotMnwt <-
            "whole catch",    #4
            "Mean individual body weight (kg)", #5
            "Mean weight in", #6
-           "for fleet"),     #7
-           col1="blue", col2="red",
+           "for"),     #7
+           col1="blue", col2="black",
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,
            cex.main=1,
            plotdir="default", verbose=TRUE)
@@ -34,8 +66,8 @@ SSplotMnwt <-
 
   # mean body weight observations ###
   if(!is.na(mnwgt)[1]){
-    for(fleetname in unique(mnwgt$Fleet)){
-      usemnwgt <- mnwgt[mnwgt$Fleet==fleetname & mnwgt$Obs>0,]
+    for(ifleet in intersect(fleets,unique(mnwgt$FleetNum))){
+      usemnwgt <- mnwgt[mnwgt$FleetNum==ifleet & mnwgt$Obs>0,]
       usemnwgt$Mkt <- usemnwgt$Mkt
       for(j in unique(mnwgt$Mkt)){
         yr <- usemnwgt$Yr[usemnwgt$Mkt==j]
@@ -47,18 +79,20 @@ SSplotMnwt <-
         liw <- -ob*cv*qt(0.025,DF_mnwgt) # quantile of t-distribution
         uiw <- ob*cv*qt(0.975,DF_mnwgt) # quantile of t-distribution
         liw[(ob-liw)<0] <- ob[(ob-liw)<0] # no negative limits
-        ymax <- max(ob + uiw)
-        ymax <- max(ymax,ex)
+        if(is.null(ymax)){
+          ymax <- max(ob + uiw)
+          ymax <- max(ymax,ex)
+        }
         titlepart <- labels[2]
         if(j==2) titlepart <- labels[3]
         if(j==0) titlepart <- labels[4]
-        ptitle <- paste(labels[6],titlepart,labels[7],fleetname,sep=" ")
+        ptitle <- paste(labels[6],titlepart,labels[7],fleetnames[ifleet],sep=" ")
         ylab <- labels[5]
 
         # wrap up plot command in function
         bdywtfunc <- function(addfit){
           plotCI(x=yr,y=ob,uiw=uiw,liw=liw,xlab=labels[1],main=ptitle,
-                 ylo=0,col=col2,sfrac=0.001,ylab=ylab,lty=1,
+                 ylo=0,col=col2,sfrac=0.005,ylab=ylab,lty=1,pch=21,bg="white",
                  xlim=c(xmin,xmax),cex.main=cex.main,ymax=ymax)
           abline(h=0,col="grey")
           if(addfit) points(yr,ex,col=col1,cex=2,pch="-")
@@ -70,7 +104,7 @@ SSplotMnwt <-
           if(isubplot==1) addfit <- FALSE else addfit <- TRUE
           if(plot) bdywtfunc(addfit=addfit)
           if(print){
-            file <- paste(plotdir,"bodywtfit_flt",fleetname,".png",sep="")
+            file <- paste(plotdir,"bodywtfit_flt",fleetnames[ifleet],".png",sep="")
             caption <- ptitle
             plotinfo <- pngfun(file=file, caption=caption)
             bdywtfunc(addfit=addfit)

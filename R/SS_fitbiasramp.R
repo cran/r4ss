@@ -1,7 +1,52 @@
+#' Estimate bias adjustment for recruitment deviates
+#' 
+#' Uses standard error of estimated recruitment deviates to estimate the 5
+#' controls for the bias adjustment in Stock Synthesis
+#' 
+#' 
+#' @param replist Object created using \code{\link{SS_output}}
+#' @param verbose Controls the amount of output to the screen.  Default=FALSE.
+#' @param startvalues A vector of 5 values for the starting points in the
+#' minimization. Default=NULL.
+#' @param method A method to apply to the 'optim' function. See ?optim for
+#' options. Default="BFGS". By default, optim is not used, and the optimization
+#' is based on the input \code{altmethod}.
+#' @param twoplots Make a two-panel plot showing devs as well as transformed
+#' uncertainty, or just the second panel in the set?  Default=TRUE.
+#' @param transform An experimental option to treat the transform the 5
+#' quantities to improve minimization. Doesn't work well. Default=FALSE.
+#' @param plot Plot to active plot device?
+#' @param print Print to PNG files?
+#' @param plotdir Directory where PNG files will be written. By default it will
+#' be the directory where the model was run.
+#' @param shownew Include new estimated bias adjustment values on top of values
+#' used in the model? (TRUE/FALSE)
+#' @param oldctl Optional name of existing control file to modify.
+#' Default=NULL.
+#' @param newctl Optional name of new control file to create from old file with
+#' estimated bias adjustment values. Default=NULL.
+#' @param altmethod Optimization tool to use in place of optim, either "nlminb"
+#' or "psoptim". If not equal to either of these, then optim is used.
+#' @param pwidth Default width of plots printed to files in units of
+#' \code{punits}. Default=7.
+#' @param pheight Default height width of plots printed to files in units of
+#' \code{punits}. Default=7.
+#' @param punits Units for \code{pwidth} and \code{pheight}. Can be "px"
+#' (pixels), "in" (inches), "cm" or "mm". Default="in".
+#' @param ptsize Point size for plotted text in plots printed to files (see
+#' help("png") in R for details). Default=12.
+#' @param res Resolution of plots printed to files. Default=300.
+#' @param cex.main Character expansion for plot titles.
+#' @author Ian Taylor
+#' @seealso \code{\link{SS_output}}
+#' @references Methot, R.D. and Taylor, I.G., 2011. Adjusting for bias due to
+#' variability of estimated recruitments in fishery assessment models.  Can. J.
+#' Fish. Aquat. Sci., 68:1744-1760.
+#' @keywords data manip hplot
 SS_fitbiasramp <-
 function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
-         transform=FALSE, plot=TRUE, print=FALSE, plotdir="default",
-         oldctl=NULL, newctl=NULL, nlminb=TRUE,
+         transform=FALSE, plot=TRUE, print=FALSE, plotdir="default",shownew=TRUE,
+         oldctl=NULL, newctl=NULL, altmethod="nlminb",
          pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1){
   ##################
   # function to estimate bias adjustment ramp
@@ -133,12 +178,21 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
 
   optimfun <- function(yr,std,startvalues){
     # run the optimizationt to find best fit values
-    if(nlminb){
+    if(altmethod=="nlminb"){
       biasopt <- nlminb(start=startvalues, objective=biasadjfit, gradient = NULL,
                         hessian = NULL, scale = 1, control = list(maxit=1000),
                         lower = c(-Inf,-Inf,-Inf,-Inf,0), upper = Inf,
                         yr=yr,std=std,sigmaR=sigma_R_in,transform=transform)
-    }else{
+    }
+    if(altmethod=="psoptim"){
+      #### the following commands no longer needed since packages are required by r4ss
+      ## require(pso)
+      biasadjfit(pars=startvalues,yr=yr,std=std,sigmaR=sigma_R_in,transform=transform)
+      biasopt <- psoptim(par=startvalues,fn=biasadjfit,yr=yr,std=std,
+                       sigmaR=sigma_R_in,transform=transform,
+                       control=list(maxit=1000,trace=TRUE),lower=rep(-1e6,5),upper=rep(1e6,5))
+    }
+    if(!(altmethod %in% c("nlminb","psoptim"))){
       biasopt <- optim(par=startvalues,fn=biasadjfit,yr=yr,std=std,
                        sigmaR=sigma_R_in,transform=transform,
                        method=method,control=list(maxit=1000))
@@ -193,9 +247,6 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   recdev_lo <- val - 1.96*std
 
   ylim <- range(recdev_hi,recdev_lo)
-  cat("Note: the default optimizer has been changed to 'nlminb' from 'optim'\n",
-      "     if you have problems with this, set input 'nlminb' to FALSE\n",
-      "     and write to Ian.Taylor@noaa.gov to let me know of the issue.\n")
   cat('Now estimating alternative recruitment bias adjustment fraction...\n')
   newbias <- optimfun(yr=yr,std=std,startvalues=startvalues)
 
@@ -218,10 +269,13 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
     mtext(side=2,line=2.5,expression(1 - italic(SE(hat(r[y]))^2 / sigma[R])^2))
     
     # bias correction (2nd axis, scaled by ymax)
-    lines(biasadjfun(yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
+    if(shownew) lines(biasadjfun(yr,newbias[[1]],transform=transform),col=4,lwd=3,lty=1)
+    legendlines <- 1
+    if(shownew) legendlines <- 1:2
     lines(recruit$year,recruit$biasadj,col=2,lwd=3,lty=2)
-    legend('topleft',col=c(2,4),lwd=3,lty=2:1,inset=.01,cex=.9,bg=rgb(1,1,1,.8),box.col=NA,
-           legend=c('bias adjust in model','estimated alternative'))
+    legend('topleft',col=c(2,4)[legendlines],lwd=3,lty=(2:1)[legendlines],
+           inset=.01,cex=.9,bg=rgb(1,1,1,.8),box.col=NA,
+           legend=c('bias adjust in model','estimated alternative')[legendlines])
     mtext(side=1,line=3,'Year')
   }
 

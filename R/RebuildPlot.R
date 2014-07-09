@@ -1,3 +1,67 @@
+#' Make plots from Rebuilder program
+#' 
+#' Make a set of plots based on output from Andre Punt's Rebuilder program.
+#' 
+#' 
+#' @param dirn Directory where rebuilder output files are stored.
+#' @param fileN Vector of filenames containing rebuilder output.
+#' Default=c("res.csv").
+#' @param Titles Titles for plots when using multiple filenames. Default="".
+#' @param ncols Number of columns to read in output file (fileN). Deafult=200.
+#' @param Plots List to get specific plots (currently 1 through 8).
+#' Default=list(1:25). If there are multiple files, supply a list of vectors,
+#' e.g. list(c(1,5),c(2:5))
+#' @param Options List to get specific strategies in the trajectory plots.
+#' Default=list(c(1:9)).If there are multiple files, supply a list of vectors,
+#' e.g. list(c(1,5),c(2:5))
+#' @param LegLoc Location for the legend (for plots with a legend).
+#' Default="bottomright".
+#' @param yearmax Maximum year to show in the plots. Set negative to show all
+#' years.  Default=-1.
+#' @param Outlines Number of rows, columns for some of the plots.
+#' Default=c(2,2).
+#' @param OutlineMulti Number of rows, columns for other plots.
+#' Default=c(2,2).
+#' @param AllTraj Vector of trajectories to show. Default=c(1,2,3,4).
+#' @param AllInd Vector of individual plots to show. Default=c(1,2,3,4,5,6,7).
+#' @param BioType Label for biomass type. Default="Spawning biomass".
+#' @param CatchUnit Units of catch. Default="(mt)".
+#' @param BioUnit Units of biomass. Default="(mt)".
+#' @param BioScalar Scalar for biomass plot. Default=1.
+#' @param ColorsUsed Optional vector for alternative line colors.
+#' Default="default".
+#' @param Labels Optional vector for alternative legend labels.
+#' Default="default".
+#' @param pdf Option to send figures to pdf file instead of plot window in
+#' Rgui. Default=FALSE.
+#' @param pwidth Width of the plot window or PDF file (in inches). Default=7.
+#' @param pheight Height of the plot window or PDF file (in inches). Default=7.
+#' @param lwd Line width for many of the plot elements. Default=2.
+#' @author Andre Punt
+#' @keywords dplot hplot
+#' @examples
+#' 
+#' \dontrun{
+#' # example with one file
+#'  DoProjectPlots(dirn="c:/myfiles/", Plots=1:8,
+#'                 Options=c(1,2,3,4,5,9), LegLoc="bottomleft")
+#' 
+#' # example with multiple files
+#'  # Plots - set to get specific plots
+#'  # Options - set to get specific strategies in the trajectory plots
+#' 
+#'  Titles <- c("Res1","Res2","Res3")
+#'  Plots <- list(c(1:9),c(6:7))
+#'  Options <- list(c(7:9,3),c(5,7))
+#'  DoProjectPlots(fileN=c("res1.csv","res2.csv"),Titles=Titles,Plots=Plots,
+#'                 Options=Options,LegLoc="bottomleft",yearmax=-1,
+#'                 Outlines=c(2,2),OutlineMulti=c(3,3),AllTraj=c(1:4),
+#'                 AllInd=c(1:7),BioType="Spawning numbers",BioUnit="(lb)",
+#'                 BioScalar=1000,CatchUnit="(lb)",
+#'                 ColorsUse=rep(c("red","blue"),5),
+#'                 Labels=c("A","B","C","D","E","F"))
+#' }
+#' 
 DoProjectPlots<-function(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",ncols=200,
                          Plots=list(1:25),Options=list(c(1:9)),LegLoc="bottomright",
                          yearmax= -1,Outlines=c(2,2),OutlineMulti=c(2,2),
@@ -11,13 +75,13 @@ DoProjectPlots<-function(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",ncols=2
     pdf(file=pdffile,width=pwidth,height=pheight)
     cat("PDF file with plots will be:",pdffile,'\n')
   }else{
-    
+
     ### Note: the following line has been commented out because it was identified
     ###       by Brian Ripley as "against CRAN policies".
     #if(exists(".SavedPlots",where=1)) rm(.SavedPlots,pos=1)
-    windows(record=T,width=pwidth,height=pheight)
+    dev.new(record=TRUE, width=pwidth, height=pheight)
   }
-  
+
  rich.colors.short <- function(n){
     # a subset of rich.colors by Arni Magnusson from the gregmisc package
     x <- seq(0, 1, length = n)
@@ -28,6 +92,9 @@ DoProjectPlots<-function(dirn="C:/myfiles/",fileN=c("res.csv"),Titles="",ncols=2
     rich.vector <- apply(rgb.m, 1, function(v) rgb(v[1], v[2], v[3]))
   }
 
+ # empty list to store output
+ OutputList <- list()
+ ind.list <- list()
 
 #  ==================================================================================================
 
@@ -187,10 +254,10 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
   }
 
  # define empty list to store values collected in loops below
- OutputList <- list(ProbRecovery=NULL,
-                    Catch=NULL,
-                    Depletion=NULL,
-                    Bio=NULL)
+ AltStrat.output <- list(ProbRecovery=NULL,
+                         Catch=NULL,
+                         Depletion=NULL,
+                         Bio=NULL)
  for (ii in AllTraj)
   {
 
@@ -201,7 +268,7 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
      axis(2,at=seq(0,100,25))
      box()
      IlineType <- 0
-     
+
      for (Icnt in 1:NOpts)
       {
        Ifile <- Files[Icnt]
@@ -214,8 +281,8 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
        lines(Xvals,Yvals,lty=IlineType,col=ColorsUsed[IlineType],lwd=lwd)
 
        # store stuff in output list
-       if(is.null(OutputList$ProbRecovery)) OutputList$ProbRecovery <- data.frame(Yr=Xvals)
-       OutputList$ProbRecovery[,Icnt+1] <- Yvals
+       if(is.null(AltStrat.output$ProbRecovery)) AltStrat.output$ProbRecovery <- data.frame(Yr=Xvals)
+       AltStrat.output$ProbRecovery[,Icnt+1] <- Yvals
       }
      abline(h=50,lwd=3)
      abline(v=Tmin,lwd=1,lty=2)
@@ -247,8 +314,8 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
        lines(Xvals,Yvals,lty=IlineType,col=ColorsUsed[IlineType],lwd=lwd)
 
        # store stuff in output list
-       if(is.null(OutputList$Catch)) OutputList$Catch <- data.frame(Yr=Xvals)
-       OutputList$Catch[,Icnt+1] <- Yvals
+       if(is.null(AltStrat.output$Catch)) AltStrat.output$Catch <- data.frame(Yr=Xvals)
+       AltStrat.output$Catch[,Icnt+1] <- Yvals
       }
     }
 
@@ -277,8 +344,8 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
        lines(Xvals,Yvals,lty=IlineType,col=ColorsUsed[IlineType],lwd=lwd)
 
        # store stuff in output list
-       if(is.null(OutputList$Depletion)) OutputList$Depletion <- data.frame(Yr=Xvals)
-       OutputList$Depletion[,Icnt+1] <- Yvals
+       if(is.null(AltStrat.output$Depletion)) AltStrat.output$Depletion <- data.frame(Yr=Xvals)
+       AltStrat.output$Depletion[,Icnt+1] <- Yvals
       }
     }
 
@@ -307,8 +374,8 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
        lines(Xvals,Yvals,lty=IlineType,col=ColorsUsed[IlineType],lwd=lwd)
 
        # store stuff in output list
-       if(is.null(OutputList$Bio)) OutputList$Bio <- data.frame(Yr=Xvals)
-       OutputList$Bio[,Icnt+1] <- Yvals
+       if(is.null(AltStrat.output$Bio)) AltStrat.output$Bio <- data.frame(Yr=Xvals)
+       AltStrat.output$Bio[,Icnt+1] <- Yvals
       }
      Jpnt <- which(UUUs[[1]]=="# Recruitments")-8
      B0 <- as.double(UUUs[[1]][Jpnt,1])
@@ -349,45 +416,52 @@ AltStrategies<-function(FileN,UUUs,Options,Title,yearmax,Titles,cols=c("red","bl
   }
 
  legend(LegLoc,legend=legs,lty=Ltys,cex=1,col=col2,lwd=lwd)
- for(i in 1:4) if(!is.null(OutputList[[i]])) names(OutputList[[i]])[-1]  <- legs
+ for(i in 1:4) if(!is.null(AltStrat.output[[i]])) names(AltStrat.output[[i]])[-1]  <- legs
 
- return(OutputList)
+ return(AltStrat.output)
 }
 # =============================================================================================================
 
 IndividualPlots<-function(UUU,Title,yearmax)
 {
+ # this function makes plots of confidence intervals of individual trajectories 
  par(mfrow=c(OutlineMulti[1],OutlineMulti[2]))
 
  Ipnt <- which(UUU=="# Individual")+2
  Npnt <- as.double(UUU[Ipnt-1,1])
 
+ # make an empty list to store values used in figures
+ ind <- list()
  for (ii in AllInd)
   {
 
-   if (ii==1) PlotA(UUU,0,"Spawning Output \\ Target",Ipnt,Npnt,yearmax,1)
+   if (ii==1) ind$ratio     <- PlotA(UUU,0,"Spawning Output \\ Target",Ipnt,Npnt,yearmax,1)
 
-   if (ii==2) PlotA(UUU,6,paste("Catch",CatchUnit),Ipnt,Npnt,yearmax,1)
+   if (ii==2) ind$catch     <- PlotA(UUU,6,paste("Catch",CatchUnit),Ipnt,Npnt,yearmax,1)
 
-   if (ii==3) PlotA(UUU,12,"Recruitment",Ipnt,Npnt,yearmax,1)
+   if (ii==3) ind$rec       <- PlotA(UUU,12,"Recruitment",Ipnt,Npnt,yearmax,1)
 
-   if (ii==4) PlotA(UUU,18,expression(paste("Fishing Mortality ", (yr^-1))),Ipnt,Npnt,yearmax,1)
+   if (ii==4) ind$mort      <- PlotA(UUU,18,expression(paste("Fishing Mortality ", (yr^-1))),Ipnt,Npnt,yearmax,1)
 
-   if (ii==5) PlotA(UUU,24,paste("Exploitable Biomass",BioUnit),Ipnt,Npnt,yearmax,BioScalar)
+   if (ii==5) ind$expl.bio  <- PlotA(UUU,24,paste("Exploitable Biomass",BioUnit),Ipnt,Npnt,yearmax,BioScalar)
 
-   if (ii==6) PlotA(UUU,30,paste("Cumulative (discounted) Catch",CatchUnit),Ipnt,Npnt,yearmax,1)
+   if (ii==6) ind$cum.catch <- PlotA(UUU,30,paste("Cumulative (discounted) Catch",CatchUnit),Ipnt,Npnt,yearmax,1)
 
    if (ii==7)
     {
-     PlotA(UUU,36,"Spawning Biomass",Ipnt,Npnt,yearmax,BioScalar)
+     ind$sb <- PlotA(UUU,36,"Spawning Biomass",Ipnt,Npnt,yearmax,BioScalar)
      Jpnt <- which(UUU=="# Recruitments")-8
      B0 <- as.double(UUU[Jpnt,1])
+     ind$sb$B0 <- B0/BioScalar
      abline(h=0.4*B0/BioScalar,lwd=1,lty=2)
      abline(h=0.25*B0/BioScalar,lwd=1,lty=2)
+     cat("Making spawning biomass plot for run",ii,"\n")
     }
 
   if (ii == AllInd[1]) title(Title)
  }
+ # return values used in figures
+ return(ind)
 }
 
 #  ==================================================================================================
@@ -414,6 +488,8 @@ PlotA <- function(UUU,offset,title,Ipnt,Npnt,yearmax,BioScalar)
  polygon(XX,c(Y2[Use],rev(Y4[Use])),col="gray")
  lines(Xvals,Y3[Use],lty=1,lwd=4)
 
+ # return these values that have been extracted from deep inside the output files
+ return(data.frame(Xvals=Xvals, Y1=Y1[Use], Y2=Y2[Use], Y3=Y3[Use], Y4=Y4[Use], Y5=Y5[Use]))
 }
 
 #  ==================================================================================================
@@ -512,7 +588,12 @@ FinalRecovery<-function(UUU,Title)
    if (4 %in% Plots[[Ifile]]) RecHist(UUU,Titles[Ifile])
 
    #Individual plots
-   if (6 %in% Plots[[Ifile]]) IndividualPlots(UUU,Titles[Ifile],yearmax)
+   if (6 %in% Plots[[Ifile]]){
+     ind.list[[Ifile]] <- IndividualPlots(UUU,Titles[Ifile],yearmax)
+     cat("Running IndividualPlots for file",Ifile,"\n")
+   }else{
+     ind.list[[Ifile]] <- NULL
+   }
 
    # First five trajectories of SSB/target
    if (7 %in% Plots[[Ifile]]) FirstFive(UUU,Titles[Ifile],yearmax)
@@ -523,13 +604,17 @@ FinalRecovery<-function(UUU,Title)
   }
 
  # Results across strategies
- DoStrategies <- F
+ DoStrategies <- FALSE
  for (Ifile in 1:length(fileN))
-  if (5 %in% Plots[[Ifile]]) DoStrategies <- T
- if (DoStrategies==T) OutputList <- AltStrategies(fileN,UUUs,Options,"",yearmax,Titles)
-
+  if (5 %in% Plots[[Ifile]]) DoStrategies <- TRUE
+ if (DoStrategies==T){
+   OutputList$AltStrategies <- AltStrategies(fileN,UUUs,Options,"",
+                                             yearmax,Titles)
+ }
  if(pdf) dev.off()
- if (DoStrategies==T) return(invisible(OutputList))
+
+ OutputList$ind.list <- ind.list
+ return(invisible(OutputList))
 }
 
 # ================================================================================================================

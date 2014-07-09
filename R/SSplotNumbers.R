@@ -1,3 +1,39 @@
+#' Plot numbers-at-age related data and fits.
+#' 
+#' Plot numbers-at-age related data and fits from Stock Synthesis output.
+#' Plots include bubble plots, mean age, equilibrium age composition,
+#' sex-ratio, and ageing imprecision patterns.
+#' 
+#' 
+#' @param replist list created by \code{SSoutput}
+#' @param subplots vector controlling which subplots to create
+#' @param plot plot to active plot device?
+#' @param print print to PNG files?
+#' @param areas optional subset of areas to plot for spatial models
+#' @param areanames names for areas. Default is to use Area1, Area2,...
+#' @param areacols vector of colors by area
+#' @param pntscalar maximum bubble size for bubble plots; each plot scaled
+#' independently based on this maximum size and the values plotted. Often some
+#' plots look better with one value and others with a larger or smaller value.
+#' Default=2.6
+#' @param bublegend Add legend with example bubble sizes?
+#' @param period indicator of whether to make plots using numbers at age just
+#' from the beginning ("B") or middle of the year ("M") (new option starting
+#' with SSv3.11)
+#' @param add add to existing plot? (not yet implemented)
+#' @param labels vector of labels for plots (titles and axis labels)
+#' @param pwidth width of plot written to PNG file
+#' @param pheight height of plot written to PNG file
+#' @param punits units for PNG file
+#' @param res resolution for PNG file
+#' @param ptsize ptsize for PNG file
+#' @param cex.main character expansion for plot titles
+#' @param plotdir directory where PNG files will be written. by default it will
+#' be the directory where the model was run.
+#' @param verbose report progress to R GUI?
+#' @author Ian Stewart, Ian Taylor
+#' @seealso \code{\link{SS_output}}, \code{\link{SS_plots}}
+#' @keywords hplot
 SSplotNumbers <-
   function(replist,subplots=1:9,
            plot=TRUE,print=FALSE,
@@ -5,6 +41,7 @@ SSplotNumbers <-
            areanames="default",
            areacols="default",
            pntscalar=2.6,
+           bublegend=TRUE,
            period=c("B","M"),
            add=FALSE,
            labels=c("Year",                   #1
@@ -69,7 +106,7 @@ SSplotNumbers <-
     # this logic is now out of date, not sure why it wasn't coming from replist anyway
     #mainmorphs <- morph_indexing$Index[morph_indexing$Bseas==1 & morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
     mainmorphs <- replist$mainmorphs
-      
+
     SS_versionshort <- toupper(substr(replist$SS_version,1,8))
 
     if(areas[1]=="all"){
@@ -111,7 +148,6 @@ SSplotNumbers <-
                                    natage$BirthSeas==min(bseas),]
                                    # natage$Bio_Pattern==1,] # formerly filtered
           natagetemp_all <- natagetemp_all[natagetemp_all$"Beg/Mid"==period[iperiod],]
-
           # create data frame with 0 values to fill across submorphs
           morphlist <- unique(natagetemp_all$SubMorph)
           natagetemp0 <- natagetemp_all[natagetemp_all$SubMorph==morphlist[1] & natagetemp_all$Bio_Pattern==1,]
@@ -135,7 +171,7 @@ SSplotNumbers <-
 
           # assign unique name to data frame for area, sex (beginning of year only)
           if(iperiod==1) assign(paste("natagetemp0area",iarea,"sex",m,sep=""),natagetemp0)
-          
+
           if(m==1 & nsexes==1) sextitle <- ""
           if(m==1 & nsexes==2) sextitle <- " of females"
           if(m==2) sextitle=" of males"
@@ -162,7 +198,6 @@ SSplotNumbers <-
           natagetemp2$meanage <- natagetemp2$sumprod/natagetemp2$sum - (natagetemp0$BirthSeas-1)/nseasons
           natageyrs <- sort(unique(natagetemp0$Yr))
           if(iperiod==1) natageyrsB <- natageyrs # unique name for beginning of year
-
           meanage <- 0*natageyrs
 
           for(i in 1:length(natageyrs)){ # averaging over values within a year (depending on birth season)
@@ -181,6 +216,7 @@ SSplotNumbers <-
             # bubble plot with line
             bubble3(x=resx, y=resy, z=resz,
                     xlab=labels[1],ylab=labels[2],
+                    legend=bublegend,
                     main=plottitle1,maxsize=(pntscalar+1.0),
                     las=1,cex.main=cex.main,allopen=1)
             lines(natageyrs,meanage,col="red",lwd=3)
@@ -226,10 +262,12 @@ SSplotNumbers <-
 
         natagef <- get(paste("natagetemp0area",iarea,"sex",1,sep=""))
         natagem <- get(paste("natagetemp0area",iarea,"sex",2,sep=""))
+        natagefyrs <- natagef$Yr
         natageratio <- as.matrix(natagem[,remove]/natagef[,remove])
+        natageratio[is.nan(natageratio)] <- NA
         if(diff(range(natageratio,finite=TRUE))!=0){
           tempfun3 <- function(...){
-            contour(natageyrsB,0:accuage,natageratio,xaxs="i",yaxs="i",xlab=labels[1],ylab=labels[2],
+            contour(natagefyrs,0:accuage,natageratio,xaxs="i",yaxs="i",xlab=labels[1],ylab=labels[2],
               main=plottitle3,cex.main=cex.main,...)
           }
           if(plot & 3 %in% subplots){
@@ -319,13 +357,13 @@ SSplotNumbers <-
             natlentemp2$meanlen <- natlentemp2$sumprod/natlentemp2$sum - (natlentemp0$BirthSeas-1)/nseasons
             natlenyrs <- sort(unique(natlentemp0$Yr))
             if(iperiod==1) natlenyrsB <- natlenyrs # unique name for beginning of year
-            
+
             meanlen <- 0*natlenyrs
             for(i in 1:length(natlenyrs)){ # averaging over values within a year (depending on birth season)
               meanlen[i] <- sum(natlentemp2$meanlen[natlentemp0$Yr==natlenyrs[i]]*natlentemp2$sum[natlentemp0$Yr==natlenyrs[i]])/sum(natlentemp2$sum[natlentemp0$Yr==natlenyrs[i]])}
 
             if(m==1 & nsexes==2) meanlenf <- meanlenf <- meanlen # save value for females in 2 sex models
-            
+
             ylab <- labels[13]
             plottitle2 <- paste(periodtitle,labels[14])
             if(nareas>1) plottitle2 <- paste(plottitle2,"in",areanames[iarea])
@@ -334,6 +372,7 @@ SSplotNumbers <-
               # bubble plot with line
               bubble3(x=resx, y=resy, z=resz,
                       xlab=labels[1],ylab=labels[12],
+                      legend=bublegend,
                       main=plottitle1,maxsize=(pntscalar+1.0),
                       las=1,cex.main=cex.main,allopen=1)
               lines(natlenyrs,meanlen,col="red",lwd=3)
@@ -388,7 +427,7 @@ SSplotNumbers <-
               }else{
                 main <- labels[20]
                 z <- 1/natlenratio
-              }                
+              }
               if(nareas > 1) main <- paste(main," for ",areanames[iarea],sep="")
               contour(natlenyrsB,lbinspop,z,
                       xaxs="i",yaxs="i",xlab=labels[1],ylab=labels[12],
@@ -473,7 +512,7 @@ SSplotNumbers <-
 
     if(plot & 4 %in% subplots){
       equilibfun()
-    } 
+    }
     if(print & 4 %in% subplots){
       file=paste(plotdir,"/numbers4_equilagecomp.png",sep="")
       caption <- labels[10]
@@ -512,14 +551,14 @@ SSplotNumbers <-
       if(plot & 5 %in% subplots){
         ageingfun()
         if(mean(ageingbias==0)!=1) ageingfun2()
-      } 
+      }
       if(print & 5 %in% subplots){
         file <- paste(plotdir,"/numbers5_ageerrorSD.png",sep="")
-        caption <- labels[8] 
+        caption <- labels[8]
         plotinfo <- pngfun(file=file, caption=caption)
         ageingfun()
         dev.off()
-        
+
         if(mean(ageingbias==0)!=1){
           file <- paste(plotdir,"/numbers5_ageerrorMeans.png",sep="")
           caption <- labels[8]

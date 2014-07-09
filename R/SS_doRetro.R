@@ -1,6 +1,48 @@
+#' Run retrospective analyses
+#' 
+#' Do retrospective analyses by creating new directories, copying model files,
+#' and iteratively changing the starter file to set the number of years of data
+#' to exclude.
+#' 
+#' 
+#' @param masterdir Directory where everything takes place.
+#' @param oldsubdir Subdirectory within \code{masterdir} with existing model
+#' files.
+#' @param newsubdir Subdirectory within \code{masterdir} where retrospectives
+#' will be run. Default is 'retrospectives'.
+#' @param subdirstart First part of the pattern of names for the directories in
+#' which the models will actually be run.
+#' @param years Vector of values to iteratively enter into the starter file for
+#' retrospective year. Should be zero or negative values.
+#' @param overwrite Overwrite any input files with matching names in the
+#' subdirectories where models will be run.
+#' @param extras Additional commands to use when running SS. Default = "-nox"
+#' will reduce the amound of command-line output.
+#' @param intern Display runtime information from SS in the R console (vs.
+#' saving to a file).
+#' @param CallType Either "system" or "shell" (choice depends on how you're running
+#' R. Default is "system".
+#' @author Ian Taylor
+#' @seealso \code{\link{SSgetoutput}}
+#' @keywords data manip
+#' @examples
+#' 
+#'   \dontrun{
+#'     # note: don't run this in your main directory--make a copy in case something goes wrong
+#'     mydir <- "C:/Simple"
+#' 
+#'     ## retrospective analyses
+#'     SS_doRetro(masterdir=mydir, oldsubdir="", newsubdir="retrospectives", years=0:-5)
+#'     
+#'     retroModels <- SSgetoutput(dirvec=file.path(mydir, "retrospectives",paste("retro",0:-5,sep="")))
+#'     retroSummary <- SSsummarize(retroModels)
+#'     endyrvec <- retroSummary$endyrs + 0:-5
+#'     SSplotComparisons(retroSummary, endyrvec=endyrvec, legendlabels=paste("Data",0:-5,"years"))
+#'   }
+#' 
 SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
                        subdirstart='retro',years=0:-5,overwrite=TRUE,
-                       extras="-nox",intern=FALSE){
+                       extras="-nox",intern=FALSE,CallType="system"){
 
   # save working directory
   oldwd <- getwd()
@@ -48,6 +90,7 @@ SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
               overwrite=TRUE)
     # change starter file to do retrospectives
     starter$retro_yr <- years[iyr]
+    starter$init_values_src = 0
     setwd(file.path(newdir,subdirnames[iyr]))
     SS_writestarter(starter, dir=getwd(), verbose=FALSE, overwrite=TRUE)
 
@@ -66,7 +109,8 @@ SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
                    getwd(),"/ADMBoutput.txt. \n   To change this, set intern=FALSE\n",
                    "Note: ignore message about 'Error trying to open data input file ss3.dat'\n",
                    sep="")
-    ADMBoutput <- system(paste(exefile,extras),intern=intern)
+    if(CallType=="system") ADMBoutput <- system(paste(exefile,extras),intern=intern)
+    if(CallType=="shell") ADMBoutput <- shell(paste(exefile,extras),intern=intern)
     if(intern) writeLines(c("###","ADMB output",as.character(Sys.time()),
                             "###"," ",ADMBoutput), con = 'ADMBoutput.txt')
     setwd('..')

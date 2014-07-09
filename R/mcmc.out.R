@@ -1,3 +1,37 @@
+#' Summarize, analyze and plot key MCMC output.
+#' 
+#' Makes four panel plot showing trace plots, moving average, autocorrelations,
+#' and densities for chosen parameters from MCMC output.
+#' 
+#' 
+#' @param directory Directory where all results are located, one level above
+#' directory for particular run.
+#' @param run Directory with files from a particular run.
+#' @param file File containing posterior samples for key parameters. This could
+#' be written by the function \code{\link{SSgetMCMC}}.
+#' @param namefile The (optional) file name of the dimension and names of
+#' posteriors.
+#' @param names Read in names file (T) or use generic naming (F).
+#' @param headernames Use the names in the header of \code{file}?
+#' @param numparams The number of parameters to analyze.
+#' @param closeall By default close all open devices.
+#' @param burn Optional burn-in value to apply on top of the option in the
+#' starter file and \code{\link{SSgetMCMC}}.
+#' @param thin Optional thinning value to apply on top of the option in the
+#' starter file, in the \code{-mcsave} runtime command, and in
+#' \code{\link{SSgetMCMC}}.
+#' @param scatter Can add a scatter-plot of all params at end, default is none.
+#' @param surface Add a surface plot of 2-way correlations.
+#' @param surf1 The first parameter for the surface plot.
+#' @param surf2 The second parameter for the surface plot.
+#' @param stats Print stats if desired.
+#' @param plots Show plots or not.
+#' @param header Data file with header?
+#' @param sep Separator for data file passed to the \code{read.table} function.
+#' @param print Send to screen unless asked to print.
+#' @author Ian Stewart
+#' @seealso \code{\link{mcmc.nuisance}}, \code{\link{SSgetMCMC}}
+#' @keywords hplot
 mcmc.out <- function (
           directory="c:/mydirectory/",
           run="mymodel/",			# folder with ADMB run files
@@ -31,10 +65,11 @@ mcmc.out <- function (
      	# Notes: columns with fixed values will cause the diagnostic tests to crash
 ##############################################################################################################
 {
-  require(coda) || stop("package coda is required")
-  geterrmessage()
-  require(gtools) || stop("package gtools is required")
-  geterrmessage()
+  #### the following commands no longer needed since packages are required by r4ss
+  ## require(coda) || stop("package coda is required")
+  ## geterrmessage()
+  ## require(gtools) || stop("package gtools is required")
+  ## geterrmessage()
      
   # add section to set up for printing or display to screen (default)
   if(print==TRUE){}# not implemented
@@ -86,7 +121,7 @@ mcmc.out <- function (
   ##### plotting section #####
   if(plots==TRUE) 					# have plots been activated by user
    {  
-    windows(record=TRUE) 				# keep the window open for each parameter
+    dev.new(record=TRUE) 				# keep the window open for each parameter
   if(numparams==5||numparams==9||numparams==13||numparams==17) 	# plots a blank plot if 5,9,13, or 17 plots created
    {							# this avoids the loss of plot n-1 in history (is this an R bug??)
     plot(0,0,
@@ -200,7 +235,7 @@ mcmc.out <- function (
    #### Statistics section #####				
     if(stats == TRUE) 				
      {
-      x11()						# opens a new graphics device
+      dev.new()						# opens a new graphics device
       par(mar=c(0,0,3,0)) 				# makes the margins large 
       plot(0,  						# plot a graph of a single point
            ylab="",					# label the y-axis for whole screen
@@ -301,7 +336,7 @@ mcmc.out <- function (
    ##### Scatter plot section #####
     if(scatter == TRUE) 				
      {
-      windows()
+      dev.new()
       par(xaxt="n",yaxt="n") 				# suppress the axis labels
       pairs(mcmcdata[1:numparams], 			# make the scatterplot
             cex=0.1,
@@ -311,7 +346,7 @@ mcmc.out <- function (
    ##### Surface plot section #####
     if(surface == TRUE)
      {
-      windows()
+      dev.new()
       par(new=FALSE) 					# use a new window
       hist2d(mcmcobject[,surf1],			# x data as a vector
              mcmcobject[,surf2], 			# y data as a vector

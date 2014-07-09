@@ -1,3 +1,28 @@
+#' visualize parameterization of cubic spline selectivity in SS
+#' 
+#' A GUI interface for exploring spline selectivity.
+#' 
+#' 
+#' @param n Number of knots.
+#' @param minBin Minimum length or age to show.
+#' @param maxBin Maximum length or age to show.
+#' @param knots Vector giving location of each knot.
+#' @param slopevec Optional initial values parameters controlling slope at
+#' first and last knot.
+#' @param params Optional initial values for the parameters controlling
+#' selectivity at each knot.
+#' @param dir Directory in which the spline_selex executable is located
+#' (default = working directory).
+#' @param silent TRUE/FALSE switch to return fit at the end.
+#' @author Ian Taylor
+#' @seealso \code{\link{selfit}}
+#' @keywords dplot hplot dynamic
+#' @examples
+#' 
+#' \dontrun{
+#' selfit_spline()
+#' }
+#' 
 selfit_spline <- function (n=4, minBin=10, maxBin=65,
                            knots=NULL, slopevec=c(0.01,-0.01), params=NULL,
                            dir=getwd(),
@@ -18,7 +43,8 @@ selfit_spline <- function (n=4, minBin=10, maxBin=65,
   #
   ################################################################################
 
-  require(tcltk) || stop("package tcltk is required")
+  #### the following commands no longer needed since packages are required by r4ss
+  ## require(tcltk) || stop("package tcltk is required")
   if(n<3 | n>7 | as.integer(n)!=n) stop("Number of knots must be an integer from 3 to 7")
   if(.Platform$OS.type=="windows"){
     if(!("spline_selex.exe" %in% dir(dir)))

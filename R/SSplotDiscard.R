@@ -1,3 +1,35 @@
+#' Plot fit to discard fraction.
+#' 
+#' Plot fit to discard fraction from Stock Synthesis output file.
+#' 
+#' 
+#' @param replist List created by \code{\link{SS_output}}
+#' @param subplots Vector of which plots to make (1 = data only, 2 = with fit).
+#' If \code{plotdat = FALSE} then subplot 1 is not created, regardless of
+#' choice of \code{subplots}.
+#' @param plot Plot to active plot device?
+#' @param print Print to PNG files?
+#' @param plotdir Directory where PNG files will be written. by default it will
+#' be the directory where the model was run.
+#' @param fleets Optional vector to subset fleets for which plots will be made
+#' @param fleetnames Optional replacement for fleenames used in data file
+#' @param datplot Make data-only plot of discards? This can override the choice
+#' of \code{subplots}.
+#' @param labels Vector of labels for plots (titles and axis labels)
+#' @param yhi Maximum y-value to include in plot (all data included
+#' regardless). Default = 1.
+#' @param col1 First color to use in plot (for expected values)
+#' @param col2 Second color to use in plot (for observations and intervals)
+#' @param pwidth Width of plot written to PNG file
+#' @param pheight Height of plot written to PNG file
+#' @param punits Units for PNG file
+#' @param res Resolution for PNG file
+#' @param ptsize Point size for PNG file
+#' @param cex.main Character expansion for plot titles
+#' @param verbose Report progress to R GUI?
+#' @author Ian Taylor, Ian Stewart
+#' @seealso \code{\link{SS_plots}}
+#' @keywords hplot
 SSplotDiscard <-
   function(replist,subplots=1:2,
            plot=TRUE,print=FALSE,
@@ -10,7 +42,7 @@ SSplotDiscard <-
            "Total discards",
            "for"),
            yhi=1,
-           col1="blue", col2="red",
+           col1="blue", col2="black",
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
            verbose=TRUE)
 {
@@ -35,14 +67,13 @@ SSplotDiscard <-
   # if discards exist
   if(!is.na(discard) && nrow(discard)>0){
     if(fleets[1]=="all") fleets <- 1:nfishfleets
-    fleets <- intersect(fleets,discard$FleetNum)
-    for(FleetNum in fleets){
+    for(ifleet in intersect(fleets,unique(discard$FleetNum))){
       # table available beginning with SSv3.20 has fleet-specific discard specs
       if(!is.null(discard_spec)){ 
-        DF_discard <- discard_spec$errtype[discard_spec$Fleet==FleetNum]
+        DF_discard <- discard_spec$errtype[discard_spec$Fleet==ifleet]
       }
-      usedisc <- discard[discard$FleetNum==FleetNum,]
-      FleetName <- usedisc$FleetName[1]
+      usedisc <- discard[discard$FleetNum==ifleet,]
+      FleetName <- fleetnames[ifleet]
 
       yr <- as.numeric(usedisc$Yr)
       ob <- as.numeric(usedisc$Obs)
@@ -79,7 +110,7 @@ SSplotDiscard <-
         ## 1:  discard_in_biomass(mt)_or_numbers(1000s)_to_match_catchunits_of_fleet
         ## 2:  discard_as_fraction_of_total_catch(based_on_bio_or_num_depending_on_fleet_catchunits)
         ## 3:  discard_as_numbers(1000s)_regardless_of_fleet_catchunits
-        discard_units <- discard_spec$units[discard_spec$Fleet==FleetNum]
+        discard_units <- discard_spec$units[discard_spec$Fleet==ifleet]
         if(discard_units==1){
           # type 1: biomass or numbers
           #         someday could make labels more specific based on catch units
@@ -101,8 +132,7 @@ SSplotDiscard <-
       # wrap up plot command in function
       dfracfunc <- function(addfit){
         plotCI(x=yr,y=ob,uiw=uiw,liw=liw,ylab=ylab,xlab=labels[1],main=title,
-               ylo=0,yhi=yhi,col=col2,sfrac=0.001,lty=1,xlim=xlim,
-               ymax=max(usedisc$Exp,na.rm=TRUE))
+               ylo=0,yhi=yhi,col=col2,sfrac=0.005,lty=1,xlim=xlim,pch=21,bg="white")
         abline(h=0,col="grey")
         if(addfit) points(yr,usedisc$Exp,col=col1,pch="-",cex=2)
       }

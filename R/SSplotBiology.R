@@ -1,5 +1,34 @@
+#' Plot biology related quantities.
+#' 
+#' Plot biology related quantities from Stock Synthesis model output, including
+#' mean weight, maturity, fecundity, and spawning output.
+#' 
+#' 
+#' @param replist List created by \code{SS_output}
+#' @param plot Plot to active plot device?
+#' @param print Print to PNG files?
+#' @param add add to existing plot
+#' @param subplots vector controlling which subplots to create
+#' @param seas which season to plot (obviously only works in seasonal models,
+#' but maybe not fully implemented even then)
+#' @param col1 color of some points/lines
+#' @param col2 color of other points/lines
+#' @param legendloc Location of legend (see ?legend for more info)
+#' @param plotdir Directory where PNG files will be written. by default it will
+#' be the directory where the model was run.
+#' @param labels Vector of labels for plots (titles and axis labels)
+#' @param pwidth Width of plot written to PNG file
+#' @param pheight Height of plot written to PNG file
+#' @param punits Units for PNG file
+#' @param res Resolution for PNG file
+#' @param ptsize Point size for PNG file
+#' @param cex.main Character expansion for plot titles
+#' @param verbose Return updates of function progress to the R GUI?
+#' @author Ian Stewart, Ian Taylor
+#' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
+#' @keywords aplot hplot
 SSplotBiology <-
-  function(replist, plot=TRUE,print=FALSE,add=FALSE,subplots=1:10,seas=1,
+function(replist, plot=TRUE,print=FALSE,add=FALSE,subplots=1:11,seas=1,
            col1="red",col2="blue",
            legendloc="topleft",
            plotdir="default",
@@ -13,7 +42,8 @@ SSplotBiology <-
              "Female weight (kg)",              #8
              "Female length (cm)",              #9
              "Fecundity",                       #10
-             "Default fecundity label"),        #11
+             "Default fecundity label",         #11
+             "Year"),                           #12
            pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
            verbose=TRUE)
 {
@@ -134,13 +164,25 @@ SSplotBiology <-
       # if empirical weight-at-age IS used
       wtmat <- wtatage[wtatage$fleet==-1 & wtatage$seas==seas & wtatage$gender==1,-(2:6)]
       if(all(wtmat[1,]==wtmat[2,])) wtmat <- wtmat[-1,] # remove redundant first row
+      main <- "Empirical weight at age in middle of the year"
+      if(nsexes > 1){main <- "Female Empirical weight at age in middle of the year"}
       persp(x=abs(wtmat$yr),
             y=0:accuage,
             z=as.matrix(wtmat[,-1]),
             theta=70,phi=30,xlab="Year",ylab="Age",zlab="Weight",
-            main="Empirical weight at age in middle of the year")
-      
-      makeimage(wtmat, main="Empirical weight at age in middle of the year")
+            main=main)
+      makeimage(wtmat, main=main)
+
+      if(nsexes > 1){
+      wtmat <- wtatage[wtatage$fleet==-1 & wtatage$seas==seas & wtatage$gender==2,-(2:6)]
+      if(all(wtmat[1,]==wtmat[2,])) wtmat <- wtmat[-1,] # remove redundant first row
+      persp(x=abs(wtmat$yr),
+            y=0:accuage,
+            z=as.matrix(wtmat[,-1]),
+            theta=70,phi=30,xlab="Year",ylab="Age",zlab="Weight",
+            main="Male Empirical weight at age in middle of the year")
+      makeimage(wtmat, main="Male Empirical weight at age in middle of the year")
+      }
     }
   }
   maturity_plot <- function(){ # maturity
@@ -188,8 +230,10 @@ SSplotBiology <-
     ## print(length(yrvec2))
     ## print(dim(mat2))
     
+    lastbin <- max(mat2)
+
     image(x=0:accuage,y=yrvec2,z=t(mat2),axes=F,xlab='Age',ylab='Year',
-          col=rainbow(60)[1:50], breaks=seq(0,4,length=51),main=main)
+          col=rainbow(60)[1:50], breaks=seq(0,lastbin,length=51),main=main)
     # add text
     zdataframe <- expand.grid(yr=yrvec2,age=0:accuage)
     zdataframe <- expand.grid(age=0:accuage,yr=yrvec2)
@@ -330,27 +374,28 @@ SSplotBiology <-
   if(plot & 7 %in% subplots) gfunc5()
   if(print & 7 %in% subplots){
     file <- paste(plotdir,"/bio7_sizeatage.png",sep="")
-    caption <- "Length at age"
+    caption <- "Length at age (dashed lines are 95% intervals)"
     plotinfo <- pngfun(file=file, caption=caption)
     gfunc5()
     dev.off()
     plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
   }
-
-  # Natural mortality (if time varying)
-  M <- growdatF$M # female mortality in the ending year
+  
+  # Natural mortality (if age-dependent -- need to add time-varying M plot)
+  MatAge <- growdatF$M # female mortality in the ending year
+  # not sure what role M2 is playing here
   M2 <- MGparmAdj[,c(1,grep("NatM",names(MGparmAdj)))]
-  # if dimension is NULL there were no time-varying natural mortality parameters
+  # not sure when you could have ncol(M2) = NULL
   if(!is.null(ncol(M2))){ 
     M2f <- M2[,c(1,grep("Fem",names(M2)))]
-    if(min(M)!=max(M) & 8 %in% subplots){
-      ymax <- max(M)
+    if(min(MatAge)!=max(MatAge) & 8 %in% subplots){
+      ymax <- max(MatAge)
       mfunc <- function(){
         if(!add){
-          plot(growdatF$Age,M,col=col1,lwd=2,ylim=c(0,ymax),type="n",ylab=labels[7],xlab=labels[2])
+          plot(growdatF$Age,MatAge,col=col1,lwd=2,ylim=c(0,ymax),type="n",ylab=labels[7],xlab=labels[2])
           abline(h=0,col="grey")
         }
-        lines(growdatF$Age,M,col=col1,lwd=2,type="o")
+        lines(growdatF$Age,MatAge,col=col1,lwd=2,type="o")
         if(nsexes > 1){
           growdatM <- growdat[growdat$Morph==mainmorphs[2],]
           lines(growdatM$Age,growdatM$M,col=col2,lwd=2,type="o")
@@ -424,6 +469,38 @@ SSplotBiology <-
       } # end loop over sexes
     } # end of if data available for time varying growth
   }# end disable of time-varying growth for multi-season models
+
+  # plot time-series of any time-varying quantities
+  if(11 %in% subplots){
+    # general function to work for any parameter
+    timeVaryingParmFunc <- function(parmlabel){
+      plot(MGparmAdj$Year, MGparmAdj[[parmlabel]],
+           xlab=labels[11], ylab=parmlabel, type="l", lwd=3, col=col2)
+    }
+    # check to make sure MGparmAdj looks as expected
+    # (maybe had different or conditional format in old SS versions)
+    if(!is.null(ncol(MGparmAdj)) && ncol(MGparmAdj)>1){
+      # loop over columns looking for time-varying parameters
+      for(icol in 2:ncol(MGparmAdj)){
+        parmlabel <- names(MGparmAdj)[icol]
+        parmvals  <- MGparmAdj[,icol]
+        # check for changes
+        if(length(unique(parmvals)) > 1){
+          # make plot
+          if(plot) timeVaryingParmFunc(parmlabel)
+          if(print){
+            file <- paste(plotdir, "/bio11_time-varying_", parmlabel, ".png", sep="")
+            caption <- "Time-varying mortality and growth parameters"
+            plotinfo <- pngfun(file=file, caption=caption) 
+            timeVaryingParmFunc(parmlabel)
+            dev.off()
+          }
+        }
+      }
+    }
+  }
+
+  # add category and return plotinfo
   if(!is.null(plotinfo)) plotinfo$category <- "Bio"
   return(invisible(plotinfo))
 }

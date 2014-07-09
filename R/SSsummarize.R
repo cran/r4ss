@@ -1,3 +1,34 @@
+#' Summarize the output from multiple Stock Synthesis models.
+#' 
+#' Summarize various quantities from the model output collected by
+#' \code{\link{SSgetoutput}} and return them in a list of tables and vectors.
+#' 
+#' 
+#' @param biglist A list of lists created by \code{\link{SSgetoutput}}.
+#' @param keyvec Optional list of strings matching names of elements of biglist
+#' to subset. Default=NULL.
+#' @param numvec Optional list of numbers of elements from biglist to subset.
+#' Default=NULL.
+#' @param sizeselfactor A string or vector of strings indicating which elements
+#' of the selectivity at length output to summarize. Default=c("Lsel").
+#' @param ageselfactor A string or vector of strings indicating which elements
+#' of the selectivity at age output to summarize. Default=c("Asel").
+#' @param selfleet Vector of fleets for which selectivity will be summarized.
+#' NULL=all fleets. Default=NULL.
+#' @param selyr String or vector of years for which selectivity will be
+#' summarized.  NOTE: NOT CURRENTLY WORKING.  Options: NULL=all years,
+#' "startyr" = first year.
+#' @param selgender Vector of genders (1 and/or 2) for which selectivity will
+#' be summarized. NULL=all genders. Default=NULL.
+#' @param SpawnOutputUnits Optional single value or vector of "biomass" or
+#' "numbers" giving units of spawning for each model.
+#' @param lowerCI Quantile for lower bound on calculated intervals. Default =
+#' 0.025 for 95\% intervals.
+#' @param upperCI Quantile for upper bound on calculated intervals. Default =
+#' 0.975 for 95\% intervals.
+#' @author Ian Taylor
+#' @seealso \code{\link{SSgetoutput}}
+#' @keywords data manip list
 SSsummarize <- function(biglist,
                         keyvec=NULL,
                         numvec=NULL,
@@ -6,6 +37,7 @@ SSsummarize <- function(biglist,
                         selfleet=NULL,
                         selyr="startyr",
                         selgender=1,
+                        SpawnOutputUnits=NULL,
                         lowerCI=0.025,
                         upperCI=0.975){
 
@@ -67,6 +99,7 @@ SSsummarize <- function(biglist,
   maxgrad    <- NULL
   nsexes     <- NULL
   likelihoods <- likelambdas <- as.data.frame(matrix(NA,nrow=length(likenames),ncol=n))
+  likelihoods_by_fleet <- NULL
   indices    <- NULL
   sizesel    <- NULL
   agesel     <- NULL
@@ -77,6 +110,11 @@ SSsummarize <- function(biglist,
   npars      <- NULL
   startyrs   <- NULL
   endyrs     <- NULL
+  SPRratioLabels <- NULL
+  sprtargs   <- NULL
+  btargs     <- NULL
+  minbthreshs <- NULL
+  FleetNames <- list()
   
   warn <- FALSE # flag for whether filter warning has been printed or not
 
@@ -146,6 +184,14 @@ SSsummarize <- function(biglist,
       likelihoods[likenames==rownames(liketemp)[irow], imodel] <- liketemp$values[irow]
       likelambdas[likenames==rownames(liketemp)[irow], imodel] <- liketemp$lambdas[irow]
     }
+    liketemp2 <- data.frame(model=imodel,stats$likelihoods_by_fleet)
+    if(is.null(likelihoods_by_fleet) ||
+       (ncol(likelihoods_by_fleet)==ncol(liketemp2) &&
+         all(names(likelihoods_by_fleet)==names(liketemp2)))){
+      likelihoods_by_fleet <- rbind(likelihoods_by_fleet,liketemp2)
+    }else{
+      cat("\nproblem summarizing likelihoods by fleet due to mismatched columns\n")
+    }
 
     ## compile parameters
     parstemp <- stats$parameters
@@ -162,7 +208,12 @@ SSsummarize <- function(biglist,
       quants[dernames==quantstemp$LABEL[iquant], imodel] <- quantstemp$Value[iquant]
       quantsSD[dernames==quantstemp$LABEL[iquant], imodel] <- quantstemp$StdDev[iquant]
     }
-
+    SPRratioLabels <- c(SPRratioLabels, stats$SPRratioLabel)
+    sprtargs       <- c(sprtargs,       stats$sprtarg)
+    btargs         <- c(btargs,         stats$btarg)
+    minbthreshs    <- c(minbthreshs,    stats$minbthresh)
+    FleetNames[[imodel]] <- stats$FleetNames
+    
     ## indices
     indextemp <- stats$cpue
     indextemp$Model <- keyvec2[imodel]
@@ -173,7 +224,27 @@ SSsummarize <- function(biglist,
       cat("problem summarizing indices due to mismatched columns\n")
     }
 
+    # number of parameters
     npars <- c(npars, stats$N_estimated_parameters)
+
+    # 2nd fecundity parameter indicates whether spawning output is proportional to biomass
+    if(!is.null(SpawnOutputUnits)){
+      # if 1 value is input, repeate n times
+      if(length(SpawnOutputUnits)==1) SpawnOutputUnits <- rep(SpawnOutputUnits,n)
+      # if total doesn't currently equal n, stop everything
+      if(length(SpawnOutputUnits)!=n)
+        stop("'SpawnOutputUnits' should have length = 1 or",n)
+    }else{
+      # if NULL, then make vector of NA values
+      SpawnOutputUnits <- rep(NA,n)
+    }
+    # if NA value in vector for current model, replace with value from model
+    if(is.na(SpawnOutputUnits[imodel]))
+      if(stats$FecPar2==0){
+        SpawnOutputUnits[imodel] <- "biomass"
+      }else{
+        SpawnOutputUnits[imodel] <- "numbers"
+      }
   } # end loop over models
 
   if(!setequal(keyvec,keyvec2)){
@@ -260,6 +331,7 @@ SSsummarize <- function(biglist,
   SPRratioUpper[,1:n] <- qnorm(p=upperCI, mean=as.matrix(SPRratio[,1:n]),
                              sd=as.matrix(SPRratioSD[,1:n]))
   
+  
   # identify recruitment parameters and their uncertainty
   recruits <- quants[grep("^Recr_",quants$Label), ]
   recruitsSD <- quantsSD[grep("^Recr_",quantsSD$Label), ]
@@ -339,6 +411,7 @@ SSsummarize <- function(biglist,
   }else{
     recdevs <- recdevsSD <- recdevsLower <- recdevsUpper <- NULL
   }
+  
   mylist <- list()
   mylist$n              <- n
   mylist$npars          <- npars
@@ -355,6 +428,7 @@ SSsummarize <- function(biglist,
   mylist$quantsSD       <- quantsSD
   mylist$likelihoods    <- likelihoods
   mylist$likelambdas    <- likelambdas
+  mylist$likelihoods_by_fleet <- likelihoods_by_fleet
   mylist$SpawnBio       <- SpawnBio
   mylist$SpawnBioSD     <- SpawnBioSD
   mylist$SpawnBioLower  <- SpawnBioLower
@@ -367,6 +441,10 @@ SSsummarize <- function(biglist,
   mylist$SPRratioSD     <- SPRratioSD
   mylist$SPRratioLower  <- SPRratioLower
   mylist$SPRratioUpper  <- SPRratioUpper
+  mylist$SPRratioLabels <- SPRratioLabels
+  mylist$sprtargs       <- sprtargs
+  mylist$btargs         <- btargs
+  mylist$minbthreshs    <- minbthreshs
   mylist$recruits       <- recruits
   mylist$recruitsSD     <- recruitsSD
   mylist$recruitsLower  <- recruitsLower
@@ -382,6 +460,8 @@ SSsummarize <- function(biglist,
   mylist$InitAgeYrs     <- InitAgeYrs
   mylist$lowerCI        <- lowerCI
   mylist$upperCI        <- upperCI
+  mylist$SpawnOutputUnits <- SpawnOutputUnits
+  mylist$FleetNames     <- FleetNames
   #mylist$lbinspop   <- as.numeric(names(stats$sizeselex)[-(1:5)])
   
   return(mylist)
