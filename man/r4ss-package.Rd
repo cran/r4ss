@@ -13,7 +13,7 @@ parameterizations, and various other tasks.
 }
 \details{
 \tabular{ll}{ Package: \tab r4ss\cr Type: \tab Package\cr Version: \tab
-1.22\cr Date: \tab 2014-07-08\cr License: \tab GPL-3\cr LazyLoad: \tab
+1.22.1\cr Date: \tab 2014-07-11\cr License: \tab GPL-3\cr LazyLoad: \tab
 yes\cr URL: \tab \url{https://github.com/r4ss/}\cr }
 Should be compatible with Stock Synthesis versions 3.20 through 3.3.
 }
@@ -29,8 +29,8 @@ SS_plots(replist=myreplist)
 \author{
 Ian Taylor, Ian Stewart, Allan Hicks, Tommy Garrison, Andre Punt,
 John Wallace, Chantel Wetzel, James Thorson, Yukio Takeuchi, Kotaro Ono,
-and other contributors
-Package maintainer: Ian Taylor <Ian.Taylor@noaa.gov>
+and other contributors.
+ Package maintainer: Ian Taylor <Ian.Taylor@noaa.gov>
 }
 \references{
 r4ss on GitHub: \url{https://github.com/r4ss}
