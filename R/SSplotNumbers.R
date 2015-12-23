@@ -9,6 +9,8 @@
 #' @param subplots vector controlling which subplots to create
 #' @param plot plot to active plot device?
 #' @param print print to PNG files?
+#' @param numbers.unit Units for numbers. Default (based on typical Stock Synthesis
+#' setup) is thousands (numbers.unit=1000).
 #' @param areas optional subset of areas to plot for spatial models
 #' @param areanames names for areas. Default is to use Area1, Area2,...
 #' @param areacols vector of colors by area
@@ -16,17 +18,19 @@
 #' independently based on this maximum size and the values plotted. Often some
 #' plots look better with one value and others with a larger or smaller value.
 #' Default=2.6
+#' @param bub.bg background color for bubbles
+#' (no control over black border at this time)
 #' @param bublegend Add legend with example bubble sizes?
 #' @param period indicator of whether to make plots using numbers at age just
 #' from the beginning ("B") or middle of the year ("M") (new option starting
 #' with SSv3.11)
 #' @param add add to existing plot? (not yet implemented)
 #' @param labels vector of labels for plots (titles and axis labels)
-#' @param pwidth width of plot written to PNG file
-#' @param pheight height of plot written to PNG file
+#' @param pwidth width of plot
+#' @param pheight height of plot
 #' @param punits units for PNG file
 #' @param res resolution for PNG file
-#' @param ptsize ptsize for PNG file
+#' @param ptsize point size for PNG file
 #' @param cex.main character expansion for plot titles
 #' @param plotdir directory where PNG files will be written. by default it will
 #' be the directory where the model was run.
@@ -38,10 +42,12 @@
 SSplotNumbers <-
   function(replist,subplots=1:9,
            plot=TRUE,print=FALSE,
+           numbers.unit=1000,
            areas="all",
            areanames="default",
            areacols="default",
            pntscalar=2.6,
+           bub.bg=gray(0.5,alpha=0.5),
            bublegend=TRUE,
            period=c("B","M"),
            add=FALSE,
@@ -65,7 +71,7 @@ SSplotNumbers <-
              "expected numbers at length",   #18
              "Sex ratio of numbers at length (males/females)", #19 (out of order, but I don't feel like runumbering)
              "Sex ratio of numbers at length (females/males)"), #20 (out of order, but I don't feel like runumbering)
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,
+           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,
            cex.main=1,
            plotdir="default",
            verbose=TRUE)
@@ -96,6 +102,7 @@ SSplotNumbers <-
     morphlist       <- replist$morphlist
     morph_indexing  <- replist$morph_indexing
     accuage         <- replist$accuage
+    agebins         <- replist$agebins
     endyr           <- replist$endyr
     N_ageerror_defs <- replist$N_ageerror_defs
     AAK             <- replist$AAK
@@ -107,6 +114,12 @@ SSplotNumbers <-
     # this logic is now out of date, not sure why it wasn't coming from replist anyway
     #mainmorphs <- morph_indexing$Index[morph_indexing$Bseas==1 & morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist)]
     mainmorphs <- replist$mainmorphs
+
+    if(!"BirthSeas" %in% names(natage)){
+      cat("Numbers at age plots haven't been updated to work with SS version 3.30\n")
+      return()
+    }
+
 
     SS_versionshort <- toupper(substr(replist$SS_version,1,8))
 
@@ -168,19 +181,46 @@ SSplotNumbers <-
           resy <- NULL
           for(i in 0:accuage) resy <- c(resy,rep(i,nyrsplot))
           resz <- NULL
-          for(i in column1+0:accuage) resz <- c(resz,natagetemp0[,i])
-
+          for(i in column1+0:accuage){
+            # numbers here are scaled by units
+            resz <- c(resz, numbers.unit * natagetemp0[,i])
+          }
+          # clean up big numbers
+          units <- ""
+          if(max(resz) > 1e9){
+            resz <- resz/1e9
+            units <- "billion"
+          }
+          if(max(resz) > 1e6 & units==""){
+            resz <- resz/1e6
+            units <- "million"
+          }
+          if(max(resz) > 1e3 & units==""){
+            resz <- resz/1e3
+            units <- "thousand"
+          }
           # assign unique name to data frame for area, sex (beginning of year only)
-          if(iperiod==1) assign(paste("natagetemp0area",iarea,"sex",m,sep=""),natagetemp0)
-
+          if(iperiod==1){
+            assign(paste("natagetemp0area",iarea,"sex",m,sep=""),natagetemp0)
+          }
           if(m==1 & nsexes==1) sextitle <- ""
           if(m==1 & nsexes==2) sextitle <- " of females"
           if(m==2) sextitle=" of males"
           if(nareas>1) sextitle <- paste(sextitle," in ",areanames[iarea],sep="")
-          if(period[iperiod]=="B") periodtitle <- labels[16] else
-            if(period[iperiod]=="M") periodtitle <- labels[17] else
-              stop("'period' input to SSplotNumbers should include only 'B' or 'M'")
-          plottitle1 <- paste(periodtitle, " ", labels[15], sextitle," in thousands (max=",max(resz),")",sep="")
+          if(!period[iperiod] %in% c("B","M")){
+            stop("'period' input to SSplotNumbers should include only 'B' or 'M'")
+          }
+          if(period[iperiod]=="B"){
+            periodtitle <- labels[16]
+            fileperiod <- "_beg"
+          }
+          if(period[iperiod]=="M"){
+            periodtitle <- labels[17]
+            fileperiod <- "_mid"
+          }
+          plottitle1 <- paste(periodtitle, " ", labels[15], sextitle,
+                              " in (max ~ ",format(round(max(resz),1),nsmall=1),
+                              " ",units,")",sep="")
 
           # calculations related to mean age
           natagetemp1 <- as.matrix(natagetemp0[,remove]) # removing the first columns to get just numbers
@@ -213,16 +253,16 @@ SSplotNumbers <-
           plottitle2 <- paste(periodtitle,labels[7])
           if(nareas>1) plottitle2 <- paste(plottitle2,"in",areanames[iarea])
 
-          tempfun <- function(){
+          ageBubble.fn <- function(){
             # bubble plot with line
             bubble3(x=resx, y=resy, z=resz,
                     xlab=labels[1],ylab=labels[2],
-                    legend=bublegend,
+                    legend=bublegend,bg.open=bub.bg,
                     main=plottitle1,maxsize=(pntscalar+1.0),
-                    las=1,cex.main=cex.main,allopen=1)
+                    las=1,cex.main=cex.main,allopen=TRUE)
             lines(natageyrs,meanage,col="red",lwd=3)
           }
-          tempfun2 <- function(){
+          meanAge.fn <- function(){
             # mean age for males and femails
             ylim <- c(0, max(meanage, meanagef, na.rm=TRUE))
             plot(natageyrs,meanage,col="blue",lty=1,pch=4,xlab=labels[1],ylim=ylim,type="o",ylab=ylab,main=plottitle2,cex.main=cex.main)
@@ -230,26 +270,28 @@ SSplotNumbers <-
             legend("bottomleft",bty="n", c("Females","Males"), lty=c(2,1), pch=c(1,4), col = c("red","blue"))
           }
           if(plot){
-            if(1 %in% subplots) tempfun()
-            if(2 %in% subplots & m==2 & nsexes==2) tempfun2()
+            if(1 %in% subplots) ageBubble.fn()
+            if(2 %in% subplots & m==2 & nsexes==2) meanAge.fn()
           }
           if(print){
             filepartsex <- paste("_sex",m,sep="")
             filepartarea <- ""
             if(nareas > 1) filepartarea <- paste("_",areanames[iarea],sep="")
             if(1 %in% subplots){
-              file <- paste(plotdir,"/numbers1",filepartarea,filepartsex,".png",sep="")
+              file <- paste(plotdir,"/numbers1",filepartarea,filepartsex,fileperiod,
+                            ".png",sep="")
               caption <- plottitle1
               plotinfo <- pngfun(file=file, caption=caption)
-              tempfun()
+              ageBubble.fn()
               dev.off()
             }
             # make 2-sex plot after looping over both sexes
             if(2 %in% subplots & m==2 & nsexes==2){
-              file <- paste(plotdir,"/numbers2_meanage",filepartarea,".png",sep="")
+              file <- paste(plotdir,"/numbers2_meanage",filepartarea,fileperiod,
+                            ".png",sep="")
               caption <- plottitle2
               plotinfo <- pngfun(file=file, caption=caption)
-              tempfun2()
+              meanAge.fn()
               dev.off()
             }
           } # end printing to PNG file
@@ -267,12 +309,12 @@ SSplotNumbers <-
         natageratio <- as.matrix(natagem[,remove]/natagef[,remove])
         natageratio[is.nan(natageratio)] <- NA
         if(diff(range(natageratio,finite=TRUE))!=0){
-          tempfun3 <- function(...){
+          numbersRatioAge.fn <- function(...){
             contour(natagefyrs,0:accuage,natageratio,xaxs="i",yaxs="i",xlab=labels[1],ylab=labels[2],
               main=plottitle3,cex.main=cex.main,...)
           }
           if(plot & 3 %in% subplots){
-            tempfun3(labcex=1)
+            numbersRatioAge.fn(labcex=1)
           }
           if(print & 3 %in% subplots){
             filepart <- ""
@@ -280,7 +322,7 @@ SSplotNumbers <-
             file <- paste(plotdir,"/numbers3_ratio_age",filepart,".png",sep="")
             caption <- plottitle3
             plotinfo <- pngfun(file=file, caption=caption)
-            tempfun3(labcex=0.4)
+            numbersRatioAge.fn(labcex=0.4)
             dev.off()}
         }else{
           cat("skipped sex ratio contour plot because ratio=1 for all ages and years\n")
@@ -328,8 +370,25 @@ SSplotNumbers <-
             resy <- NULL
             for(ilen in 1:nlbinspop) resy <- c(resy,rep(lbinspop[ilen],nyrsplot))
             resz <- NULL
-            for(ilen in column1+1:nlbinspop) resz <- c(resz,natlentemp0[,ilen])
-
+            for(ilen in column1+1:nlbinspop){
+              # numbers here are scaled by units
+              resz <- c(resz, numbers.unit * natlentemp0[,ilen])
+            }
+            # clean up big numbers
+            units <- ""
+            if(max(resz) > 1e9){
+              resz <- resz/1e9
+              units <- "billion"
+            }
+            if(max(resz) > 1e6 & units==""){
+              resz <- resz/1e6
+              units <- "million"
+            }
+            if(max(resz) > 1e3 & units==""){
+              resz <- resz/1e3
+              units <- "thousand"
+            }
+            
             # assign unique name to data frame for area, sex
             assign(paste("natlentemp0area",iarea,"sex",m,sep=""),natlentemp0)
 
@@ -340,7 +399,9 @@ SSplotNumbers <-
             if(period[iperiod]=="B") periodtitle <- labels[16] else
             if(period[iperiod]=="M") periodtitle <- labels[17] else
             stop("'period' input to SSplotNumbers should include only 'B' or 'M'")
-            plottitle1 <- paste(periodtitle," ",labels[18], sextitle," in thousands (max=",max(resz),")",sep="")
+            plottitle1 <- paste(periodtitle, " ", labels[18], sextitle,
+                                " in (max ~ ",format(round(max(resz),1),nsmall=1),
+                                " ",units,")",sep="")
 
             # calculations related to mean len
             natlentemp1 <- as.matrix(natlentemp0[,remove]) # removing the first columns to get just numbers
@@ -369,16 +430,16 @@ SSplotNumbers <-
             plottitle2 <- paste(periodtitle,labels[14])
             if(nareas>1) plottitle2 <- paste(plottitle2,"in",areanames[iarea])
 
-            tempfun4 <- function(){
+            lenBubble.fn <- function(){
               # bubble plot with line
               bubble3(x=resx, y=resy, z=resz,
                       xlab=labels[1],ylab=labels[12],
-                      legend=bublegend,
+                      legend=bublegend,bg.open=bub.bg,
                       main=plottitle1,maxsize=(pntscalar+1.0),
-                      las=1,cex.main=cex.main,allopen=1)
+                      las=1,cex.main=cex.main,allopen=TRUE)
               lines(natlenyrs,meanlen,col="red",lwd=3)
             }
-            tempfun5 <- function(){
+            meanLen.fn <- function(){
               # mean length for males and females
               ylim <- c(0, max(meanlen, meanlenf))
               plot(natlenyrs,meanlen,col="blue",lty=1,pch=4,xlab=labels[1],ylim=ylim,
@@ -387,8 +448,8 @@ SSplotNumbers <-
               legend("bottomleft",bty="n", c("Females","Males"), lty=c(2,1), pch=c(1,4), col = c("red","blue"))
             }
             if(plot){
-              if(6 %in% subplots) tempfun4()
-              if(7 %in% subplots & m==2 & nsexes==2) tempfun5()
+              if(6 %in% subplots) lenBubble.fn()
+              if(7 %in% subplots & m==2 & nsexes==2) meanLen.fn()
             }
             if(print){
               filepartsex <- paste("_sex",m,sep="")
@@ -398,7 +459,7 @@ SSplotNumbers <-
                 file <- paste(plotdir,"/numbers6_len",filepartarea,filepartsex,".png",sep="")
                 caption <- plottitle1
                 plotinfo <- pngfun(file=file, caption=caption)
-                tempfun4()
+                lenBubble.fn()
                 dev.off()
               }
               # make 2-sex plot after looping over both sexes
@@ -406,7 +467,7 @@ SSplotNumbers <-
                 file <- paste(plotdir,"/numbers7_meanlen",filepartarea,".png",sep="")
                 caption <- plottitle2
                 plotinfo <- pngfun(file=file, caption=caption)
-                tempfun5()
+                meanLen.fn()
                 dev.off()
               }
             } # end printing of plot 14
@@ -421,7 +482,7 @@ SSplotNumbers <-
           natlenm <- get(paste("natlentemp0area",iarea,"sex",2,sep=""))
           natlenratio <- as.matrix(natlenm[,remove]/natlenf[,remove])
           if(diff(range(natlenratio,finite=TRUE))!=0){
-            tempfun6 <- function(males.to.females=TRUE,...){
+            numbersRatioLen.fn <- function(males.to.females=TRUE,...){
               if(males.to.females){
                 main <- labels[19]
                 z <- natlenratio
@@ -435,10 +496,10 @@ SSplotNumbers <-
                       main=main,cex.main=cex.main,...)
             }
             if(plot & 8 %in% subplots){
-              tempfun6(males.to.females=TRUE,labcex=1)
+              numbersRatioLen.fn(males.to.females=TRUE,labcex=1)
             }
             if(plot & 9 %in% subplots){
-              tempfun6(males.to.females=FALSE,labcex=1)
+              numbersRatioLen.fn(males.to.females=FALSE,labcex=1)
             }
             if(print & 8 %in% subplots){
               filepart <- ""
@@ -446,7 +507,7 @@ SSplotNumbers <-
               file <- paste(plotdir,"/numbers8_ratio_len1",filepart,".png",sep="")
               caption <- labels[19]
               plotinfo <- pngfun(file=file, caption=caption)
-              tempfun6(labcex=0.4)
+              numbersRatioLen.fn(labcex=0.4)
               dev.off()
             }
             if(print & 9 %in% subplots){
@@ -455,7 +516,7 @@ SSplotNumbers <-
               file <- paste(plotdir,"/numbers8_ratio_len2",filepart,".png",sep="")
               caption <- labels[20]
               plotinfo <- pngfun(file=file, caption=caption)
-              tempfun6(labcex=0.4)
+              numbersRatioLen.fn(labcex=0.4)
               dev.off()
             }
           }else{
@@ -533,6 +594,9 @@ SSplotNumbers <-
         matplot(xvals,yvals,ylim=ylim,type="o",pch=1,lty=1,col=colvec,
                 xlab=labels[3],ylab=labels[4],main=labels[8],cex.main=cex.main)
         abline(h=0,col="grey") # grey line at 0
+        legend('topleft',bty='n',pch=1,lty=1,col=colvec,
+               ncol=ifelse(N_ageerror_defs<20,1,2), # more columns for crazy models like hake
+               legend=paste("Ageing method",1:N_ageerror_defs))
       }
 
       # check for bias in ageing error pattern
@@ -546,27 +610,83 @@ SSplotNumbers <-
                   xlab=labels[3],ylab=labels[5],main=labels[8])
           abline(h=0,col="grey") # grey line at 0
           abline(0,1,col="grey") # grey line with slope = 1
+          legend('topleft',bty='n',pch=1,lty=1,col=colvec,
+                 ncol=ifelse(N_ageerror_defs<20,1,2), # more columns for crazy models like hake
+                 legend=paste("Ageing method",1:N_ageerror_defs))
         }
       }
 
+      ageing_matrix_fun <- function(i_ageerror_def){
+        ## function to make shaded image illustrating true vs. obs. age
+        
+        # change label from "Mean observered age" to "Observed age"
+        # this could be additional input instead
+        ylab <- gsub(pattern="Mean o", replacement="O", x=labels[5])
+        # take subset of age-age-key that for particular method
+        # but only the rows for females because males should always be identical
+        agebins.tmp <- sort(unique(as.numeric(dimnames(AAK)$ObsAgeBin)))
+        z <- t(AAK[i_ageerror_def, rev(1:length(agebins.tmp)), ])
+        # make image
+        image(x=as.numeric(rownames(z)),
+              y=as.numeric(colnames(z)),
+              z=z,
+              xlab=labels[3],
+              ylab=ylab,
+              main=paste(labels[8], ": matrix for method ", i_ageerror_def, sep=""),
+              axes=FALSE)
+        if(accuage<=40){
+          axis(1, at=0:accuage)
+          axis(2, at=agebins.tmp, las=2)
+        }          
+        if(accuage>40){
+          axis(1, at=0:accuage, labels=rep("",accuage+1))
+          axis(1, at=seq(0,accuage,5))
+          axis(2, at=agebins.tmp, labels=rep("",length(agebins.tmp)))
+          axis(2, at=agebins.tmp[agebins.tmp %in% seq(0,accuage,5)], las=2)
+        }
+        box()
+      }
+
+      # run functions to make requested plots
+      
       if(plot & 5 %in% subplots){
+        # make plots of age error standard deviations
         ageingfun()
+        # make plots of age error means
         if(mean(ageingbias==0)!=1) ageingfun2()
+        # make plots of age error matrices
+        for(i_ageerror_def in 1:N_ageerror_defs){
+          ageing_matrix_fun(i_ageerror_def)
+        }
       }
       if(print & 5 %in% subplots){
+        # make files with plots of age error standard deviations
         file <- paste(plotdir,"/numbers5_ageerrorSD.png",sep="")
-        caption <- labels[8]
+        caption <- paste(labels[8], ": ", labels[4], sep="")
         plotinfo <- pngfun(file=file, caption=caption)
         ageingfun()
         dev.off()
 
+        # make files with plots of age error means
         if(mean(ageingbias==0)!=1){
           file <- paste(plotdir,"/numbers5_ageerrorMeans.png",sep="")
-          caption <- labels[8]
+          caption <- paste(labels[8], ": ", labels[5], sep="")
           plotinfo <- pngfun(file=file, caption=caption)
           ageingfun2()
           dev.off()
         }
+
+        # make files with plots of age error matrices
+        for(i_ageerror_def in 1:N_ageerror_defs){
+          file <- paste(plotdir,"/numbers5_ageerror_matrix_",
+                        i_ageerror_def,".png",sep="")
+          caption <- paste(labels[8], ": matrix for method ", i_ageerror_def, sep="")
+          plotinfo <- pngfun(file=file, caption=caption)
+          ageingfun()
+          ageing_matrix_fun(i_ageerror_def)
+          dev.off()
+        } # end loop over ageing error methods
+        
       } # end print to PNG
     } # end if AAK
   } # end if data available

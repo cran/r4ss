@@ -32,6 +32,10 @@
 #' @param verbose Controls amount of text output (maybe). Default=TRUE.
 #' @param nrows How many rows in multi-figure plot. Default=3.
 #' @param ncols How many columns in multi-figure plot. Default=3.
+#' @param ltyvec Vector of line types used for lines showing MLE and prior
+#' distributions and the median of the posterior distribution
+#' @param colvec Vector of colors used for lines and polygons showing MLE, 
+#' initial value, prior, posterior, and median of the posterior. 
 #' @param new Open new window for plotting? Default=TRUE.
 #' @param pdf Write to PDF file instead of R GUI? Default=FALSE.
 #' @param pwidth Default width of plots printed to files in units of
@@ -74,29 +78,13 @@ SSplotPars <-
     showmle=TRUE, showinit=TRUE, showrecdev=TRUE, priorinit=TRUE,
     priorfinal=TRUE, showlegend=TRUE, fitrange=FALSE, xaxs="i",
     xlim=NULL, ylim=NULL, verbose=TRUE, nrows=3, ncols=3,
-    new=TRUE, pdf=FALSE, pwidth=7, pheight=7, punits="in",
-    ptsize=12, returntable=FALSE, strings=c(), exact=FALSE,
+    ltyvec=c(1,1,3,4),
+    colvec=c("blue","red","black","gray60",rgb(0,0,0,.5)),
+    new=TRUE, pdf=FALSE, pwidth=6.5, pheight=5.0, punits="in",
+    ptsize=10, returntable=FALSE, strings=c(), exact=FALSE,
     newheaders=NULL, burn=0, thin=1,
     ctlfile="control.ss_new")
 {
-  ################################################################################
-  #
-  # SSplotPars
-  # This function comes with no warranty or guarantee of accuracy
-  #
-  # Purpose: To make a multi-figure plot of prior distributions
-  #          from a Stock Synthesis control file
-  # Written: Ian Taylor, NWFSC/UW. Ian.Taylor-at-noaa.gov
-  # Returns: Plots of prior distributions used in Stock Synthesis model
-  # Notes:   hosted at http://code.google.com/p/r4ss/
-  # Required packages: none
-  #
-  ################################################################################
-
-  if(verbose){
-    cat("Check for new code and report problems at http://code.google.com/p/r4ss/\n")
-  }
-
   # define subfunction
   GetPrior <- function(Ptype,Pmin,Pmax,Pr,Psd,Pval){
     # function to calculate prior values is direct translation of code in SSv3
@@ -115,8 +103,12 @@ SSplotPars <-
       Ptype2 <- Ptype
     }
     # fix cases where numeric value was read as character (from older SS versions, I think)
-    if(is.na(Ptype2)) Ptype2 <- as.numeric(Ptype)
-    if(is.na(Ptype2)) cat("problem with prior type interpretation. Ptype:",Ptype," Ptype2:",Ptype2,"\n")
+    if(is.na(Ptype2)){
+      Ptype2 <- as.numeric(Ptype)
+    }
+    if(is.na(Ptype2)){
+      cat("problem with prior type interpretation. Ptype:",Ptype," Ptype2:",Ptype2,"\n")
+    }
     
     Pconst <- 0.0001
     if(Ptype2==-1){ # no prior
@@ -202,14 +194,18 @@ SSplotPars <-
 
   ## get posteriors
   if(showpost & !is.na(postfileinfo) & postfileinfo>0){
-    test <- readLines(fullpostfile,n=10) # test for presence of file with at least 10 rows
-    if(length(test)>5){
+    test <- readLines(fullpostfile,n=20) # test for presence of file with at least 10 rows
+    if(length(test)>10){
       posts <- read.table(fullpostfile,header=TRUE)
       names(posts)[names(posts)=="SR_LN.R0."] <- "SR_LN(R0)"
+      cat("read",nrow(posts),"lines in",postfile,"\n")
       # remove burn-in and thin the posteriors if requested
       posts <- posts[seq(burn+1,nrow(posts),thin), ]
+      if(burn > 0 | thin > 1){
+        cat("length of posteriors after burnin-in and thinning:",nrow(posts),"\n")
+      }
     }else{
-      cat("Posteriors file has too few rows, changing input to 'showpost=FALSE'\n")
+      cat("Posteriors file has fewer than 10 rows, changing input to 'showpost=FALSE'\n")
       showpost <- FALSE
     }
   }
@@ -422,6 +418,7 @@ SSplotPars <-
       if(min(breakvec) > min(post)) breakvec <- c(min(post),breakvec)
       if(max(breakvec) < max(post)) breakvec <- c(breakvec,max(post))
       posthist <- hist(post,plot=FALSE,breaks=breakvec)
+      postmedian <- median(post)
       ymax <- max(ymax,max(posthist$density),na.rm=FALSE) # update ymax
     }
 
@@ -434,40 +431,58 @@ SSplotPars <-
     # axis(2) # don't generally show y-axis values because it's just distracting
 
     # add stuff to plot
-    colval <- "grey"
-    if(showpost & goodpost) plot(posthist,add=TRUE,freq=FALSE,col=colval,border=colval)
-    if(showprior) lines(x,prior,lwd=2,lty=1)
+    colval <- colvec[4]
+    # posterior with median
+    if(showpost & goodpost){
+      plot(posthist,add=TRUE,freq=FALSE,col=colval,border=colval)
+      abline(v=postmedian,col=colvec[5],lwd=2,lty=ltyvec[3])
+    }
+    # prior
+    if(showprior){
+      lines(x,prior,lwd=2,lty=ltyvec[2])
+    }
+    # MLE
     if(showmle){
+      # full normal distribution if uncertainty is present
       if(!is.na(parsd) && parsd>0){
-        lines(x,mle,col="blue",lwd=2)
-        lines(rep(finalval,2),c(0,dnorm(finalval,finalval,parsd)*mlescale),col="blue")
+        lines(x,mle,col=colvec[1],lwd=1,lty=ltyvec[1])
+        lines(rep(finalval,2),c(0,dnorm(finalval,finalval,parsd)*mlescale),
+              col=colvec[1],lty=ltyvec[1])
       }else{
-        abline(v=finalval,col="blue")
+        # just point estimate otherwise
+        abline(v=finalval, col=colvec[1], lty=ltyvec[1])
       }
     }
+    # marker for initial value
     if(showinit){
       par(xpd=NA) # stop clipping
-      points(initval,-0.02*ymax,col="red",pch=17,cex=1.2)
+      points(initval,-0.02*ymax,col=colvec[2],pch=17,cex=1.2)
       par(xpd=FALSE)  # restore original value
     }
     ##     if(printlike) mtext(side=3,line=0.2,cex=.8,adj=0,paste("prob@init =",round(priorinit,3)))
     ##     if(printlike) mtext(side=3,line=0.2,cex=.8,adj=1,paste("prob@final =",round(priorfinal,3)))
     box()
 
+    # add margin text and legend
     if(max(par("mfg")[1:2])==1){ # first panel on page
       mtext(xlab,side=1,line=0.5,outer=TRUE)
       mtext(ylab,side=2,line=0.5,outer=TRUE)
       if(showlegend){
-        showvec <- c(showprior,showmle,showpost,showinit)
-        legend("topleft",cex=1.2,bty="n",pch=c(NA,NA,15,17)[showvec],
-               lty=c(1,1,NA,NA)[showvec],lwd=c(2,1,NA,NA)[showvec],
-               col=c("black","blue","grey","red")[showvec],
-               pt.cex=c(1,1,2,1)[showvec],
-               legend=c("prior","max. likelihood","posterior","initial value")[showvec])
+        showvec <- c(showprior,showmle,showpost,showpost,showinit)
+        legend("topleft",cex=1.2,bty="n",pch=c(NA,NA,15,NA,17)[showvec],
+               lty=c(ltyvec[2],ltyvec[1],NA,ltyvec[3],NA)[showvec],lwd=c(2,1,NA,2,NA)[showvec],
+               col=c(colvec[3],colvec[1],colvec[4],colvec[5],colvec[2])[showvec],
+               pt.cex=c(1,1,2,1,1)[showvec],
+               legend=c("prior","max. likelihood","posterior",
+                   "posterior median","initial value")[showvec])
       } # end legend
     } # end first panel stuff
   } # end loop over parameters
-  if(pdf) dev.off() # close PDF file if it was open
-  if(returntable) return(partable[partable$Label %in% goodnames,])
+  if(pdf){
+    dev.off() # close PDF file if it was open
+  }
+  if(returntable){
+    return(partable[partable$Label %in% goodnames,])
+  }
 }
 

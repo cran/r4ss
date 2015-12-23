@@ -1,13 +1,13 @@
 #' A function to create a list object for the output from Stock Synthesis
-#' 
+#'
 #' Reads the Report.sso and (optionally) the covar.sso, CompReport.sso and
 #' other files files produced by Stock Synthesis and formats the important
 #' content of these files into a list in the R workspace. A few statistics
 #' unavailable elsewhere are taken from the .par and .cor files. Summary
 #' information and statistics can be returned to the R console or just
 #' contained within the list produced by this function.
-#' 
-#' 
+#'
+#'
 #' @param dir Locates the directory of the files to be read in, double
 #' backslashes (or forwardslashes) and quotes necessary.
 #' @param model Name of the executable (leaving off the .exe).  Deafult="ss3"
@@ -55,11 +55,11 @@
 #' @seealso \code{\link{SS_plots}}
 #' @keywords data manip list
 #' @examples
-#' 
+#'
 #'   \dontrun{
 #'     myreplist <- SS_output(dir='c:/SS/SSv3.10b/Simple/')
 #'   }
-#' 
+#'
 SS_output <-
   function(dir="C:/myfiles/mymodels/myrun/", model="ss3",
            repfile="Report.sso", compfile="CompReport.sso",covarfile="covar.sso",
@@ -162,7 +162,7 @@ SS_output <-
   SS_versionshort <- toupper(substr(SS_version,1,8))
   SS_versionNumeric <- as.numeric(substring(SS_versionshort,5))
   # rough limits on compatibility of this code
-  SS_versionMax <- 3.24
+  SS_versionMax <- 3.30
   SS_versionMin <- 3.21 # a stab in the dark at which versions still work
 
   # test for version compatibility with this code
@@ -286,7 +286,7 @@ SS_output <-
     endyield <- matchfun("MSY_not_calculated",rawforecast1[,1])
     if(is.na(endyield)) yesMSY <- TRUE else yesMSY <- FALSE
     if(yesMSY) endyield <- matchfun("findFmsy",rawforecast1[,10])
-    if(verbose) cat("Got forecast file\n")
+    if(verbose) cat("Got Forecast-report file\n")
 
     # this section on equilibrium yield moved to Report.sso on Jan 6
     startline <- matchfun("profile",rawforecast1[,11])
@@ -308,9 +308,9 @@ SS_output <-
         yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),c(4,7)]
         colnames(yielddat) <- c("Catch","Depletion")
       }else{
-        names <- yieldraw[1,1:9]
+        names <- yieldraw[1,]
         names[names=="SSB/Bzero"] <- "Depletion"
-        yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),1:9]
+        yielddat <- yieldraw[c(2:(as.numeric(length(yieldraw[,1])-1))),]
         names(yielddat) <- names #colnames(yielddat) <- c("Catch","Depletion","YPR")
       }
       for(icol in 1:ncol(yielddat)){
@@ -342,7 +342,7 @@ SS_output <-
           "  (can replace or override in SS_plots by setting 'minbthresh')\n")
     minbthresh <- 0.125 # west coast assumption for flatfish
   }
-  
+
   flush.console()
 
   # check for use of temporary files
@@ -429,6 +429,9 @@ SS_output <-
     for(icol in 1:ncol(defs)){
       defs[,icol] <- as.numeric(defs[,icol])
     }
+    # fleet_type definitions from TPL:
+    # 1=fleet with catch; 2=discard only fleet with F;
+    # 3=survey(ignore catch); 4=ignore completely
     fleet_type   <- defs$fleet_type
     fleet_timing <- defs$timing
     fleet_area   <- defs$area
@@ -437,28 +440,27 @@ SS_output <-
     catch_se     <- defs$catch_se
     survey_units <- defs$survey_units
     survey_error <- defs$survey_error
-    ## FishFleet    <- !is.na(catch_units)
-    nfishfleets  <- nfleets
+    IsFishFleet  <- fleet_type <= 2 # based on definitions above
   }else{
     # version 3.20-3.24
     # get fleet info
     defs <- rawdefs[-(1:3),apply(rawdefs[-(1:3),],2,emptytest)<1]
     defs[defs==""] <- NA
     lab <- defs$X1
-    fleet_ID    <- as.numeric(defs[grep("fleet_ID",lab),-1])
-    names(defs) <- c("Label",paste("Fleet",fleet_ID,sep=""))
-    FleetNames <- as.character(defs[grep("fleet_names",lab),-1])
-    fleet_area  <- as.numeric(defs[grep("fleet_area",lab),-1])
-    catch_units <- as.numeric(defs[grep("Catch_units",lab),-1])
-    catch_error <- as.numeric(defs[grep("Catch_error",lab),-1])
+    fleet_ID     <- as.numeric(defs[grep("fleet_ID",lab),-1])
+    names(defs)  <- c("Label",paste("Fleet",fleet_ID,sep=""))
+    FleetNames   <- as.character(defs[grep("fleet_names",lab),-1])
+    fleet_area   <- as.numeric(defs[grep("fleet_area",lab),-1])
+    catch_units  <- as.numeric(defs[grep("Catch_units",lab),-1])
+    catch_error  <- as.numeric(defs[grep("Catch_error",lab),-1])
     survey_units <- as.numeric(defs[grep("Survey_units",lab),-1])
     survey_error <- as.numeric(defs[grep("Survey_error",lab),-1])
-    FishFleet   <- !is.na(catch_units)
-    nfleets <- length(FleetNames)
-    nfishfleets <- sum(FishFleet)
+    IsFishFleet  <- !is.na(catch_units)
+    nfleets      <- length(FleetNames)
   }
 
   # more dimensions
+  nfishfleets  <- sum(IsFishFleet)
   nsexes <- length(unique(as.numeric(selex$gender)))
   nareas <- max(as.numeric(rawrep[begin:end,1]))
   startyr <- min(as.numeric(rawrep[begin:end,2]))+2  # this is the 'initial' year not including
@@ -466,7 +468,15 @@ SS_output <-
   endyr <- max(as.numeric(temptime[temptime[,2]=="TIME",1])) # this is the beginning of the last year of the normal timeseries
   tempaccu <- as.character(rawrep[matchfun("Natural_Mortality")+1,-(1:5)])
   accuage <- max(as.numeric(tempaccu[tempaccu!=""]))
-  ncpue <- sum(as.numeric(rawrep[matchfun("INDEX_1")+1+1:nfleets,11]))
+  # which column of INDEX_1 has number of CPUE values (used in reading INDEX_2)
+  if(SS_versionNumeric >= 3.3){
+    ncpue_column <- 13
+    # IAN T.: this may need updating in revised version
+  }else{
+    ncpue_column <- 11
+  }
+  ncpue <- sum(as.numeric(rawrep[matchfun("INDEX_1")+1+1:nfleets,ncpue_column]))
+
 
   # compositions
   if(comp){   # skip this stuff if no CompReport.sso file
@@ -499,7 +509,7 @@ SS_output <-
       # split Pick_gender=3 into males and females to get a value for sex = 0 (unknown), 1 (female), or 2 (male)
       compdbase$sex <- compdbase$Pick_gender
       compdbase$sex[compdbase$Pick_gender==3] <- compdbase$Gender[compdbase$Pick_gender==3]
-      
+
       # make correction to tag output associated with 3.24f (fixed in later versions)
       if(substr(SS_version,1,9)=="SS-V3.24f"){
         cat('Correcting for bug in tag data output associated with SSv3.24f\n')
@@ -645,7 +655,7 @@ SS_output <-
     # if comp option is turned off
     lbins <- NA
     nlbins <- NA
-    
+
     #### need to get length bins from somewhere
     ## temp <- rawrep[grep("NUMBERS_AT_LENGTH",rawrep[,1])+1,]
     ## lbinspop <- as.numeric(temp[temp!=""][-(1:11)])
@@ -689,8 +699,10 @@ SS_output <-
   stats <- list()
   stats$SS_version <- SS_version
   stats$SS_versionshort <- SS_versionshort
+  stats$SS_versionNumeric <- SS_versionNumeric
 
-  stats$Run_time <- paste(as.character(matchfun2("StartTime",0,"StartTime",0,cols=1:6)),collapse=" ")
+  stats$StartTime <- paste(as.character(matchfun2("StartTime",0,"StartTime",0,cols=1:6)),collapse=" ")
+  stats$RunTime <- paste(as.character(matchfun2("StartTime",2,"StartTime",2,cols=4:9)),collapse=" ")
 
   tempfiles  <- as.data.frame(rawrep[4:5,1:2],row.names = NULL)
   tempfiles <- matchfun2("Data_File",0,"Control_File",0,cols=1:2)
@@ -722,7 +734,7 @@ SS_output <-
   for(irow in 1:length(labs)) labs[irow] <- substr(labs[irow],1,nchar(labs[irow])-1)
   likelihoods_by_fleet$Label <- labs
   stats$likelihoods_by_fleet <- likelihoods_by_fleet
-  
+
 
   # parameters
   if(SS_versionNumeric>= 3.23) shift <- -1
@@ -758,7 +770,7 @@ SS_output <-
       parameters[,i] <- as.numeric(parameters[,i])
   }
   rownames(parameters) <- parameters$Label
-  
+
   activepars <- parameters$Label[!is.na(parameters$Active_Cnt)]
 
   if(!is.na(parfile)){
@@ -808,8 +820,18 @@ SS_output <-
       }
     }
     Nstd <- sum(stdtable$std>0)
+    checkbadrun <- unique(stdtable$std)
+    if (length(checkbadrun) == 1) {
+      if (checkbadrun %in% c(NA, "NaN", "na")) {
+        stop(paste0("No quantities were estimated in the covar file \nand all",
+          "estimates of standard deviation are ", checkbadrun, ". \nTry re-running",
+          "stock synthesis."))
+      }
+    }
 
-    if(Nstd<=1) stop("Too few estimated quantities in covar file (n=",Nstd,"). Change input to covar=FALSE.")
+    if(Nstd<=1){
+      stop("Too few estimated quantities in covar file (n=",Nstd,"). Change input to covar=FALSE.")
+    }
     if(checkcor==TRUE & stats$N_estimated_parameters > 1)
     {
       corfilter <- CoVar[CoVar$all.i!=CoVar$all.j &
@@ -879,8 +901,17 @@ SS_output <-
       }else{
         corstats$cormessage11 <-"Uncorrelated parameters not reported. To report, change 'printlowcor' input to a positive value."
       }
-    }else{if(verbose) cat("You skipped the correlation check\n")}
-  }else{if(verbose) cat("You skipped the covar file\n")}
+    }else{
+      corstats <- NA
+      if(verbose){
+        cat("You skipped the correlation check (or have only 1 parameter)\n")
+      }
+    }
+  }else{
+    if(verbose){
+      cat("You skipped the covar file\n")
+    }
+  }
   flush.console()
 
   # read weight-at-age file
@@ -900,12 +931,22 @@ SS_output <-
   }
 
   # derived quantities
-  der <- matchfun2("DERIVED_QUANTITIES",4,"MGparm_By_Year_after_adjustments",-1,cols=1:3,header=TRUE)
+  if(SS_versionNumeric < 3.3){
+    der <- matchfun2("DERIVED_QUANTITIES",4,"MGparm_By_Year_after_adjustments",-1,
+                     header=TRUE)
+    MGParm_dev_details <- NA
+  }else{
+    der <- matchfun2("DERIVED_QUANTITIES",4,"MGParm_dev_details",0,
+                     header=TRUE)
+    MGParm_dev_details <- matchfun2("MGParm_dev_details",1,
+                                    "MGparm_By_Year_after_adjustments",-1,
+                                    header=TRUE)
+  }
   der <- der[der$LABEL!="Bzero_again",]
   der[der=="_"] <- NA
   for(i in 2:3) der[,i] = as.numeric(der[,i])
   rownames(der) <- der$LABEL
-  
+
   managementratiolabels <- matchfun2("DERIVED_QUANTITIES",1,"DERIVED_QUANTITIES",3,cols=1:2)
   names(managementratiolabels) <- c("Ratio","Label")
 
@@ -973,20 +1014,47 @@ SS_output <-
     # provide as same name
     recruitment_dist <- rd
   }
-    
+
   # gradient
   if(covar & !is.na(corfile)) stats$log_det_hessian <- read.table(corfile,nrows=1)[1,10]
   stats$maximum_gradient_component <- as.numeric(matchfun2("Convergence_Level",0,"Convergence_Level",0,cols=2))
 
   # sigma_R
-  srhead <- matchfun2("SPAWN_RECRUIT",0,"SPAWN_RECRUIT",10,cols=1:6)
-  rmse_table <- as.data.frame(srhead[-(1:9),1:5])
-  for(icol in 2:5) rmse_table[,icol] <- as.numeric(rmse_table[,icol])
-  names(rmse_table) <- srhead[9,1:5]
-  names(rmse_table)[4] <- "RMSE_over_sigmaR"
+  if(SS_versionNumeric >= 3.3 |
+     substring(SS_version,1,9) %in% c("SS-V3.24U", "SS-V3.24V",
+                                      "SS-V3.24W", "SS-V3.24X",
+                                      "SS-V3.24Y", "SS-V3.24Z")){
+    # accounting for additional line introduced in 3.24U
+    last_row_index <- 11
+  }else{
+    last_row_index <- 10
+  }
 
-  stats$sigma_R_in <- as.numeric(srhead[4,1])
+  srhead <- matchfun2("SPAWN_RECRUIT",0,"SPAWN_RECRUIT",last_row_index,cols=1:6)
+  rmse_table <- as.data.frame(srhead[-(1:(last_row_index-1)),1:5])
+  for(icol in 2:5){
+    rmse_table[,icol] <- as.numeric(rmse_table[,icol])
+  }
+  names(rmse_table) <- srhead[last_row_index-1,1:5]
+  names(rmse_table)[4] <- "RMSE_over_sigmaR"
+  stats$sigma_R_in <- as.numeric(srhead[last_row_index-6,1])
   stats$rmse_table <- rmse_table
+
+  # Bias adjustment ramp
+  biascol <- grep("breakpoints_for_bias", srhead)
+  breakpoints_for_bias_adjustment_ramp <- srhead[
+    grep("breakpoints_for_bias", srhead[, biascol]), 1:5]
+  colnames(breakpoints_for_bias_adjustment_ramp) <- c("last_yr_early",
+    "first_yr_full", "last_yr_full", "first_yr_recent", "max_bias_adj")
+  rownames(breakpoints_for_bias_adjustment_ramp) <- NULL
+
+  # Spawner-recruit curve
+  rawsr <- matchfun2("SPAWN_RECRUIT",last_row_index+1,"INDEX_2",-1,cols=1:9)
+  names(rawsr) <- rawsr[1,]
+  rawsr[rawsr=="_"] <- NA
+  rawsr <- rawsr[-(1:2),] # remove header rows
+  sr <- rawsr[-(1:2),] # remove rows for Virg and Init
+  for(i in 1:(ncol(sr)-1)) sr[,i] <- as.numeric(sr[,i])
 
   # variance and sample size tuning information
   vartune <- matchfun2("INDEX_1",1,"INDEX_1",(nfleets+1),cols=1:21,header=TRUE)
@@ -1008,12 +1076,16 @@ SS_output <-
   ## # FIT_AGE_COMPS
   fit_age_comps <- matchfun2("FIT_AGE_COMPS",1,"FIT_SIZE_COMPS",-(nfleets+2),header=TRUE)
   if(nrow(fit_age_comps)>0){
+    # replace underscores with NA
     fit_age_comps[fit_age_comps=="_"] <- NA
-    for(icol in 1:ncol(fit_age_comps)) fit_age_comps[,icol] <- as.numeric(fit_age_comps[,icol])
+    # make columns numeric (except "Used", which may contain "skip")
+    for(icol in which(!names(fit_age_comps) %in% "Use")){
+      fit_age_comps[,icol] <- as.numeric(fit_age_comps[,icol])
+    }
   }else{
     fit_age_comps <- NA
   }
-  
+
   # Age comp effective N tuning check
   agentune <- matchfun2("FIT_SIZE_COMPS",-(nfleets+1),"FIT_SIZE_COMPS",-1,cols=1:10,header=TRUE)
   names(agentune)[10] <- "FleetName"
@@ -1047,10 +1119,6 @@ if(FALSE){
     returndat$fleet_area   <- fleet_area
     returndat$catch_units  <- catch_units
     returndat$catch_error  <- catch_error
-    returndat$survey_units <- survey_units
-    returndat$survey_error <- survey_error
-    returndat$IsFishFleet  <- !is.na(catch_units)
-    returndat$nfishfleets  <- nfishfleets
   }
   if(SS_versionNumeric >= 3.3){
     returndat$definitions  <- defs
@@ -1061,11 +1129,11 @@ if(FALSE){
     returndat$catch_units  <- catch_units
     returndat$catch_se     <- catch_se
     returndat$equ_catch_se <- equ_catch_se
-    returndat$survey_units <- survey_units
-    returndat$survey_error <- survey_error
-    #returndat$IsFishFleet  <- !is.na(catch_units)
-    returndat$nfishfleets  <- nfishfleets
   }
+  returndat$survey_units <- survey_units
+  returndat$survey_error <- survey_error
+  returndat$IsFishFleet  <- IsFishFleet
+  returndat$nfishfleets  <- nfishfleets
 
   returndat$nfleets     <- nfleets
   returndat$nsexes      <- nsexes
@@ -1087,10 +1155,14 @@ if(FALSE){
   returndat$seasdurations  <- seasdurations
   returndat$nforecastyears <- nforecastyears
   returndat$morph_indexing <- morph_indexing
+  returndat$MGParm_dev_details <- MGParm_dev_details
   returndat$MGparmAdj   <- MGparmAdj
   returndat$SelSizeAdj  <- SelSizeAdj
   returndat$SelAgeAdj   <- SelAgeAdj
   returndat$recruitment_dist <- recruitment_dist
+  returndat$recruit     <- sr
+  returndat$breakpoints_for_bias_adjustment_ramp <- breakpoints_for_bias_adjustment_ramp
+
 
   # Static growth
   begin <- matchfun("N_Used_morphs",rawrep[,6])+1 # keyword "BIOLOGY" not unique enough
@@ -1135,8 +1207,19 @@ if(FALSE){
   returndat$FecPar1 <- parameters$Value[parameters$Label==FecPar1name]
   returndat$FecPar2 <- parameters$Value[parameters$Label==FecPar2name]
 
-  ## Growth_Parameters <- matchfun2["Growth_Parameters",1,"Seas_Effects",-1]
-  ## returndat$Growth_Parameters <- Growth_Parameters
+  # simple test to figure out if fecundity is proportional to spawning biomass:
+  returndat$SpawnOutputUnits <- ifelse(!is.na(biology$Fecundity[1]) &&
+                                       all(biology$Wt_len_F==biology$Fecundity),
+                                       "biomass", "numbers")
+
+  Growth_Parameters <- matchfun2("Growth_Parameters",1,
+                                 "Growth_Parameters",1+nrow(morph_indexing),
+                                 header=TRUE)
+  for(icol in 1:ncol(Growth_Parameters)){
+    Growth_Parameters[,icol] <- as.numeric(Growth_Parameters[,icol])
+  }
+  returndat$Growth_Parameters <- Growth_Parameters
+
   Seas_Effects <- matchfun2("Seas_Effects",1,"Biology_at_age_in_endyr",-1,header=TRUE)
   if(Seas_Effects[[1]][1]!="absent"){
     for(i in 1:ncol(Seas_Effects)) Seas_Effects[,i] <- as.numeric(Seas_Effects[,i])
@@ -1163,7 +1246,7 @@ if(FALSE){
   test <- matchfun2("MEAN_BODY_WT(begin)",0,"MEAN_BODY_WT(begin)",0,header=FALSE)
   wtatage_switch <- length(grep("wtatage.ss",test))>0
   returndat$wtatage_switch <- wtatage_switch
-  
+
   # mean body weight
   mean_body_wt <- matchfun2("MEAN_BODY_WT(begin)",1,"MEAN_SIZE_TIMESERIES",-1,header=TRUE)
   for(i in 1:ncol(mean_body_wt)) mean_body_wt[,i] <- as.numeric(mean_body_wt[,i])
@@ -1197,18 +1280,49 @@ if(FALSE){
   timeseries <- matchfun2("TIME_SERIES",1,"SPR_series",-1,header=TRUE)
   timeseries[timeseries=="_"] <- NA
   for(i in (1:ncol(timeseries))[names(timeseries)!="Era"]) timeseries[,i] = as.numeric(timeseries[,i])
+
+  ## # sum catches and other quantities across fleets
+  ## # commented out pending additional test for more than one fleet with catch,
+  ## # without which the apply function has errors
+  ## timeseries$dead_B_sum <- apply(timeseries[,grep("dead(B)",names(timeseries),
+  ##                                                 fixed=TRUE)], 1, sum)
+  ## timeseries$dead_N_sum <- apply(timeseries[,grep("dead(N)",names(timeseries),
+  ##                                                 fixed=TRUE)], 1, sum)
+  ## timeseries$retain_B_sum <- apply(timeseries[,grep("retain(B)",names(timeseries),
+  ##                                                   fixed=TRUE)], 1, sum)
+  ## timeseries$retain_N_sum <- apply(timeseries[,grep("retain(N)",names(timeseries),
+  ##                                                   fixed=TRUE)], 1, sum)
+  ## timeseries$sel_B_sum <- apply(timeseries[,grep("sel(B)",names(timeseries),
+  ##                                                fixed=TRUE)], 1, sum)
+  ## timeseries$sel_N_sum <- apply(timeseries[,grep("sel(N)",names(timeseries),
+  ##                                                fixed=TRUE)], 1, sum)
+  ## timeseries$obs_cat_sum <- apply(timeseries[,grep("obs_cat",names(timeseries),
+  ##                                                  fixed=TRUE)], 1, sum)
+
   returndat$timeseries <- timeseries
 
   # get spawning season
   # currently (v3.20b), Spawning Biomass is only calculated in a unique spawning season within the year
-  returndat$spawnseas <- spawnseas <- unique(timeseries$Seas[!is.na(timeseries$SpawnBio)])
+  spawnseas <- unique(timeseries$Seas[!is.na(timeseries$SpawnBio)])
+  # probablem with spawning season calculation when NA values in SpawnBio
+  if(length(spawnseas)==0){
+    spawnseas <- NA
+  }
+  returndat$spawnseas <- spawnseas
   # get birth seasons as vector of seasons with non-zero recruitment
   returndat$birthseas <- sort(unique(timeseries$Seas[timeseries$Recruit_0 > 0]))
 
   # set mainmorphs as those morphs born in the spawning season
   # and the largest fraction of the submorphs (should equal middle morph when using sub-morphs)
-  temp <- morph_indexing[morph_indexing$Bseas==min(spawnseas) &
-                         morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
+  if(SS_versionNumeric >= 3.3){
+    # new "platoon" label
+    temp <- morph_indexing[morph_indexing$Bseas==min(spawnseas) &
+                           morph_indexing$Platoon_Dist==max(morph_indexing$Platoon_Dist),]
+  }else{
+    # old "sub_morph" label
+    temp <- morph_indexing[morph_indexing$Bseas==min(spawnseas) &
+                           morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
+  }
   # however, if there are no fish born in the spawning season, then it should be the first birth season
   if("recruit_dist_endyr" %in% names(recruitment_dist)){
     rd <- recruitment_dist$recruit_dist_endyr
@@ -1217,15 +1331,33 @@ if(FALSE){
   }
   # this work around needed for 12/2/2013 version of 3.3
   # which has simpler recruitment_dist than 3.24S
-  if(is.null(rd$Used)) rd$Used <- 1
-  if(rd$Used[spawnseas]==0)
-    temp <- morph_indexing[morph_indexing$Bseas==min(rd$Seas[rd$Used==1]) &
-                           morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
-
+  if(is.null(rd$Used)){
+    rd$Used <- 1
+  }
+  if(!is.na(spawnseas) & rd$Used[spawnseas]==0){
+    if(SS_versionNumeric >= 3.3){
+      # new "platoon" label
+      temp <- morph_indexing[morph_indexing$Bseas==min(rd$Seas[rd$Used==1]) &
+                             morph_indexing$Platoon_Dist==max(morph_indexing$Platoon_Dist),]
+    }else{
+      # old "sub_morph" label
+      temp <- morph_indexing[morph_indexing$Bseas==min(rd$Seas[rd$Used==1]) &
+                             morph_indexing$Sub_Morph_Dist==max(morph_indexing$Sub_Morph_Dist),]
+    }
+  }
   # filter in case multiple growth patterns (would cause problems)
-  mainmorphs <- min(temp$Index[temp$Gender==1])
-  if(nsexes==2) mainmorphs <- c(mainmorphs, min(temp$Index[temp$Gender==2]))
-  if(length(mainmorphs)==0) cat("!Error with morph indexing in SS_output function.\n")
+  if(SS_versionNumeric >= 3.3){
+    column_label <- "Sex"
+  }else{
+    column_label <- "Gender"
+  }
+  mainmorphs <- min(temp$Index[temp[[column_label]]==1])
+  if(nsexes==2){
+    mainmorphs <- c(mainmorphs, min(temp$Index[temp[[column_label]]==2]))
+  }
+  if(length(mainmorphs)==0){
+    cat("!Error with morph indexing in SS_output function.\n")
+  }
   returndat$mainmorphs  <- mainmorphs
 
   # stats and dimensions
@@ -1241,12 +1373,15 @@ if(FALSE){
       tsspaw_bio <- tsspaw_bio + ts$SpawnBio[ts$Seas==spawnseas & ts$Area==a]
     }
   }
-  if(nsexes==1) tsspaw_bio <- tsspaw_bio/2
+  if(nsexes==1){
+    tsspaw_bio <- tsspaw_bio/2
+  }
   depletionseries <- tsspaw_bio/tsspaw_bio[1]
   stats$SBzero <- tsspaw_bio[1]
   stats$current_depletion <- depletionseries[length(depletionseries)]
 
-  # total landings
+  # total landings (in the future, this section should be cleaned up to take advantage of
+  # new columns that are in process of being added above, such as $dead_B_sum
   ls <- nrow(ts)-1
   totretainedmat <- as.matrix(ts[,substr(names(ts),1,nchar("retain(B)"))=="retain(B)"])
   ts$totretained <- 0
@@ -1298,7 +1433,14 @@ if(FALSE){
     shift <- 1
     discard_spec <- matchfun2("DISCARD_SPECIFICATION",9,"DISCARD_OUTPUT",-2,
                               cols=1:3,header=TRUE)
-    for(icol in 1:3) discard_spec[,icol] <- as.numeric(discard_spec[,icol])
+    # test for Robbie Emmet's experimental new discard option
+    if(length(grep("trunc_normal", names(discard_spec)))>0){
+      discard_spec <- matchfun2("DISCARD_SPECIFICATION",10,"DISCARD_OUTPUT",-2,
+                                cols=1:3,header=TRUE)
+    }
+    for(icol in 1:3){
+      discard_spec[,icol] <- as.numeric(discard_spec[,icol])
+    }
     names(discard_spec)[1] <- "Fleet"
   }
   discard <- matchfun2("DISCARD_OUTPUT",shift,"MEAN_BODY_WT_OUTPUT",-1,header=TRUE)
@@ -1310,7 +1452,7 @@ if(FALSE){
     discard <- matchfun2("DISCARD_OUTPUT",shift,"MEAN_BODY_WT_OUTPUT",-1,header=FALSE)
     names(discard) <- c("Fleet","Yr","Seas","Obs","Exp","Std_in","Std_use","Dev")
   }
-  
+
   discard_type <- NA
   if(!is.na(discard) && nrow(discard)>1){
     discard[discard=="_"] <- NA
@@ -1425,7 +1567,7 @@ if(FALSE){
     minbthresh <- 0.1 # treaty value for hake
   }
   returndat$minbthresh <- minbthresh
-  
+
   if(forecast){
    returndat$equil_yield <- yielddat
    # stats$spr_at_msy <- as.numeric(rawforecast[33,2])
@@ -1434,17 +1576,6 @@ if(FALSE){
    # stats$retained_msy <- as.numeric(rawforecast[43,5])
   }else{if(verbose) cat("You skipped the equilibrium yield data\n")}
   flush.console()
-
-
-
-  # Spawner-recruit curve
-  rawsr <- matchfun2("SPAWN_RECRUIT",11,"INDEX_2",-1,cols=1:9)
-  names(rawsr) <- rawsr[1,]
-  rawsr[rawsr=="_"] <- NA
-  rawsr <- rawsr[-(1:2),] # remove header rows
-  sr <- rawsr[-(1:2),] # remove rows for Virg and Init
-  for(i in 1:(ncol(sr)-1)) sr[,i] <- as.numeric(sr[,i])
-  returndat$recruit <- sr
 
   if(ncpue>0)
   {
@@ -1503,7 +1634,7 @@ if(FALSE){
     }
   }
 
-  
+
   # Movement
   movement <- matchfun2("MOVEMENT",1,"EXPLOITATION",-1,cols=1:(7+accuage),substr1=FALSE)
   names(movement) <- c(movement[1,1:6],paste("age",movement[1,-(1:6)],sep=""))
@@ -1529,14 +1660,14 @@ if(FALSE){
                         "Tags_Alive",-1,
                         cols=1:10)
   if(tagrecap[[1]][1]!="absent"){
-    tagfirstperiod <- tagrecap[1,1]
-    tagaccumperiod <- tagrecap[2,1]
+    tagfirstperiod <- as.numeric(tagrecap[1,1])
+    tagaccumperiod <- as.numeric(tagrecap[2,1])
     names(tagrecap) <- tagrecap[4,]
     tagrecap <- tagrecap[-(1:4),]
     for(i in 1:ncol(tagrecap)) tagrecap[,i] <- as.numeric(tagrecap[,i])
     returndat$tagrecap <- tagrecap
-    returndat$tagfirstperiod
-    returndat$tagaccumperiod
+    returndat$tagfirstperiod <- tagfirstperiod
+    returndat$tagaccumperiod <- tagaccumperiod
   }else{
     returndat$tagrecap <- NA
     returndat$tagfirstperiod <- NA
@@ -1574,12 +1705,17 @@ if(FALSE){
   # age-length matrix
   rawALK <- matchfun2("AGE_LENGTH_KEY",4,"AGE_AGE_KEY",-1,cols=1:(accuage+2))
   if(length(rawALK)>1){
-    ALK = array(NA,c(nlbinspop,accuage+1,nmorphs))
     morph_col <- 5
-    if(SS_versionNumeric < 3.3) morph_col <- 3
+    if(SS_versionNumeric < 3.3 &
+       length(grep("Sub_Seas", rawALK[,3]))==0){
+      morph_col <- 3
+    }
     starts <- grep("Morph:",rawALK[,morph_col])+2
     ends <- grep("mean",rawALK[,1])-1
-    for(i in 1:nmorphs){
+    N_ALKs <- length(starts)
+    # 3rd dimension should be either nmorphs or nmorphs*(number of Sub_Seas)
+    ALK = array(NA,c(nlbinspop,accuage+1,length(starts)))
+    for(i in 1:N_ALKs){
       ALKtemp <- rawALK[starts[i]:ends[i],-1]
       for(icol in 1:(accuage+1)) ALKtemp[,icol] <- as.numeric(ALKtemp[,icol])
       ALK[,,i] <- as.matrix(ALKtemp)
@@ -1594,16 +1730,23 @@ if(FALSE){
     returndat$N_ageerror_defs <- N_ageerror_defs <- length(starts)
     if(N_ageerror_defs > 0)
     {
+      # loop over ageing error types to get definitions
       nrowsAAK <- nrow(rawAAK)/N_ageerror_defs - 3
       AAK = array(NA,c(N_ageerror_defs,nrowsAAK,accuage+1))
       age_error_mean <- age_error_sd <- data.frame(age=0:accuage)
       for(i in 1:N_ageerror_defs){
         AAKtemp <- rawAAK[starts[i] + 2 + 1:nrowsAAK,-1]
-        # what about 2-sex model?
+        rownames.tmp <- rawAAK[starts[i] + 2 + 1:nrowsAAK,1]
         for(icol in 1:(accuage+1)) AAKtemp[,icol] <- as.numeric(AAKtemp[,icol])
         AAK[i,,] <- as.matrix(AAKtemp)
         age_error_mean[[paste("type",i,sep="")]] <- as.numeric((rawAAK[starts[i] + 1,-1]))
         age_error_sd[[paste("type",i,sep="")]] <- as.numeric((rawAAK[starts[i] + 2,-1]))
+      }
+      # add names to 3 dimensions of age-age-key
+      if(!is.null(AAK)){
+        dimnames(AAK) <- list(AgeingErrorType=1:N_ageerror_defs,
+                              ObsAgeBin=rownames.tmp,
+                              TrueAge=0:accuage)
       }
       returndat$AAK <- AAK
       returndat$age_error_mean <- age_error_mean
@@ -1633,7 +1776,7 @@ if(FALSE){
     #No_fishery_for_Z=M_and_dynamic_Bzero
     Z_at_age <- matchfun2("Z_AT_AGE_Annual_2",1,"Spawning_Biomass_Report_1",-2,header=TRUE)
     M_at_age <- matchfun2("Z_AT_AGE_Annual_1",1,"-ln(Nt+1",-1,matchcol2=5, header=TRUE)
-    if(nrow(Z_at_age)>0){  
+    if(nrow(Z_at_age)>0){
       Z_at_age[Z_at_age=="_"] <- NA
       M_at_age[M_at_age=="_"] <- NA
       # if birth season is not season 1, you can get infinite values
@@ -1698,14 +1841,26 @@ if(FALSE){
   returndat$repfiletime <- repfiletime
   returndat$SRRtype <- as.numeric(rawrep[matchfun("SPAWN_RECRUIT"),3]) # type of stock recruit relationship
 
+  # get "sigma" used by Pacific Council in P-star calculations
+  SPB_final_Label <- paste0("SPB_",endyr+1)
+  if(SPB_final_Label %in% der$LABEL){
+    SPB_final_EST <- der$Value[der$LABEL==SPB_final_Label]
+    SPB_final_SD <- der$StdDev[der$LABEL==SPB_final_Label]
+    returndat$Pstar_sigma <- sqrt(log((SPB_final_SD/SPB_final_EST)^2+1))
+  }else{
+    returndat$Pstar_sigma <- NULL
+  }
+
   if(covar){
     returndat$CoVar    <- CoVar
-    if(stats$N_estimated_parameters > 1){returndat$highcor  <- highcor}
-    if(stats$N_estimated_parameters > 1){returndat$lowcor   <- lowcor}
+    if(stats$N_estimated_parameters > 1){
+      returndat$highcor  <- highcor
+      returndat$lowcor   <- lowcor
+      returndat$corstats <- corstats
+    }
     returndat$stdtable <- stdtable
   }
   returndat <- c(returndat,stats)
-  if(covar) returndat$corstats <- corstats
   returndat$logfile <- logfile
 
   # process annual recruit devs
@@ -1758,7 +1913,11 @@ if(FALSE){
     stats$estimated_non_rec_devparameters <- format(stats$estimated_non_rec_devparameters,scientific=20)
     print(stats)
     if(covar){
-      if(stats$N_estimated_parameters > 1){print(corstats, quote=FALSE)}else{cat("Too few estimated parameters to report correlations")}
+      if(stats$N_estimated_parameters > 1){
+        print(corstats, quote=FALSE)
+      }else{
+        cat("Too few estimated parameters to report correlations.\n")
+      }
     }
   }
 

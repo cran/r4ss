@@ -48,7 +48,7 @@ SS_fitbiasramp <-
 function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
          transform=FALSE, plot=TRUE, print=FALSE, plotdir="default",shownew=TRUE,
          oldctl=NULL, newctl=NULL, altmethod="nlminb",
-         pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1){
+         pwidth=6.5, pheight=5.0, punits="in", ptsize=10, res=300, cex.main=1){
   ##################
   # function to estimate bias adjustment ramp
   # for Stock Synthesis v3.11 - v3.21
@@ -83,7 +83,12 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   rmse_table <- replist$rmse_table
   if(plotdir=="default") plotdir <- replist$inputs$dir
 
-  if(max(rmse_table$RMSE)==0) stop("No bias adjustment needed. Root mean squared error of recruit devs is 0.")
+  if(!is.numeric(rmse_table$RMSE)){
+    stop("Input list element 'rmse_table' has non-numeric 'RMSE' column.")
+  }
+  if(max(rmse_table$RMSE)==0){
+    stop("No bias adjustment needed. Root mean squared error of recruit devs is 0.")
+  }
   
   if(is.null(startvalues)){
       nonfixedyrs <- recruit$year[recruit$era!="Fixed"]
@@ -153,12 +158,18 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
 
   getrecdevs <- function(replist){
     # get info on recruitment devs from the model output
-    parmat <- replist$parameters
-    rowrange <- (grep("SR_autocorr",parmat$Label)+1):((grep("InitF",parmat$Label)[1]-1))
-    Impl_err_rows <- grep("Impl_err",parmat$Label)
+    par_mat   <- replist$parameters
+    par_start <- grep("SR_autocorr",par_mat$Label)+1
+    par_end   <- grep("InitF",par_mat$Label)[1]-1
+    if(is.na(par_end)){
+      # InitF parameters have gone away in SSv3.3 (at least for one model)
+      par_end <- grep("Impl_err",par_mat$Label)[1]-1
+    }
+    rowrange <- par_start:par_end
+    Impl_err_rows <- grep("Impl_err",par_mat$Label)
     if(length(Impl_err_rows)>0)
-      rowrange <- (grep("SR_autocorr",parmat$Label)+1):(Impl_err_rows[1]-1)
-    yr <- parmat$Label[rowrange]
+      rowrange <- (grep("SR_autocorr",par_mat$Label)+1):(Impl_err_rows[1]-1)
+    yr <- par_mat$Label[rowrange]
     yr <- strsplit(yr,"_")
     yr2 <- rep(NA,length(yr))
     for(i in 1:length(yr)){
@@ -172,8 +183,8 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
     }
     
     yr2[is.na(yr2)] <- min(yr2,na.rm=T) - sum(is.na(yr2)):1
-    val <- parmat$Value[rowrange]
-    std <- parmat$Parm_StDev[rowrange]
+    val <- par_mat$Value[rowrange]
+    std <- par_mat$Parm_StDev[rowrange]
     return(data.frame(yr=yr2,val=val,std=std))
   }
 
@@ -307,8 +318,11 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
   if(print){
     file <- paste(plotdir,"/recruit_fit_bias_adjust.png",sep="")
     caption <-
-      paste("Least squares estimate of alternative bias adjustment relationship ",
-            "for recruitment deviations. For more information, see<br> \n",
+      paste("Points are transformed variances. Red line shows current settings for",
+            "for bias adjustment specified in control file.",
+            "Blue line shows least squares estimate of alternative bias adjustment",
+            "relationship for recruitment deviations (which may or may not be an",
+            "improvement. For more information, see<br> \n",
             "<blockquote>Methot, R.D. and Taylor, I.G., 2011. Adjusting for bias ",
             "due to variability of estimated recruitments in fishery assessment ",
             "models. <i>Can. J. Fish. Aquat. Sci.</i>, 68:1744-1760.",
@@ -337,7 +351,7 @@ function(replist, verbose=FALSE, startvalues=NULL, method="BFGS", twoplots=TRUE,
     spot2 <- grep('max_bias_adj_in_MPD',ctlfile)
     if(spot1!=spot2-4) stop('error related to maxbias inputs in ctl file')
     # replace values
-    ctlfile[spot1:spot2] <- newvals
+    ctlfile[spot1:spot2] <- apply(df, 1, paste, collapse = " ")
     # write new file
     writeLines(ctlfile,newctl)
     cat('wrote new file to',newctl,'with values',paste(newvals,collapse=" "),"\n")

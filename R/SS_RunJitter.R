@@ -1,4 +1,4 @@
-################## 
+##################
 # SS_RunJitter
 ##################
 ##' Iteratively apply the jitter option in SS
@@ -6,20 +6,26 @@
 ##' Iteratively runs SS model with different jittered starting parameter values
 ##' (jitter value must be mannually set in starter.ss). Output files are renamed
 ##' in the format Report1.sso, Report2.sso, etc.
-##' 
+##'
 ##' @param mydir Directory where model files are located
 ##' @param model Executable name
 ##' @param extras Additional command line arguments passed to executable
-##' @param Njitter Number of jitters
+##' @param Njitter Number of jitters, or a vector of jitter iterations.
+##'   If \code{length(Njitter) > 1} only the iterations specified will be ran,
+##'   else \code{1:Njitter} will be executed.
 ##' @param Intern Show command line info in R console or keep hidden (Internal=TRUE)
 ##' @param systemcmd Option to switch between 'shell' and 'system'
 ##' @param printlikes Print likelihood values to console
-##' @author Jim Thorson
+##' @author James T. Thorson, Kelli F. Johnson
+##' @return A vector of likelihoods for each jitter iteration.
 ##' @export
 SS_RunJitter <- function(mydir, model="ss3",
                          extras="-nohess -cbs 500000000 -gbs 500000000",
                          Njitter, Intern=TRUE, systemcmd=FALSE,
                          printlikes=TRUE){
+  # Determine working directory on start and return upon exit
+  startdir <- getwd()
+  on.exit(setwd(startdir))
 
   # determine operating system in a relatively brute force way
   OS <- "Mac" # don't know the version$os info for Mac
@@ -35,10 +41,14 @@ SS_RunJitter <- function(mydir, model="ss3",
   file.copy(from="CompReport.sso", to="CompReport0.sso", overwrite=TRUE)
   file.copy(from="covar.sso", to="covar0.sso", overwrite=TRUE)
   file.copy(from="Report.sso", to="Report0.sso", overwrite=TRUE)
-  file.copy(from=paste(model,".par",sep=""), to=paste(model,".par_0.sso",sep=""), overwrite=TRUE)
-  for(i in 1:Njitter){
+  file.copy(from=paste0(model,".par"), to=paste0(model,".par_0.sso"), overwrite=TRUE)
+  file.remove( c("CompReport.sso","covar.sso","Report.sso",paste0(model,".par")) )
+
+  if (length(Njitter) == 1) Njitter <- 1:Njitter
+  likesaved <- rep(NA, length(Njitter))
+  for(i in Njitter){
     print(paste("Jitter=",i,date()))
-    file.copy(from=paste(model,".par_0.sso",sep=""), to=paste(model,".par",sep=""), overwrite=TRUE)
+    file.copy(from=paste0(model,".par_0.sso"), to=paste0(model,".par"), overwrite=TRUE)
     # run model
     command <- paste(model,extras,sep=" ")
     if(i==1){
@@ -50,23 +60,30 @@ SS_RunJitter <- function(mydir, model="ss3",
     }else{
       system(command, intern=Intern)
     }
-    if(printlikes){
-      Rep.head <- readLines("Report.sso",n=100)
-      likeline <- Rep.head[which(Rep.head=="Component logL*Lambda Lambda")-1]
-      like <- as.numeric(substring(likeline,11))
-      cat("Likelihood = ",like,"\n")
+    # Only save stuff if it converged
+    if( "Report.sso" %in% list.files() ){
+      if(printlikes){
+        Rep.head <- readLines("Report.sso",n=100)
+        likeline <- Rep.head[which(Rep.head=="Component logL*Lambda Lambda")-1]
+        like <- as.numeric(substring(likeline,11))
+        likesaved[i] <- like
+        cat("Likelihood = ",like,"\n")
+      }
+      # rename output files
+      file.copy(from="CompReport.sso", to=paste0("CompReport",i,".sso"), overwrite=TRUE)
+      file.copy(from="covar.sso", to=paste0("covar",i,".sso"), overwrite=TRUE)
+      file.copy(from="Report.sso", to=paste0("Report",i,".sso"), overwrite=TRUE)
+      file.copy(from=paste0(model,".par"), to=paste0(model,".par_",i,".sso"), overwrite=TRUE)
+    }else{
+      cat("Run = ",i," didn't converge \n")
     }
-    # rename output files
-    file.copy(from=paste("CompReport.sso"), to=paste("CompReport",i,".sso",sep=""), overwrite=TRUE)
-    file.copy(from=paste("covar.sso"), to=paste("covar",i,".sso",sep=""), overwrite=TRUE)
-    file.copy(from=paste("Report.sso"), to=paste("Report",i,".sso",sep=""), overwrite=TRUE)
-    file.copy(from=paste(model,".par",sep=""), to=paste(model,".par_",i,".sso",sep=""), overwrite=TRUE)
   }
   # Move original files back
   file.copy(from="CompReport0.sso", to="CompReport.sso", overwrite=TRUE)
   file.copy(from="covar0.sso", to="covar.sso", overwrite=TRUE)
   file.copy(from="Report0.sso", to="Report.sso", overwrite=TRUE)
   file.copy(from=paste(model,".par_0.sso",sep=""), to=paste(model,".par",sep=""), overwrite=TRUE)
+  invisible(likesaved)
 }
 
 

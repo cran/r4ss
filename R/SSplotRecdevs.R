@@ -17,11 +17,11 @@
 #' @param col4 fourth color used
 #' @param legendloc location of legend. see ?legend for more info
 #' @param labels vector of labels for plots (titles and axis labels)
-#' @param pwidth width of plot written to PNG file
-#' @param pheight height of plot written to PNG file
+#' @param pwidth width of plot
+#' @param pheight height of plot
 #' @param punits units for PNG file
 #' @param res resolution for PNG file
-#' @param ptsize ptsize for PNG file
+#' @param ptsize point size for PNG file
 #' @param cex.main character expansion for plot titles
 #' @param plotdir directory where PNG files will be written. by default it will
 #' be the directory where the model was run.
@@ -39,7 +39,7 @@ SSplotRecdevs <-
              "Asymptotic standard error estimate", #2
              "Log recruitment deviation",          #3
              "Bias adjustment fraction, 1 - stddev^2 / sigmaR^2"), #4
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,
+           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,
            cex.main=1, plotdir="default",
            verbose=TRUE)
 {
@@ -143,7 +143,7 @@ SSplotRecdevs <-
           par(mar=par("mar")[c(1:3,2)])
           ymax <- 1.1*max(recdev$Parm_StDev,recdevEarly$Parm_StDev,recdevFore$Parm_StDev,sigma_R_in,na.rm=TRUE)
           plot(recdev$Yr,recdev$Parm_StDev,xlab=labels[1],
-               main="Recruitment deviation variance check",cex.main=cex.main,
+               main="Recruitment deviation variance",cex.main=cex.main,
                ylab=labels[2],xlim=xlim,ylim=c(0,ymax),type="b")
           if(nrow(recdevEarly)>0)
               lines(recdevEarly$Yr,recdevEarly$Parm_StDev,type="b",col=col2)
@@ -179,14 +179,17 @@ SSplotRecdevs <-
         if(uncertainty){
           if(2 %in% subplots){
             file <- paste(plotdir,"/recdevs2_withbars.png",sep="")
-            caption <- "Recruitment deviations with uncertainty"
+            caption <- "Recruitment deviations with 95% intervals"
             plotinfo <- pngfun(file=file, caption=caption)
             recdevfunc(uncertainty=TRUE)
             dev.off()
           }
           if(3 %in% subplots){
             file <- paste(plotdir,"/recdevs3_varcheck.png",sep="")
-            caption <- "Recruitment deviations variance check"
+            caption <-
+              paste("Recruitment deviations variance check.<br>",
+                    "See later figure of transformed variance values for comparison",
+                    "with bias adjustment settings in the model.")
             plotinfo <- pngfun(file=file, caption=caption)
             recdevfunc3()
             dev.off()

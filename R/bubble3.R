@@ -7,13 +7,15 @@
 #' 
 #' @param x Vector of x-values.
 #' @param y Vector of y-values.
-#' @param z Vector of bubble sizes.
+#' @param z Vector of bubble sizes, where positive sizes will be plotted as
+#' closed bubbles and negative as open unless \code{allopen==TRUE}.
 #' @param col Color for bubbles.
 #' @param cexZ1 Character expansion (cex) value for a proportion of 1.0.
 #' @param maxsize Size of largest bubble. Prefered option is now an expansion
 #' factor for a bubble with z=1 (see \code{cexZ1} above).
 #' @param do.sqrt Should size be based on the area? (Diameter proportional to
 #' sqrt(z)). Default=TRUE.
+#' @param bg.open background color for open bubbles (border will equal 'col')
 #' @param legend Add a legend to the plot?
 #' @param legendloc Location for legend (default='top')
 #' @param legend.z If a legend is added, what z values will be shown. Default
@@ -38,9 +40,10 @@
 #' @author Ian Stewart and Ian Taylor
 #' @keywords aplot hplot
 bubble3 <- function (x,y,z,col=1,cexZ1=5,maxsize=NULL,do.sqrt=TRUE,
+                     bg.open=gray(0.95,0.3),
                      legend=TRUE,legendloc='top',
                      legend.z="default",legend.yadj=1.1,
-                     main="",cex.main=1,xlab="",ylab="",minnbubble=8,
+                     main="",cex.main=1,xlab="",ylab="",minnbubble=3,
                      xlim=NULL,ylim=NULL,axis1=TRUE,xlimextra=1,
                      add=FALSE,las=1,allopen=TRUE)
   {
@@ -69,7 +72,9 @@ bubble3 <- function (x,y,z,col=1,cexZ1=5,maxsize=NULL,do.sqrt=TRUE,
       # if legend is too long, cut in half
       if(length(legend.z)>3) legend.z <- legend.z[seq(1,length(legend.z),2)]
       # add negatives
-      if(any(z<0)) legend.z <- c(-rev(legend.z[-1]),legend.z) 
+      if(any(z<0)){
+        legend.z <- c(-rev(legend.z[-1]),legend.z)
+      }
     }
     legend.n <- length(legend.z)
     legend.z2 <- legend.z
@@ -91,20 +96,45 @@ bubble3 <- function (x,y,z,col=1,cexZ1=5,maxsize=NULL,do.sqrt=TRUE,
       xlim <- range(x)
       if(length(unique(x))<minnbubble) xlim=xlim+c(-1,1)*xlimextra
     }
+    #### old way using plot character to control open/closed
+    ## # set plot character
+    ## pch <- rep(NA,n)
+    ## pch[z>0] <- 16
+    ## pch[z<0] <- 1
+    ## legend.pch <- rep(NA,legend.n)
+    ## legend.pch[legend.z>0] <- 16
+    ## legend.pch[legend.z<0] <- 1
+
+    ## # if only open points to be shown
+    ## if(allopen){
+    ##   legend.z <- legend.z[legend.z>0]
+    ##   legend.pch <- 1
+    ##   pch[!is.na(pch)] <- 1
+    ## }
+
+    #### new way using background color
     # set plot character
-    pch <- rep(NA,n)
-    pch[z>0] <- 16
-    pch[z<0] <- 1
-    legend.pch <- rep(NA,legend.n)
-    legend.pch[legend.z>0] <- 16
-    legend.pch[legend.z<0] <- 1
+    pch <- rep(21,n)
+    pch[is.na(z) | z==0] <- NA
+    # set background color equal to open color for all points 
+    bg <- rep(bg.open, n)
+    if(!allopen){
+      # replace background color with foreground color for closed points
+      # (if not all open)
+      bg[z>0] <- col[z>0]
+    }
+    legend.pch <- rep(21, legend.n)
+    legend.bg <- rep(bg.open, legend.n)
+    legend.bg[legend.z>0] <- col[1] # error occured when full vector was used
 
     # if only open points to be shown
     if(allopen){
       legend.z <- legend.z[legend.z>0]
-      legend.pch <- 1
-      pch[!is.na(pch)] <- 1
+      legend.bg <- bg.open
+      legend.pch <- 21
+      #pch[!is.na(pch)] <- 1
     }
+
     # make empty plot (if needed)
     if(!add){
       if(is.null(ylim)) ylim <- range(y)
@@ -119,10 +149,13 @@ bubble3 <- function (x,y,z,col=1,cexZ1=5,maxsize=NULL,do.sqrt=TRUE,
       box()
     }
     # add points
-    points(x,y,pch=pch,cex=cex,col=col)
-    # add legend
+    points(x, y, pch=pch, cex=cex, col=col, bg=bg)
+    # do things for legend
     if(legend & all(par()$mfg[1:2]==1)){
-      legend(x=legendloc,legend=legend.z,pch=legend.pch,col=col,
+      # set labels
+      legend.lab <- format(legend.z, scientific=FALSE,drop0trailing=TRUE)
+      # add legend
+      legend(x=legendloc,legend=legend.lab,pch=legend.pch,col=col,pt.bg=legend.bg,
              pt.cex=legend.cex,ncol=legend.n,bty='n')
       ## next line for debugging legends
       # print(data.frame(legendloc,legend.z,legend.pch,col,legend.cex,legend.n))

@@ -51,8 +51,8 @@
 #' @param type Line type (see ?plot for more info).
 #' @param legend Include legend?
 #' @param legendloc Location of legend (see ?legend for more info).
-#' @param pwidth Width of plot written to PNG file
-#' @param pheight Height of plot written to PNG file
+#' @param pwidth Width of plot
+#' @param pheight Height of plot
 #' @param punits Units for PNG file
 #' @param res Resolution for PNG file
 #' @param ptsize Point size for PNG file
@@ -61,6 +61,7 @@
 #' be the directory where the model was run.
 #' @param verbose Return updates of function progress to the R GUI? (Doesn't do
 #' anything yet.)
+#' @param \dots Additional arguments passed to the \code{plot} command.
 #' @note Someday the function \code{\link{SS_profile}} will be improved and
 #' made to work directly with this plotting function, but they don't yet work
 #' well together. Thus, even if \code{\link{SS_profile}} is used, the output
@@ -132,9 +133,9 @@ SSplotProfile <-
            xaxs="r", yaxs="r",
            type="o",
            legend=TRUE, legendloc="topright",
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
+           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,cex.main=1,
            plotdir=NULL,
-           verbose=TRUE)
+           verbose=TRUE,...)
 {
   # subfunction to write png files
   pngfun <- function(file){
@@ -231,7 +232,7 @@ SSplotProfile <-
   # make plot
   plotprofile <- function(){
     plot(0,type='n',xlim=xlim,ylim=ylim,xlab=profile.label, ylab=ylab,
-         yaxs=yaxs,xaxs=xaxs)
+         yaxs=yaxs,xaxs=xaxs,...)
     abline(h=0,col='grey')
     matplot(parvec, prof.table, type=type,
             pch=pch, col=col,

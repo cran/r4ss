@@ -23,11 +23,11 @@
 #' @param ghost TRUE/FALSE indicator for whether to show presence of
 #' composition data from ghost fleets (data for which the fit is shown, but is
 #' not included in the likelihood calculations).
-#' @param pwidth width of plot written to PNG file
-#' @param pheight height of plot written to PNG file
+#' @param pwidth width of plot
+#' @param pheight height of plot
 #' @param punits units for PNG file
 #' @param res resolution for PNG file
-#' @param ptsize ptsize for PNG file
+#' @param ptsize point size for PNG file
 #' @param cex.main character expansion for plot titles
 #' @param margins margins of plot (passed to par() function), which may need to
 #' be increased if fleet names run off right-hand margin
@@ -44,7 +44,7 @@ SSplotData <- function(replist,
                        plotdir="default",
                        fleetcol="default",
                        datatypes="all",fleets="all",fleetnames="default",ghost=FALSE,
-                       pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
+                       pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,cex.main=1,
                        margins=c(5.1,2.1,2.1,8.1),
                        cex=2,lwd=12,
                        verbose=TRUE)
@@ -127,9 +127,18 @@ SSplotData <- function(replist,
       for(ifleet in 1:nfleets){
         allyrs <- NULL
         # identify years from different data types
-        if(typename=="catch" & ifleet<=nfishfleets) allyrs <- dat$Yr[dat[,ifleet]>0]
-        if(typename %in% c("cpue","mnwgt","discard")) allyrs <- dat$Yr[dat$FleetNum==ifleet]
-        if(length(grep("dbase",typename))>0) allyrs <- dat$Yr[dat$Fleet==ifleet]
+        if(typename=="catch" & ifleet<=nfishfleets){
+          allyrs <- dat$Yr[dat[,ifleet]>0]
+        }
+        if(typename %in% c("cpue")){
+          allyrs <- dat$Yr[dat$Use>0 & dat$FleetNum==ifleet]
+        }
+        if(typename %in% c("mnwgt","discard")){
+          allyrs <- dat$Yr[dat$FleetNum==ifleet]
+        }
+        if(length(grep("dbase",typename))>0){
+          allyrs <- dat$Yr[dat$Fleet==ifleet]
+        }
         # expand table of years with data
         if(!is.null(allyrs) & length(allyrs)>0){
           yrs <- sort(unique(floor(allyrs)))

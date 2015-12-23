@@ -1,8 +1,8 @@
 #' Plot fit to discard fraction.
-#' 
+#'
 #' Plot fit to discard fraction from Stock Synthesis output file.
-#' 
-#' 
+#'
+#'
 #' @param replist List created by \code{\link{SS_output}}
 #' @param subplots Vector of which plots to make (1 = data only, 2 = with fit).
 #' If \code{plotdat = FALSE} then subplot 1 is not created, regardless of
@@ -20,14 +20,14 @@
 #' regardless). Default = 1.
 #' @param col1 First color to use in plot (for expected values)
 #' @param col2 Second color to use in plot (for observations and intervals)
-#' @param pwidth Width of plot written to PNG file
-#' @param pheight Height of plot written to PNG file
+#' @param pwidth Width of plot
+#' @param pheight Height of plot
 #' @param punits Units for PNG file
 #' @param res Resolution for PNG file
 #' @param ptsize Point size for PNG file
 #' @param cex.main Character expansion for plot titles
 #' @param verbose Report progress to R GUI?
-#' @author Ian Taylor, Ian Stewart
+#' @author Ian G. Taylor, Ian J. Stewart, Robbie L. Emmet
 #' @export
 #' @seealso \code{\link{SS_plots}}
 #' @keywords hplot
@@ -44,7 +44,7 @@ SSplotDiscard <-
            "for"),
            yhi=1,
            col1="blue", col2="black",
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1,
+           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,cex.main=1,
            verbose=TRUE)
 {
   pngfun <- function(file,caption=NA){
@@ -70,7 +70,12 @@ SSplotDiscard <-
     if(fleets[1]=="all") fleets <- 1:nfishfleets
     for(ifleet in intersect(fleets,unique(discard$FleetNum))){
       # table available beginning with SSv3.20 has fleet-specific discard specs
-      if(!is.null(discard_spec)){ 
+      if(!is.null(discard_spec)){
+        # check to make sure fleet is represented in the table
+        if(!ifleet %in% discard_spec$Fleet){
+          stop("Fleet ", ifleet, " not found in table of discard specifications.")
+        }
+        # get degrees of freedom
         DF_discard <- discard_spec$errtype[discard_spec$Fleet==ifleet]
       }
       usedisc <- discard[discard$FleetNum==ifleet,]
@@ -79,7 +84,15 @@ SSplotDiscard <-
       yr <- as.numeric(usedisc$Yr)
       ob <- as.numeric(usedisc$Obs)
       std <- as.numeric(usedisc$Std_use)
-      if(DF_discard == -2){ # lognormal with std as interpreted as the standard error (in log space) of the observation
+      if(DF_discard == -3){ # truncated normal thanks to Robbie Emmet
+        ## liw <- ob - truncnorm::qtruncnorm(0.025, 0, 1, ob, std * ob)
+        ## uiw <- truncnorm::qtruncnorm(0.975, 0, 1, ob, std * ob) - ob
+        # correction from Robbie on 7/30/15
+        liw <- ob - truncnorm::qtruncnorm(0.025, 0, 1, ob, std)
+        uiw <- truncnorm::qtruncnorm(0.975, 0, 1, ob, std) - ob
+      }
+      if(DF_discard == -2){ # lognormal with std as interpreted as
+                            # the standard error (in log space) of the observation
         liw <- ob - qlnorm(0.025,log(ob),std)
         uiw <- qlnorm(0.975,log(ob),std) - ob
       }

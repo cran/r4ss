@@ -30,11 +30,11 @@
 #' output is 0.25 in which case minbthresh = 0.125 (U.S. west coast flatfish).
 #' @param xlab x axis label for all plots
 #' @param labels vector of labels for plots (titles and axis labels)
-#' @param pwidth width of plot written to PNG file
-#' @param pheight height of plot written to PNG file
+#' @param pwidth width of plot
+#' @param pheight height of plot
 #' @param punits units for PNG file
 #' @param res resolution for PNG file
-#' @param ptsize ptsize for PNG file
+#' @param ptsize point size for PNG file
 #' @param cex.main character expansion for plot titles
 #' @author Ian Taylor, Ian Stewart
 #' @export
@@ -48,7 +48,7 @@ SSplotTimeseries <-
            plot=TRUE,print=FALSE,plotdir="default",verbose=TRUE,
            btarg="default",minbthresh="default",xlab="Year",
            labels=NULL,
-           pwidth=7,pheight=7,punits="in",res=300,ptsize=12,cex.main=1)
+           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,cex.main=1)
 {
 
   # individual function for plotting time series of total or summary biomass
@@ -77,6 +77,22 @@ SSplotTimeseries <-
   }
   plotinfo <- NULL
 
+  # default labels that are passed from SS_plots but available if running
+  # this function independently
+  if(is.null(labels)){
+    labels <- c("Total biomass (mt)",           #1
+                "Total biomass (mt) at beginning of season", #2
+                "Summary biomass (mt)",         #3
+                "Summary biomass (mt) at beginning of season", #4
+                "Spawning biomass (mt)",        #5
+                "Relative spawning biomass",    #6
+                "Spawning output",              #7
+                "Age-0 recruits (1,000s)",      #8
+                "Fraction of total Age-0 recruits",  #9
+                "Management target",            #10
+                "Minimum stock size threshold") #11
+  }
+
   # get values from replist
   SS_versionshort <- replist$SS_versionshort
   timeseries     <- replist$timeseries
@@ -88,17 +104,23 @@ SSplotTimeseries <-
   nsexes         <- replist$nsexes
   nareas         <- replist$nareas
   derived_quants <- replist$derived_quants
-  FecPar2        <- replist$FecPar2
+  #FecPar2        <- replist$FecPar2
   B_ratio_denominator <- replist$B_ratio_denominator
   seasfracs      <- replist$seasfracs
   recruitment_dist <- replist$recruitment_dist
 
   if(btarg=="default") btarg <- replist$btarg
   if(minbthresh=="default") minbthresh <- replist$minbthresh
-  
+
+  # set default colors if not specified
   if(areacols[1]=="default"){
     areacols  <- rich.colors.short(nareas)
-    if(nareas > 2) areacols <- rich.colors.short(nareas+1)[-1]
+    if(nareas == 3){
+      areacols <- c("blue","red","green3")
+    }
+    if(nareas > 3){
+      areacols <- rich.colors.short(nareas+1)[-1]
+    }
   }
   if(!is.null(birthseas)){
     nbirthseas <- length(birthseas)
@@ -108,10 +130,18 @@ SSplotTimeseries <-
   
   # temporary fix for SS_output versions prior to 9/20/2010
   if(is.null(B_ratio_denominator)) B_ratio_denominator <- 1
-  
+
+  # directory where PNG files will go
+  if(plotdir=="default"){
+    plotdir <- replist$inputs$dir
+  }
+
   # check if spawning output rather than spawning biomass is plotted
-  if(plotdir=="default") plotdir <- replist$inputs$dir
-  if(FecPar2!=0) labels[5] <- labels[7]
+  #if(FecPar2!=0){ # old test based on parameter values not robust to all options
+  if(replist$SpawnOutputUnits=='numbers'){ # quantity from test in SS_output
+    labels[5] <- labels[7]
+    labels[6] <- gsub("biomass","output",labels[6])
+  }
 
   # check area subsets
   if(areas[1]=="all"){
@@ -259,7 +289,8 @@ SSplotTimeseries <-
       if(subplot==10){
         for(iarea in 1:nareas){
           yvals <- ts$SpawnBio[ts$Area==iarea]/(ts$SpawnBio[ts$Area==iarea & ts$Seas == spawnseas][1])
-          ymax <- max(ymax,yvals,na.rm=TRUE)
+          #ymax <- max(ymax,yvals,na.rm=TRUE)
+          ymax <- max(yvals,na.rm=TRUE)
         }
       }
     }
@@ -343,7 +374,9 @@ SSplotTimeseries <-
       filename <- gsub("%","",filename,fixed=TRUE)
       if(forecastplot) filename <- paste(filename,"forecast")
       if(uncertainty & subplot %in% c(5,7,9)) filename <- paste(filename,"intervals")
-      filename <- paste("ts",subplot," ",filename,".png",sep="")
+      filename <- paste("ts",subplot,"_",filename,".png",sep="")
+      # replace any spaces with underscores
+      filename <- gsub(pattern=" ", replacement="_", x=filename, fixed=TRUE)
       filename <- paste(plotdir,filename,sep="")
       # if(verbose) cat("printing plot to file:",filename,"\n")
       plotinfo <- pngfun(file=filename,caption=main)

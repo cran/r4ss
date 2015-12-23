@@ -1,9 +1,9 @@
 #' write starter file
-#' 
+#'
 #' write Stock Synthesis starter file from list object in R which was probably
 #' created using \code{\link{SS_readstarter}}
-#' 
-#' 
+#'
+#'
 #' @param mylist List object created by \code{\link{SS_readstarter}}.
 #' @param dir Directory for new starter file. Default=NULL (working directory).
 #' @param file Filename for new starter file. Default="starter.ss".
@@ -30,7 +30,11 @@ SS_writestarter <- function(mylist, dir=NULL, file="starter.ss",
   on.exit({if(sink.number()>0) sink()})
 
   if(is.null(dir)) dir <- getwd() # set to working directory if no input provided
-  outfile <- paste(dir,file,sep="/")
+  if(grepl("/$", dir)) {
+    outfile <- paste0(dir, file) # bc trailing backslash
+  } else {
+    outfile <- paste(dir,file,sep="/")
+  }
   if(file.exists(outfile)){
     if(!overwrite){
       stop(paste("file exists:",outfile,"\n  set overwrite=TRUE to replace\n"))
@@ -39,20 +43,22 @@ SS_writestarter <- function(mylist, dir=NULL, file="starter.ss",
       file.remove(outfile)
     }
   }else{
-    cat("writing new file:",outfile,"\n")
+    if(verbose)cat("writing new file:",outfile,"\n")
   }
 
-  # preliminary setup
+  # record current max characters per line and then expand in case of long lines
   oldwidth <- options()$width
   options(width=1000)
 
   if(verbose) cat("opening connection to",outfile,"\n")
   zz <- file(outfile, open="at")
   sink(zz)
+
+  # simple function to clean up many repeated commands
+  # writes the content of an R object, followed by the object name with "#_" in front
   wl <- function(name){
-    # simple function to clean up many repeated commands
     value = mylist[names(mylist)==name]
-    writeLines(paste(value," #_",name,sep=""),con=zz)
+    writeLines(paste0(value," #_",name),con=zz)
   }
 
   writeLines("#C starter file written by R function SS_writestarter")
@@ -65,6 +71,7 @@ SS_writestarter <- function(mylist, dir=NULL, file="starter.ss",
   wl("datfile")
   wl("ctlfile")
 
+  # lots of single numerical values
   wl("init_values_src")
   wl("run_display_detail")
   wl("detailed_age_structure")
@@ -93,10 +100,12 @@ SS_writestarter <- function(mylist, dir=NULL, file="starter.ss",
   wl("F_report_units")
   if(mylist$F_report_units==4){
     cat(mylist[["F_age_range"]],"#_F_age_range\n")
-  }    
+  }
   wl("F_report_basis")
   writeLines("#")
-  writeLines("999")
+  wl("final")
+
+  # restore printing width to whatever the user had before
   options(width=oldwidth)
   sink()
   close(zz)

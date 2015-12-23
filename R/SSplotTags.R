@@ -42,21 +42,21 @@
 #' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
 #' @keywords hplot
 SSplotTags <-
-  function(replist=replist, subplots=1:8, latency=0,
+  function(replist=replist, subplots=1:8, latency=NULL,
            rows=1, cols=1,
            tagrows=3, tagcols=3,
            plot=TRUE, print=FALSE,
            pntscalar=2.6,minnbubble=8,
-           pwidth=7, pheight=7, punits="in", ptsize=12, res=300, cex.main=1,
+           pwidth=6.5, pheight=5.0, punits="in", ptsize=10, res=300, cex.main=1,
            col1=rgb(0,0,1,.7),col2="red",col3="grey95",col4="grey70",
            labels = c("Year",                                   #1
            "Frequency",                                         #2
            "Tag Group",                                         #3
            "Fit to tag recaptures by tag group",                #4
-           "Tag recaptures aggregated across tag groups",       #5
+           "Post-latency tag recaptures aggregated across tag groups", #5
            "Observed tag recaptures by year and tag group",     #6
-           "Residuals for tag recaptures: (obs-exp)/sqrt(exp)", #7
-           "Observed and expected tag recaptures by year and tag group"), #8
+           "Residuals for post-latency tag recaptures: (obs-exp)/sqrt(exp)", #7
+           "Observed and expected post-latency tag recaptures by year and tag group"), #8
            plotdir="default",
            verbose=TRUE)
 {
@@ -74,9 +74,9 @@ SSplotTags <-
   if(is.null(tagdbase2) || nrow(tagdbase2)==0){
     if(verbose) cat("skipping tag plots because there's no tagging data\n")
   }else{
-    if(verbose) cat("Running tag plot code.\n",
-                    "  Tag latency (mixing period) is set to ",latency,".\n",
-                    "  To change value, use the 'latency' input to the SSplotTags function.\n",sep="")
+    ## if(verbose) cat("Running tag plot code.\n",
+    ##                 "  Tag latency (mixing period) is set to ",latency,".\n",
+    ##                 "  To change value, use the 'latency' input to the SSplotTags function.\n",sep="")
     
     # calculations needed for printing to multiple PNG files
     grouprange     <- unique(tagdbase2$Rep)
@@ -88,7 +88,10 @@ SSplotTags <-
     tagrecap       <- replist$tagrecap
     tagsalive      <- replist$tagsalive
     tagtotrecap    <- replist$tagtotrecap
-
+    if(is.null(latency)){
+      latency <- replist$tagfirstperiod
+    }
+    
     tagfun1 <- function(ipage=0){
       if(verbose) cat("Note: lighter colored bars in tag plot indicate latency period excluded from likelihood\n")
       # obs & exp recaps by tag group
@@ -100,12 +103,20 @@ SSplotTags <-
         plot(0,type="n",xlab="",ylab="",ylim=ylim,main=paste("TG ",igroup,sep=""),
              xaxs="i",yaxs="i",xlim=c(min(tagtemp$Yr.S)-0.5,max(tagtemp$Yr.S)+0.5))
         for (iy in 1:length(tagtemp$Yr.S)){
-          xx <- c(tagtemp$Yr.S[iy]-width,tagtemp$Yr.S[iy]-width,tagtemp$Yr.S[iy]+width,tagtemp$Yr.S[iy]+width)
+          xx <- c(tagtemp$Yr.S[iy]-width,tagtemp$Yr.S[iy]-width,
+                  tagtemp$Yr.S[iy]+width,tagtemp$Yr.S[iy]+width)
           yy <- c(0,tagtemp$Obs[iy],tagtemp$Obs[iy],0)
           polygon(xx,yy,col=ifelse(iy<=latency,col3,col4))
         }
         points(tagtemp$Yr.S,tagtemp$Exp,type="o",lty=1,pch=16)
-        if(latency>0) points(tagtemp$Yr.S[1:latency],tagtemp$Exp[1:latency],type="o",lty=1,pch=21,bg="white")
+        if(latency>0){
+          points(tagtemp$Yr.S[1:latency], tagtemp$Exp[1:latency],
+                 type="o", lty=1, pch=21, bg="white")
+          if(all(par()$mfg[1:2]==1)){
+            legend('topright', fill=c(col3,col4),
+                   c("Latency period","Post-latency"), bty='n')
+          }
+        }
         box()
         
         # add labels in left and lower outer margins once per page
@@ -160,7 +171,8 @@ SSplotTags <-
       plot(0,xlim=xlim+c(-0.5,0.5),ylim=c(0,max(RecAg$Obs,RecAg$Exp)*1.05),type="n",xaxs="i",yaxs="i",
            xlab=labels[1],ylab=labels[2],main=labels[5],cex.main=cex.main)
       for (iy in 1:nrow(RecAg)){
-        xx <- c(RecAg$Yr.S[iy]-width,RecAg$Yr.S[iy]-width,RecAg$Yr.S[iy]+width,RecAg$Yr.S[iy]+width)
+        xx <- c(RecAg$Yr.S[iy]-width, RecAg$Yr.S[iy]-width,
+                RecAg$Yr.S[iy]+width, RecAg$Yr.S[iy]+width)
         yy <- c(0,RecAg$Obs[iy],RecAg$Obs[iy],0)
         polygon(xx,yy,col=col4)
       }

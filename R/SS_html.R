@@ -26,6 +26,7 @@
 #' @export
 #' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
 #' @keywords aplot hplot
+#' 
 SS_html <- function(replist=NULL,
                     plotdir="plots",
                     plotInfoTable=NULL,
@@ -45,7 +46,7 @@ SS_html <- function(replist=NULL,
   if(is.null(plotInfoTable)){
     if(!is.null(replist)){
       dir <- replist$inputs$dir
-      filenames <- dir(paste(dir,plotdir,sep="/"))
+      filenames <- dir(file.path(dir,plotdir))
       # look for all files beginning with the name 'plotInfoTable'
       filenames <- filenames[grep("plotInfoTable",filenames)]
       filenames <- filenames[grep(".csv",filenames)]
@@ -53,7 +54,7 @@ SS_html <- function(replist=NULL,
       plotInfoTable <- NULL
       # loop over matching CSV files and combine them
       for(ifile in 1:length(filenames)){
-        filename <- paste(dir,plotdir,filenames[ifile],sep="/")
+        filename <- file.path(dir,plotdir,filenames[ifile])
         temp <- read.csv(filename,colClasses = "character")
         plotInfoTable <- rbind(plotInfoTable,temp)
       }
@@ -100,7 +101,7 @@ SS_html <- function(replist=NULL,
   plotInfoTable$basename <- basename(as.character(plotInfoTable$file))
   plotInfoTable$dirname <- dirname(as.character(plotInfoTable$file))
   plotInfoTable$dirname2 <- basename(dirname(as.character(plotInfoTable$file)))
-  plotInfoTable$path <- paste(plotInfoTable$dirname2,plotInfoTable$basename,sep="/")
+  plotInfoTable$path <- file.path(plotInfoTable$dirname2,plotInfoTable$basename)
   dir <- dirname(plotInfoTable$dirname)[1]
 
   # write unique HTML file for each category of plots (or whatever)
@@ -108,12 +109,14 @@ SS_html <- function(replist=NULL,
   for(icat in 0:length(categories)){
     if(icat==0){
       category <- "Home"
-      htmlfile <- paste(dir,plotdir,"SS_output.html",sep="/")
+      htmlfile <- file.path(dir,plotdir,"SS_output.html")
       htmlhome <- htmlfile
-      if(verbose) cat("Home HTML file with output will be:\n",htmlhome,'\n')
+      if(verbose){
+        cat("Home HTML file with output will be:\n",htmlhome,'\n')
+      }
     }else{
       category <- categories[icat]
-      htmlfile <- paste(dir,"/",plotdir,"/SS_output_",category,".html",sep="")
+      htmlfile <- file.path(dir,plotdir,paste("SS_output_",category,".html",sep=""))
     }
     # write HTML head including some CSS stuff about fonts and whatnot
     # source for text below is http://unraveled.com/publications/css_tabs/
@@ -187,7 +190,6 @@ SS_html <- function(replist=NULL,
         '    h2 {\n',
         '    font-size: 20px;\n',
         '    color: #4c994c;\n',
-        #'    margin: 0px 20px 5px 20px;\n',
         '    padding-top: 1px;\n',
         '    font-weight: bold;\n',
         '    border-bottom-width: 1px;\n',
@@ -244,7 +246,7 @@ SS_html <- function(replist=NULL,
         cat('<p><b>SS version:</b>\n',
             replist$SS_version,'</p>\n\n',
             '<p><b>Starting time of model:</b>\n',
-            substring(replist$Run_time,12),'</p>\n\n',
+            substring(replist$StartTime,12),'</p>\n\n',
             sep="", file=htmlfile, append=TRUE)
         if(!is.null(filenotes)){
           for(i in 1:length(filenotes)){
@@ -300,8 +302,16 @@ SS_html <- function(replist=NULL,
   cat("\n\n</body>\n</html>", file=htmlfile, append=TRUE)
 
   # open HTML file automatically:
+  # thanks John Wallace for finding the browseURL command
   if(openfile){
     cat("Opening HTML file in your default web-browser.\n")
-    browseURL(htmlhome) # thanks John Wallace for finding this command
+    # check for presence of file
+    # alternative location for file in the path is relative to the working directory
+    htmlhome2 <- file.path(getwd(), htmlhome)
+    if(is.na(file.info(htmlhome2)$size)){
+      browseURL(htmlhome)
+    }else{
+      browseURL(htmlhome2) 
+    }
   }
 }
