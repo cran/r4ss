@@ -5,9 +5,10 @@
 \title{Change parameters, bounds, or phases in the control file.}
 \usage{
 SS_changepars(dir = NULL, ctlfile = "control.ss_new",
-  newctlfile = "control_modified.ss", linenums = NULL, strings = NULL,
-  newvals = NULL, repeat.vals = FALSE, newlos = NULL, newhis = NULL,
-  estimate = FALSE, verbose = TRUE, newphs = NULL)
+  newctlfile = "control_modified.ss", linenums = NULL,
+  strings = NULL, newvals = NULL, repeat.vals = FALSE,
+  newlos = NULL, newhis = NULL, newprior = NULL, newprsd = NULL,
+  newprtype = NULL, estimate = NULL, verbose = TRUE, newphs = NULL)
 }
 \arguments{
 \item{dir}{Directory with control file to change.}
@@ -35,21 +36,43 @@ the vector of values needs to be in the same order as either
 \item{repeat.vals}{If multiple parameter lines match criteria, repeat the
 \code{newvals} input for each line.}
 
-\item{newlos}{Vector of new lo bounds. Default=NULL.
+\item{newlos}{Vector of new lower bounds. Default=NULL.
 The vector can contain \code{NA} values, which will assign the original
 value to the given parameter but change the remainder parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 
-\item{newhis}{Vector of new hi bounds. Must be the same length as newhis
+\item{newhis}{Vector of new high bounds. Must be the same length as newhis
 Default=NULL.
 The vector can contain \code{NA} values, which will assign the original
 value to the given parameter but change the remainder parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 
-\item{estimate}{Vector of TRUE/FALSE for which changed parameters are to be
-estimated. Default=FALSE. Can also be \code{NULL}.}
+\item{newprior}{Vector of new prior values. 
+Default=NULL.
+The vector can contain \code{NA} values, which will assign the original
+value to the given parameter but change the remainder parameters, where
+the vector of values needs to be in the same order as either
+\code{linenums} or \code{strings}.}
+
+\item{newprsd}{Vector of new prior sd values. 
+Default=NULL.
+The vector can contain \code{NA} values, which will assign the original
+value to the given parameter but change the remainder parameters, where
+the vector of values needs to be in the same order as either
+\code{linenums} or \code{strings}.}
+
+\item{newprtype}{Vector of new prior type. 
+Default=NULL.
+The vector can contain \code{NA} values, which will assign the original
+value to the given parameter but change the remainder parameters, where
+the vector of values needs to be in the same order as either
+\code{linenums} or \code{strings}.}
+
+\item{estimate}{Optional vector or single value of TRUE/FALSE for which
+parameters are to be estimated. Changes sign of phase to be positive or
+negative. Default \code{NULL} causes no change to phase.}
 
 \item{verbose}{More detailed output to command line. Default=TRUE.}
 
@@ -60,7 +83,7 @@ phases will not be changed. If one wants to strictly turn parameters
 on or off and not change the phase in which they are estimated use
 \code{estimate = TRUE} or \code{estimate = FALSE}, respectively.
 The vector can contain \code{NA} values, which will assign the original
-value to the given parameter but change the remainder parameters, where
+value to the given parameter but change the remaining parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 }
@@ -74,21 +97,29 @@ Used by \code{\link{SS_profile}} and the \pkg{ss3sim} package.
 \examples{
 
 \dontrun{
-SS_changepars(dir='Y:/ss/SSv3.03a/Simple/',ctlfile='Control.SS_New',
-              strings=c('SR_steep','SR_sigmaR'),newvals=c(.35,.6))
-# [1] wrote new file to Control_Modified.SS
-#    oldvals newvals oldphase newphase     comment
-# 1 0.609048    0.35        4       -4  # SR_steep
-# 2 0.600000    0.60       -4       -4 # SR_sigmaR
+SS_changepars(dir='C:/ss/SSv3.30.03.05_May11/Simple - Copy',
+              strings=c("steep","sigmaR"), newvals=c(.4,.6))
+## parameter names in control file matching input vector 'strings' (n=2):
+## [1] "SR_BH_steep" "SR_sigmaR"  
+## These are the ctl file lines as they currently exist:
+##     LO HI     INIT PRIOR PR_type SD PHASE env-var use_dev dev_minyr dev_maxyr
+## 95 0.2  1 0.613717   0.7    0.05  1     4       0       0         0         0
+## 96 0.0  2 0.600000   0.8    0.80  0    -4       0       0         0         0
+##    dev_stddev Block Block_Fxn       Label Linenum
+## 95          0     0         0 SR_BH_steep      95
+## 96          0     0         0   SR_sigmaR      96
+## line numbers in control file (n=2):
+## [1] 95 96
+## 
+## wrote new file to control_modified.ss with the following changes:
+##    oldvals newvals oldphase newphase oldlos newlos oldhis newhis       comment
+## 1 0.613717     0.4        4       -4    0.2    0.2      1      1 # SR_BH_steep
+## 2 0.600000     0.6       -4       -4    0.0    0.0      2      2   # SR_sigmaR
 }
-
-}
-\author{
-Ian Taylor, Christine Stawitz
 }
 \seealso{
 \code{\link{SS_parlines}}, \code{\link{SS_profile}}
 }
-\keyword{data}
-\keyword{manip}
-
+\author{
+Ian Taylor, Christine Stawitz, Chantel Wetzel
+}

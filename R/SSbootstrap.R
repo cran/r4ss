@@ -13,7 +13,6 @@
 #' \url{http://www.pcouncil.org/wp-content/uploads/2006_hake_assessment_FINAL_ENTIRE.pdf}
 #' (A description is on page 41 and Figures 55-56 (pg 139-140) show some
 #' results.)
-#' @keywords data manip
 SSbootstrap <- function(){
   # this is not yet a generalized function, just some example code for how to do
   # a parametric bootstrap such as was done for the Pacific hake model in 2006
@@ -77,7 +76,7 @@ SSbootstrap <- function(){
   # a bunch of plots that won't work well if there are lots of models
   SSplotComparisons(bootsummary,png=TRUE)
   # histogram of a single quantity
-  hist(as.numeric(bootsummary$quants[bootsummary$quants$Label=="SPB_Virgin",1:N]))
+  hist(as.numeric(bootsummary$quants[bootsummary$quants$Label=="SSB_Virgin",1:N]))
   hist(as.numeric(bootsummary$pars[grep("R0",bootsummary$pars$Label),1:N]))
 
 

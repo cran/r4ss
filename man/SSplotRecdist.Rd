@@ -21,10 +21,10 @@ SSplotRecdist(replist, plot = TRUE, print = FALSE, areanames = NULL,
 
 \item{seasnames}{optional vector to replace c("Season1","Season2",...)}
 
-\item{xlab}{optional x-axis label (if the area names aren't informative
+\item{xlab}{optional x-axis label (if the area names aren\'t informative
 enough)}
 
-\item{ylab}{optional y-axis label (if the season names aren't informative
+\item{ylab}{optional y-axis label (if the season names aren\'t informative
 enough)}
 
 \item{main}{title for plot}
@@ -51,11 +51,9 @@ Image plot shows fraction of recruitment in each combination of area and
 season. This is based on the RECRUITMENT_DIST section of the Report.sso
 file.
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SSplotRecdevs}}
 }
-\keyword{hplot}
-
+\author{
+Ian Taylor
+}

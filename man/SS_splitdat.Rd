@@ -4,10 +4,10 @@
 \alias{SS_splitdat}
 \title{Split apart bootstrap data to make input file.}
 \usage{
-SS_splitdat(inpath = "working_directory", outpath = "working_directory",
-  inname = "data.ss_new", outpattern = "BootData", number = FALSE,
-  verbose = TRUE, fillblank = TRUE, MLE = TRUE, inputs = FALSE,
-  notes = "")
+SS_splitdat(inpath = "working_directory",
+  outpath = "working_directory", inname = "data.ss_new",
+  outpattern = "BootData", number = FALSE, verbose = TRUE,
+  fillblank = TRUE, MLE = TRUE, inputs = FALSE, notes = "")
 }
 \arguments{
 \item{inpath}{Directory containing the input file. By default the working
@@ -42,11 +42,11 @@ be added). Default="".}
 \description{
 A function to split apart bootstrap data files created in data.ss_new.  To
 get bootstraps, the input "N bootstrap file to produce" in starter.ss needs
-to be 3 or greater.
+to be 3 or greater. The function can either create a file for just the
+input data (if \code{inputs=TRUE}), a file for just the MLE values
+(if \code{MLE = TRUE}), or separate files for each of the bootstraps
+(if \code{inputs=FALSE} and \code{MLE=FALSE}).
 }
 \author{
 Ian Taylor
 }
-\keyword{data}
-\keyword{manip}
-

@@ -29,7 +29,6 @@
 #' the Eastern Bering Sea.
 #' \url{http://www.afsc.noaa.gov/REFM/docs/2011/EBSpollock.pdf}. (Figure 1.31,
 #' which is on an absolute, rather than log scale.)
-#' @keywords hplot
 #' @examples
 #' 
 #'  \dontrun{
@@ -147,6 +146,7 @@ SSplotRetroRecruits <-
   }
 
   # make empty plot with axes
+  par(mar=c(4.1, 4.1, 0.2, 0.2))
   plot(0,type='n',xlim=xlim,ylim=ylim,xlab=labels[4],
        ylab=ylab,main=main,axes=FALSE)
   axis(1,at=0:maxage)

@@ -4,18 +4,19 @@
 \alias{SSplotCatch}
 \title{Plot catch related quantities.}
 \usage{
-SSplotCatch(replist, subplots = 1:15, add = FALSE, areas = 1,
-  plot = TRUE, print = FALSE, type = "l", fleetlty = 1, fleetpch = 1,
-  fleetcols = "default", fleetnames = "default", lwd = 3,
-  areacols = "default", areanames = "default", minyr = NULL,
-  maxyr = NULL, annualcatch = TRUE, forecastplot = FALSE,
-  plotdir = "default", showlegend = TRUE, legendloc = "topleft",
-  order = "default", xlab = "Year", labels = c("Harvest rate/Year",
-  "Continuous F", "Landings", "Total catch", "Predicted Discards",
-  "Discard fraction", "(mt)", "(numbers x1000)", "Observed and expected",
-  "aggregated across seasons"), catchasnumbers = NULL, catchbars = TRUE,
-  addmax = TRUE, ymax = NULL, pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+SSplotCatch(replist, subplots = 1:16, add = FALSE, areas = 1,
+  plot = TRUE, print = FALSE, type = "l", fleetlty = 1,
+  fleetpch = 1, fleetcols = "default", fleetnames = "default",
+  lwd = 3, areacols = "default", areanames = "default",
+  minyr = -Inf, maxyr = Inf, annualcatch = TRUE,
+  forecastplot = FALSE, plotdir = "default", showlegend = TRUE,
+  legendloc = "topleft", order = "default", xlab = "Year",
+  labels = c("Harvest rate/Year", "Continuous F", "Landings",
+  "Total catch", "Predicted discards", "Discard fraction", "(mt)",
+  "(numbers x1000)", "Observed and expected", "aggregated across seasons"),
+  catchasnumbers = NULL, catchbars = TRUE, addmax = TRUE,
+  ymax = NULL, pwidth = 6.5, pheight = 5, punits = "in",
+  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
 }
 \arguments{
 \item{replist}{List created by \code{SS_output}}
@@ -39,7 +40,8 @@ only.  Other options include "o" for overplotting points on lines.}
 
 \item{fleetcols}{Vector of colors by fleet}
 
-\item{fleetnames}{Optional replacement for fleenames used in data file}
+\item{fleetnames}{Optional replacement for fleenames used in data file,
+should include all fleets (not just those with catch)}
 
 \item{lwd}{Line width}
 
@@ -100,12 +102,9 @@ white space at the top of the figure)}
 Plot catch related quantities from Stock Synthesis output. Plots include
 harvest rate, continuous F, landings, and discard fraction.
 }
-\author{
-Ian Taylor, Ian Stewart
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\keyword{aplot}
-\keyword{hplot}
-
+\author{
+Ian Taylor, Ian Stewart
+}

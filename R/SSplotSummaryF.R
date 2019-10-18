@@ -21,7 +21,6 @@
 #' @author Allan Hicks
 #' @export
 #' @seealso \code{\link{SSplotTimeseries}}, ~~~
-#' @keywords hplot
 SSplotSummaryF <- function(replist,yrs="all",Ftgt=NA,ylab="Summary Fishing Mortality",
                            plot=TRUE,print=FALSE,plotdir="default",verbose=TRUE,
                            uncertainty=TRUE,
@@ -29,17 +28,20 @@ SSplotSummaryF <- function(replist,yrs="all",Ftgt=NA,ylab="Summary Fishing Morta
   #plots the summary F (or harvest rate) as set up in the starter file
   #needs a lot of work to be generalized
 
-  pngfun <- function(file,caption=NA){
-    png(filename=file,width=pwidth,height=pheight,
-        units=punits,res=res,pointsize=ptsize)
-    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+  # subfunction to write png files
+  pngfun <- function(file, caption=NA){
+    png(filename=file.path(plotdir, file),
+        width=pwidth, height=pheight, units=punits, res=res, pointsize=ptsize)
+    plotinfo <- rbind(plotinfo, data.frame(file=file, caption=caption))
     return(plotinfo)
   }
   plotinfo <- NULL
-  if(plotdir=="default") plotdir <- replist$inputs$dir
+  if(plotdir=="default"){
+    plotdir <- replist$inputs$dir
+  }
 
   if(yrs[1]=="all") {yrs <- replist$startyr:replist$endyr}
-  Ftot <- replist$derived_quants[match(paste("F_",yrs,sep=""),replist$derived_quants$LABEL),]
+  Ftot <- replist$derived_quants[match(paste("F_",yrs,sep=""),replist$derived_quants$Label),]
   if(all(is.na(Ftot$Value))){
     warning("Skipping SSplotSummaryF because no real values found in DERIVED_QUANTITIES\n",
             "    Values with labels like F_2012 may not be real.\n")
@@ -55,15 +57,14 @@ SSplotSummaryF <- function(replist,yrs="all",Ftgt=NA,ylab="Summary Fishing Morta
     plot(0,type="n",,xlab="Year",ylab=ylab,xlim=range(yrs),ylim=c(0,Fmax),
          cex.lab=1.0,cex.axis=1.0,cex=0.7)
     abline(h=0,col='grey')
-    if(uncertainty) segments(as.numeric(substring(Ftot$LABEL,3,6)),uppFtot,as.numeric(substring(Ftot$LABEL,3,6)),lowFtot,col=gray(0.5))
-    points(as.numeric(substring(Ftot$LABEL,3,6)),Ftot$Value,pch=16,type="p")
+    if(uncertainty) segments(as.numeric(substring(Ftot$Label,3,6)),uppFtot,as.numeric(substring(Ftot$Label,3,6)),lowFtot,col=gray(0.5))
+    points(as.numeric(substring(Ftot$Label,3,6)),Ftot$Value,pch=16,type="p")
     abline(h=Ftgt,col="red")
   }
   if(plot) plotfun()
   if(print){
-    file <- file.path(plotdir,"ts_summaryF.png")
     caption <- "Summary F (definition of F depends on setting in starter.ss)"
-    plotinfo <- pngfun(file=file, caption=caption)
+    plotinfo <- pngfun(file="ts_summaryF.png", caption=caption)
     plotfun()
     dev.off()
     if(!is.null(plotinfo)) plotinfo$category <- "Timeseries"

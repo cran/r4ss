@@ -12,11 +12,15 @@
 #' \code{summaryoutput}.  Either "all" or a vector of numbers indicating
 #' columns in summary tables.
 #' @param profile.string Character string used to find parameter over which the
-#' profile was conducted. Needs to match substring of one of the SS parameter
-#' labels found in the Report.sso file. For instance, the default input 'steep'
-#' matches the parameter 'SR_BH_steep'.
+#' profile was conducted. If \code{exact=FALSE}, this can be a substring of
+#' one of the SS parameter labels found in the Report.sso file.
+#' For instance, the default input 'steep'
+#' matches the parameter 'SR_BH_steep'. If \code{exact=TRUE}, then
+#' profile.string needs to be an exact match to the parameter label.
 #' @param profile.label Label for x-axis describing the parameter over which
 #' the profile was conducted.
+#' @param exact Should the \code{profile.string} have to match the parameter
+#' label exactly, or is a substring OK.
 #' @param ylab Label for y-axis. Default is "Change in -log-likelihood".
 #' @param components Vector of likelihood components that may be included in
 #' plot. List is further refined by any components that are not present in
@@ -32,9 +36,9 @@
 #' Default=TRUE.
 #' @param col Optional vector of colors for each line.
 #' @param pch Optional vector of plot characters for the points.
-#' @param lty Line total for the liklihood components.
+#' @param lty Line total for the likelihood components.
 #' @param lty.total Line type for the total likelihood.
-#' @param lwd Line width for the liklihood components.
+#' @param lwd Line width for the likelihood components.
 #' @param lwd.total Line width for the total likelihood.
 #' @param cex Character expansion for the points representing the likelihood
 #' components.
@@ -59,6 +63,11 @@
 #' @param cex.main Character expansion for plot titles
 #' @param plotdir Directory where PNG files will be written. by default it will
 #' be the directory where the model was run.
+#' @param add_cutoff Add dashed line at ~1.92 to indicate 95% confidence interval
+#' based on common cutoff of half of chi-squared of p=.95 with 1 degree of
+#' freedom: \code{0.5*qchisq(p=cutoff_prob, df=1)}. The probability value
+#' can be adjusted using the \code{cutoff_prob} below.
+#' @param cutoff_prob Probability associated with \code{add_cutoff} above.
 #' @param verbose Return updates of function progress to the R GUI? (Doesn't do
 #' anything yet.)
 #' @param \dots Additional arguments passed to the \code{plot} command.
@@ -71,13 +80,13 @@
 #' @export
 #' @seealso \code{\link{SSsummarize}}, \code{\link{SS_profile}},
 #' \code{\link{SS_output}}, \code{\link{SSgetoutput}}
-#' @keywords aplot hplot
 SSplotProfile <-
   function(summaryoutput,
            plot=TRUE,print=FALSE,
            models="all",
            profile.string="steep",
            profile.label="Spawner-recruit steepness (h)",
+           exact=FALSE,
            ylab="Change in -log-likelihood",
            components=
            c("TOTAL",
@@ -94,6 +103,7 @@ SSplotProfile <-
              "Tag_comp",
              "Tag_negbin",
              "Recruitment",
+             "InitEQ_Regime",
              "Forecast_Recruitment",
              "Parm_priors",
              "Parm_softbounds",
@@ -115,6 +125,7 @@ SSplotProfile <-
              "Tag recapture distribution",
              "Tag recapture total",
              "Recruitment",
+             "Initital equilibrium recruitment",
              "Forecast recruitment",
              "Priors",
              "Soft bounds",
@@ -135,19 +146,31 @@ SSplotProfile <-
            legend=TRUE, legendloc="topright",
            pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,cex.main=1,
            plotdir=NULL,
+           add_cutoff=FALSE,
+           cutoff_prob=0.95,
            verbose=TRUE,...)
 {
   # subfunction to write png files
   pngfun <- function(file){
-    png(filename=paste(plotdir,file,sep="/"),width=pwidth,height=pheight,
+    png(filename=file.path(plotdir,file),width=pwidth,height=pheight,
         units=punits,res=res,pointsize=ptsize)
   }
   
-  if(print & is.null(plotdir)) stop("to print PNG files, you must supply a directory as 'plotdir'")
+  if(print){
+    if(is.null(plotdir)){
+      stop("to print PNG files, you must supply a directory as 'plotdir'")
+    }
+    # create directory if it's missing
+    if(!file.exists(plotdir)){
+      if(verbose) cat("creating directory:", plotdir, "\n")
+      dir.create(plotdir, recursive=TRUE)
+    }
+  }
 
-  if(length(components) != length(component.labels))
+  if(length(components) != length(component.labels)){
     stop("Inputs 'components' and 'component.labels' should have equal length")
-
+  }
+  
   # get stuff from summary output
   n             <- summaryoutput$n
   likelihoods   <- summaryoutput$likelihoods
@@ -166,12 +189,20 @@ SSplotProfile <-
   }
   
   # find the parameter that the profile was over
-  parnumber <- grep(profile.string,pars$Label)
-  if(length(parnumber)<=0) stop("No parameters matching profile.string='",profile.string,"'",sep="")
+  if(exact){
+    parnumber <- match(profile.string,pars$Label)
+  }else{
+    parnumber <- grep(profile.string,pars$Label)
+  }
+  if(length(parnumber)<=0){
+    stop("No parameters matching profile.string='",profile.string,"'",sep="")
+  }
   parlabel <- pars$Label[parnumber]
-  if(length(parlabel) > 1)
-    stop("Multiple parameters matching profile.string='",profile.string,"': ",paste(parlabel,collapse=", "),sep="")
-
+  if(length(parlabel) > 1){
+    stop("Multiple parameters matching profile.string='",profile.string,"':\n",
+         paste(parlabel,collapse=", "),
+         "\nYou may need to use 'exact=TRUE'.", sep="")
+  }
   parvec <- as.numeric(pars[pars$Label==parlabel,models])
   cat("Parameter matching profile.string='",profile.string,"': '",parlabel,"'\n",sep="")
   cat("Parameter values (after subsetting based on input 'models'):\n")
@@ -203,27 +234,37 @@ SSplotProfile <-
   column.max <- apply(prof.table[subset,],2,max)
   change.fraction <- column.max / column.max[1]
   include <- change.fraction >= minfraction
-  
-  cat("\nLikelihood components showing max change as fraction of total change.\n",
-      "To change which components are included, change input 'minfraction'.\n\n",sep="")
-  print(data.frame(frac_change=round(change.fraction,4),include=include,label=component.labels.good))
-  component.labels.used <- component.labels.good[include]
 
+  nlines <- sum(include)
+  message("\nLikelihood components showing max change as fraction of total change.\n",
+          "To change which components are included, change input 'minfraction'.\n")
+  print(data.frame(frac_change=round(change.fraction,4),include=include,label=component.labels.good))
+  # stop function if nothing left
+  if(nlines == 0){
+    stop("No components included, 'minfraction' should be smaller.")
+  }
+  component.labels.used <- component.labels.good[include]
+  
   # reorder values
   prof.table <- prof.table[order(parvec),include]
   parvec <- parvec[order(parvec)]
 
-  # reorder columns by largest change (if requested)
+  # reorder columns by largest change (if requested, and more than 1 line)
   change.fraction <- change.fraction[include]
-  if(sort.by.max.change){
-    neworder <- c(1,1+order(change.fraction[-1],decreasing=TRUE))
-    prof.table <- prof.table[,neworder]
-    component.labels.used <- component.labels.used[neworder]
+  if(nlines > 1){
+    if(sort.by.max.change){
+      neworder <- c(1,1+order(change.fraction[-1],decreasing=TRUE))
+      prof.table <- prof.table[,neworder]
+      component.labels.used <- component.labels.used[neworder]
+    }
   }
-    
-  nlines <- ncol(prof.table)
-  if(col[1]=="default") col <- rich.colors.short(nlines)
-  if(pch[1]=="default") pch <- 1:nlines
+
+  if(col[1]=="default"){
+    col <- rich.colors.short(nlines)
+  }
+  if(pch[1]=="default"){
+    pch <- 1:nlines
+  }
   lwd <- c(lwd.total,rep(lwd,nlines-1))
   cex <- c(cex.total,rep(cex,nlines-1))
   lty <- c(lty.total,rep(lty,nlines-1))
@@ -234,6 +275,11 @@ SSplotProfile <-
     plot(0,type='n',xlim=xlim,ylim=ylim,xlab=profile.label, ylab=ylab,
          yaxs=yaxs,xaxs=xaxs,...)
     abline(h=0,col='grey')
+    # optionally add horizontal line at ~1.92 (or other value depending
+    # on chosen probability)
+    if(add_cutoff){
+      abline(h=0.5*qchisq(p=cutoff_prob, df=1), lty=2)
+    }
     matplot(parvec, prof.table, type=type,
             pch=pch, col=col,
             cex=cex, lty=lty, lwd=lwd, add=T)

@@ -6,10 +6,11 @@
 \usage{
 mcmc.out(directory = "c:/mydirectory/", run = "mymodel/",
   file = "keyposteriors.csv", namefile = "postplotnames.sso",
-  names = FALSE, headernames = TRUE, numparams = 1, closeall = TRUE,
-  burn = 0, thin = 1, scatter = FALSE, surface = FALSE, surf1 = 1,
-  surf2 = 2, stats = FALSE, plots = TRUE, header = TRUE, sep = ",",
-  print = FALSE, new = T, colNames = NULL)
+  names = FALSE, headernames = TRUE, numparams = 1,
+  closeall = TRUE, burn = 0, thin = 1, scatter = FALSE,
+  surface = FALSE, surf1 = 1, surf2 = 2, stats = FALSE,
+  plots = TRUE, header = TRUE, sep = ",", print = FALSE, new = T,
+  colNames = NULL)
 }
 \arguments{
 \item{directory}{Directory where all results are located, one level above
@@ -69,7 +70,7 @@ and densities for chosen parameters from MCMC output.
   \dontrun{
       mcmc.df <- SSgetMCMC(dir="mcmcRun", writecsv=T,
                   keystrings = c("NatM", "R0", "steep", "Q_extraSD"),
-                  nuisancestrings = c("Objective_function", "SPB_", "InitAge", "RecrDev"))
+                  nuisancestrings = c("Objective_function", "SSB_", "InitAge", "RecrDev"))
       mcmc.out("mcmcRun",run="",numparams=4,closeall=F)
 
   #Or for more control
@@ -78,11 +79,9 @@ and densities for chosen parameters from MCMC output.
       mtext("M (natural mortality)",side=2,outer=T,line=1.5,cex=1.1)
   }
 }
-\author{
-Ian Stewart, Allan Hicks (modifications)
-}
 \seealso{
 \code{\link{mcmc.nuisance}}, \code{\link{SSgetMCMC}}
 }
-\keyword{hplot}
-
+\author{
+Ian Stewart, Allan Hicks (modifications)
+}

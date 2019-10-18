@@ -2,8 +2,8 @@
 % Please edit documentation in R/r4ss-package.R
 \docType{package}
 \name{r4ss-package}
-\alias{r4ss}
 \alias{r4ss-package}
+\alias{r4ss}
 \title{R tools for Stock Synthesis}
 \description{
 A collection of R functions for use with Stock Synthesis, a fisheries stock
@@ -14,9 +14,10 @@ parameterizations, and various other tasks.
 }
 \details{
 \tabular{ll}{ Package: \tab r4ss\cr Type: \tab Package\cr Version: \tab
-1.24.0\cr Date: \tab 2015-12-15\cr License: \tab GPL-3\cr LazyLoad: \tab
+1.36.1\cr Date: \tab 2019-10-16\cr License: \tab GPL-3\cr LazyLoad: \tab
 yes\cr URL: \tab \url{https://github.com/r4ss/}\cr }
-Should be compatible with Stock Synthesis versions 3.20 through 3.30.
+Should be compatible with Stock Synthesis versions 3.24 through 3.30
+(specifically version 3.30.14.05, from September, 2019).
 }
 \examples{
 
@@ -29,17 +30,18 @@ SS_plots(replist=myreplist)
 }
 
 }
+\references{
+r4ss on GitHub: \url{https://github.com/r4ss}
+\cr Download Stock Synthesis: \url{https://vlab.ncep.noaa.gov/web/stock-synthesis/home}
+}
 \author{
 Ian G. Taylor, Ian J. Stewart, Allan C. Hicks, Tommy M. Garrison,
 Andre E. Punt, John R. Wallace, Chantel R. Wetzel, James T. Thorson,
 Yukio Takeuchi, Kotaro Ono, Cole C. Monnahan, Christine C. Stawitz,
 Z. Teresa A'mar, Athol R. Whitten, Kelli F. Johnson, Robbie L. Emmet,
-Sean C. Anderson, and other contributors.
- Package maintainer: Ian Taylor <Ian.Taylor@noaa.gov>
-}
-\references{
-r4ss on GitHub: \url{https://github.com/r4ss}
-\cr Download Stock Synthesis: \url{http://nft.nefsc.noaa.gov/}
-}
-\keyword{package}
+Sean C. Anderson, Gwladys I. Lambert, Megan M. Stachura,
+Andrew B. Cooper, Andi Stephens, Neil L. Klaer, Carey R. McGilliard,
+Iago Mosqueira, Watal M. Iwasaki, Kathryn Doering, and Andrea M. Havron
 
+Package maintainer: Ian G. Taylor <Ian.Taylor@noaa.gov>
+}

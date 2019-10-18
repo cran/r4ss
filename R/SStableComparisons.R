@@ -27,23 +27,23 @@
 #' @export
 #' @seealso \code{\link{SSsummarize}}, \code{\link{SSplotComparisons}},
 #' \code{\link{SS_output}}
-#' @keywords data
 SStableComparisons <-  function(summaryoutput,
                                 models="all",
                                 likenames=c("TOTAL",
-                                  "Survey",
-                                  "Length_comp",
-                                  "Age_comp",
-                                  "priors",
-                                  "Size_at_age"),
-                                names=c("R0",
-                                  "steep",
-                                  "NatM",
-                                  "L_at_Amax",
-                                  "VonBert_K",
-                                  "SPB_Virg",
-                                  "Bratio_2015",
-                                  "SPRratio_2014"),
+                                    "Survey",
+                                    "Length_comp",
+                                    "Age_comp",
+                                    "priors",
+                                    "Size_at_age"),
+                                names=c("Recr_Virgin",
+                                    "R0",
+                                    "steep",
+                                    "NatM",
+                                    "L_at_Amax",
+                                    "VonBert_K",
+                                    "SSB_Virg",
+                                    "Bratio_2017",
+                                    "SPRratio_2016"),
                                 digits=NULL,
                                 modelnames="default",
                                 csv=FALSE,
@@ -69,6 +69,7 @@ SStableComparisons <-  function(summaryoutput,
   if(modelnames[1]=="default") modelnames <- paste("model",1:ncols,sep="")
   tab <- as.data.frame(matrix(NA,nrow=0,ncol=ncols+1))
 
+  # get MLE values for table
   if(!mcmc) {
     if(!is.null(likenames)){
       likenames <- paste(likenames,"_like",sep="")
@@ -91,40 +92,36 @@ SStableComparisons <-  function(summaryoutput,
         tab <- rbind(tab, " ")
       }else{
         # get values
-        vals <- bigtable[grep(name, bigtable$Label),]
+        vals <- bigtable[grep(name, bigtable$Label, fixed=TRUE),]
         #      cat("labels found:\n",bigtable$Label[grep(name, bigtable$Label)],"\n")
-        # fix scale on a few things
-        if(name %in% c("SR_LN(R0)","SR_LN.R0.","SR_R0","R0")){
-          vals[-1] <- round(exp(vals[-1])/1e6,6)
-          vals[1] <- "R0_billions"
-        }
+        # scale recruits into billions, or millions, or thousands
         if(substring(name,1,4)=="Recr" & length(grep("like",name))==0) {
-          vals[1,-1] <- round(vals[1,-1]/1e6,6)
-          vals[1,1] <-paste(vals[1,1],"billions",sep="_")
+          median.value <- median(as.numeric(vals[1,-1]), na.rm=TRUE)
+          if(median.value > 1e6){
+            vals[1,-1] <- round(vals[1,-1]/1e6,6)
+            vals[1,1] <- paste0(vals[1,1],"_billions")
+          } else if (median.value > 1e3){
+            vals[1,-1] <- round(vals[1,-1]/1e3,6)
+            vals[1,1] <- paste0(vals[1,1],"_millions")
+          } else {
+            vals[1,1] <- paste0(vals[1,1],"_thousands")
+          }
         }
         if(substring(name,1,3)%in%c("SPB","SSB") | substring(name,1,8)=="TotYield") {
           vals[1,-1] <- round(vals[1,-1]/1e3,3)
-          vals[1,1] <-paste(vals[1,1],"thousand_mt",sep="_")
-        }
-        ## if(name=="SPB_Virg"){
-        ##   vals[1,-1] <- as.numeric(vals[1,-1])/1e3
-        ##   vals[1,1] <- "SB0_thousand_mt"
-        ## }
-        if(((length(grep("SPB",name))>0  | length(grep("SSB",name))>0) & any(nsexes==1))){
-          cat("dividing name by 2 for single-sex models:",(1:ncols)[nsexes==1],"\n")
-          for(i in (1:ncols)[nsexes==1]) vals[1+i] <- vals[1+i]/2
+          vals[1,1] <-paste0(vals[1,1],"_thousand_mt")
         }
 
         if(name %in% c("Q","Q_calc")){
-          Calc_Q <- aggregate(Calc_Q ~ name+FleetNum,data=indices,FUN=mean)
+          Calc_Q <- aggregate(Calc_Q ~ name+Fleet,data=indices,FUN=mean)
           cat("\n")
-          fleetvec <- sort(as.numeric(unique(Calc_Q$FleetNum)))
+          fleetvec <- sort(as.numeric(unique(Calc_Q$Fleet)))
           vals <- data.frame(matrix(NA,nrow=length(fleetvec),ncol=ncol(bigtable)))
           names(vals) <- names(bigtable)
           for(ifleet in 1:length(fleetvec)){
             f <- fleetvec[ifleet]
             vals[ifleet,1] <- paste("Q_calc_mean_fleet_",f,sep="")
-            vals[ifleet,-1] <- Calc_Q$Calc_Q[Calc_Q$FleetNum==f]
+            vals[ifleet,-1] <- Calc_Q$Calc_Q[Calc_Q$Fleet==f]
           }
         }
         if(verbose) cat("added ",nrow(vals)," row",ifelse(nrow(vals)!=1,"s",""),"\n",sep="")
@@ -139,6 +136,7 @@ SStableComparisons <-  function(summaryoutput,
     } # end loop over names
   } # end if not mcmc
 
+  # get medians if using MCMC
   if(mcmc) {
     nnames <- length(names)
     for(iname in 1:nnames){
@@ -156,7 +154,8 @@ SStableComparisons <-  function(summaryoutput,
         for(imodel in models) {   ###loop over models and create a vector of medians to put into tab
           mcmcTable <- summaryoutput$mcmc[[imodel]]
           # get values
-          tmp <- mcmcTable[,grep(name, names(mcmcTable))]  #for future functionality grabbing more than one column
+          #for future functionality grabbing more than one column
+          tmp <- mcmcTable[,grep(name, names(mcmcTable), fixed=TRUE)]  
           #        cat("labels found: ",names(mcmcTable)[grep(name, names(mcmcTable))],"\n")
           if(!is.null(dim(tmp))){
             if(ncol(tmp)>0)
@@ -168,27 +167,22 @@ SStableComparisons <-  function(summaryoutput,
             vals[1,imodel+1] <- median(tmp)  #First element is label
           }
         }
-        # fix scale on a few things
-        if(name %in% c("SR_LN(R0)","SR_LN.R0.","SR_R0","R0")){
-          vals[1,-1] <- round(exp(vals[1,-1])/1e6,6)
-          vals[1,1] <- "R0_billions"
-        }
+        # scale recruits into billions, or millions, or thousands
         if(substring(name,1,4)=="Recr") {
-          vals[1,-1] <- round(vals[1,-1]/1e6,6)
-          vals[1,1] <-paste(vals[1,1],"billions",sep="_")
+          median.value <- median(as.numeric(vals[1,-1]), na.rm=TRUE)
+          if(median.value > 1e6){
+            vals[1,-1] <- round(vals[1,-1]/1e6,6)
+            vals[1,1] <- paste0(vals[1,1],"_billions")
+          } else if (median.value > 1e3){
+            vals[1,-1] <- round(vals[1,-1]/1e3,6)
+            vals[1,1] <- paste0(vals[1,1],"_millions")
+          } else {
+            vals[1,1] <- paste0(vals[1,1],"_thousands")
+          }
         }
         if(substring(name,1,3)%in%c("SPB","SSB") | substring(name,1,8)=="TotYield") {
           vals[1,-1] <- round(vals[1,-1]/1e3,3)
           vals[1,1] <-paste(vals[1,1],"thousand_mt",sep="_")
-        }
-        ## if(name=="SPB_Virg"){
-        ##   vals[1,-1] <- as.numeric(vals[1,-1])/1e3
-        ##   vals[1,1] <- "SB0_thousand_mt"
-        ## }
-        if(((length(grep("SPB",name))>0  | length(grep("SSB",name))>0) & any(nsexes==1))){
-          cat("dividing name by 2 for single-sex models:",(1:ncols)[nsexes==1],"\n")
-          for(i in (1:ncols)[nsexes==1]) vals[1,1+i] <- vals[1,1+i]/2
-          print(vals)
         }
         if(!is.null(digits)){
           if(verbose) cat("rounded to",digit,"digits\n")
@@ -204,13 +198,20 @@ SStableComparisons <-  function(summaryoutput,
   } # end if mcmc
 
   names(tab) <- c("Label",modelnames)
-  rownames(tab) <- 1:nrow(tab)
+  # check for presence of any content of table and reset rownames
+  if(nrow(tab) > 0){
+    rownames(tab) <- 1:nrow(tab)
+  }else{
+    warning("'names' and 'likenames' didn't match any variables so output is empty\n")
+  }
 
+  # write CSV if requested
   if(csv){
     if(csvdir=="workingdirectory") csvdir <- getwd()
     fullpath <- paste(csvdir,csvfile,sep="/")
     cat("writing table to:\n  ",fullpath,"\n")
     write.csv(tab,fullpath,row.names=FALSE)
   }
+  # return table
   return(tab)
 }

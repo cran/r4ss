@@ -4,27 +4,29 @@
 \alias{SSplotComps}
 \title{Plot composition data and fits.}
 \usage{
-SSplotComps(replist, subplots = c(1:21, 24), kind = "LEN", sizemethod = 1,
-  aalyear = -1, aalbin = -1, plot = TRUE, print = FALSE,
-  fleets = "all", fleetnames = "default", sexes = "all", yupper = 0.4,
-  datonly = FALSE, samplesizeplots = TRUE, compresidplots = TRUE,
-  bub = FALSE, showyears = TRUE, showsampsize = TRUE, showeffN = TRUE,
-  sampsizeline = FALSE, effNline = FALSE, minnbubble = 3,
-  pntscalar = NULL, scalebubbles = FALSE, cexZ1 = 1.5, bublegend = TRUE,
-  colvec = c(rgb(1, 0, 0, 0.7), rgb(0, 0, 1, 0.7), rgb(0.1, 0.1, 0.1, 0.7)),
-  linescol = c(rgb(0, 0.5, 0, 0.7), rgb(0.8, 0, 0, 0.7), rgb(0, 0, 0.8, 0.7)),
-  axis1 = NULL, axis2 = NULL, blue = rgb(0, 0, 1, 0.7), red = rgb(1, 0,
-  0, 0.7), pwidth = 6.5, pheight = 5, punits = "in", ptsize = 10,
+SSplotComps(replist, subplots = c(1:21, 24), kind = "LEN",
+  sizemethod = 1, aalyear = -1, aalbin = -1, plot = TRUE,
+  print = FALSE, fleets = "all", fleetnames = "default",
+  sexes = "all", yupper = 0.4, datonly = FALSE,
+  samplesizeplots = TRUE, compresidplots = TRUE, bub = FALSE,
+  showyears = TRUE, showsampsize = TRUE, showeffN = TRUE,
+  aggregates_by_mkt = FALSE, sampsizeline = FALSE, effNline = FALSE,
+  minnbubble = 3, pntscalar = NULL, scalebubbles = FALSE,
+  cexZ1 = 1.5, bublegend = TRUE, colvec = c(rgb(1, 0, 0, 0.7), rgb(0,
+  0, 1, 0.7), rgb(0.1, 0.1, 0.1, 0.7)), linescol = c(rgb(0, 0.5, 0, 0.7),
+  rgb(0.8, 0, 0, 0.7), rgb(0, 0, 0.8, 0.7)), axis1 = NULL,
+  axis2 = NULL, blue = rgb(0, 0, 1, 0.7), red = rgb(1, 0, 0, 0.7),
+  pwidth = 6.5, pheight = 5, punits = "in", ptsize = 10,
   res = 300, plotdir = "default", cex.main = 1, linepos = 1,
   fitbar = FALSE, do.sqrt = TRUE, smooth = TRUE, cohortlines = c(),
   labels = c("Length (cm)", "Age (yr)", "Year", "Observed sample size",
-  "Effective sample size", "Proportion", "cm", "Frequency", "Weight", "Length",
-  "(mt)", "(numbers x1000)", "Stdev (Age) (yr)", "Conditional AAL plot, "),
-  printmkt = TRUE, printsex = TRUE, maxrows = 6, maxcols = 6,
-  maxrows2 = 2, maxcols2 = 4, rows = 1, cols = 1, andre_oma = c(3, 0,
-  3, 0), andrerows = 3, fixdims = TRUE, fixdims2 = FALSE,
-  maxneff = 5000, verbose = TRUE, scalebins = FALSE, addMeans = TRUE,
-  ...)
+  "Effective sample size", "Proportion", "cm", "Frequency", "Weight",
+  "Length", "(mt)", "(numbers x1000)", "Stdev (Age) (yr)",
+  "Conditional AAL plot, "), printmkt = TRUE, printsex = TRUE,
+  maxrows = 6, maxcols = 6, maxrows2 = 2, maxcols2 = 4, rows = 1,
+  cols = 1, andre_oma = c(3, 0, 3, 0), andrerows = 3,
+  fixdims = TRUE, fixdims2 = FALSE, maxneff = 5000, verbose = TRUE,
+  scalebins = FALSE, addMeans = TRUE, mainTitle = FALSE, ...)
 }
 \arguments{
 \item{replist}{list created by \code{SSoutput}}
@@ -73,6 +75,9 @@ plots.}
 \item{showsampsize}{add sample sizes to plot}
 
 \item{showeffN}{add effective sample sizes to plot}
+
+\item{aggregates_by_mkt}{separate plots of aggregates across years
+into different plots for each market category (retained, discarded)?}
 
 \item{sampsizeline}{show line for input sample sizes on top of conditional
 age-at-length plots (TRUE/FALSE, still in development)}
@@ -145,7 +150,7 @@ add growth curves to numbers at length bubble plots}
 
 \item{printmkt}{show market categories in plot titles?}
 
-\item{printsex}{show gender in plot titles?}
+\item{printsex}{show sex in plot titles?}
 
 \item{maxrows}{maximum (or fixed) number or rows of panels in the plot}
 
@@ -188,17 +193,17 @@ work correctly in all cases.}
 \item{addMeans}{Add parameter means in addition to medians for MCMC
 posterior distributions in which the median and mean differ.}
 
+\item{mainTitle}{Logical indicating if a title for the plot should be produced}
+
 \item{\dots}{additional arguments that will be passed to the plotting.}
 }
 \description{
 Plot composition data and fits from Stock Synthesis output.  Multi-figure
 plots depend on \code{make_multifig}.
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{make_multifig}}
 }
-\keyword{hplot}
-
+\author{
+Ian Taylor
+}

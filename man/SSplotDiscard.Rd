@@ -6,10 +6,10 @@
 \usage{
 SSplotDiscard(replist, subplots = 1:2, plot = TRUE, print = FALSE,
   plotdir = "default", fleets = "all", fleetnames = "default",
-  datplot = FALSE, labels = c("Year", "Discard fraction", "Total discards",
-  "for"), yhi = 1, col1 = "blue", col2 = "black", pwidth = 6.5,
-  pheight = 5, punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  verbose = TRUE)
+  datplot = FALSE, labels = c("Year", "Discard fraction",
+  "Total discards", "for"), yhi = 1, ymax = NULL, col1 = "blue",
+  col2 = "black", pwidth = 6.5, pheight = 5, punits = "in",
+  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
 }
 \arguments{
 \item{replist}{List created by \code{\link{SS_output}}}
@@ -34,8 +34,13 @@ of \code{subplots}.}
 
 \item{labels}{Vector of labels for plots (titles and axis labels)}
 
-\item{yhi}{Maximum y-value to include in plot (all data included
-regardless). Default = 1.}
+\item{yhi}{Maximum y-value which will always be included in the plot
+(all data included regardless). Default = 1 so that discard fractions are always
+plotted on a 0-1 range, but total discard amounts which are greater than this value
+will exceed it.}
+
+\item{ymax}{Optional maximum y-value to include (useful if upper tails on
+discard amounts are very high)}
 
 \item{col1}{First color to use in plot (for expected values)}
 
@@ -58,11 +63,9 @@ regardless). Default = 1.}
 \description{
 Plot fit to discard fraction from Stock Synthesis output file.
 }
-\author{
-Ian G. Taylor, Ian J. Stewart, Robbie L. Emmet
-}
 \seealso{
 \code{\link{SS_plots}}
 }
-\keyword{hplot}
-
+\author{
+Ian G. Taylor, Ian J. Stewart, Robbie L. Emmet
+}

@@ -5,14 +5,18 @@
 \title{Plot biology related quantities.}
 \usage{
 SSplotBiology(replist, plot = TRUE, print = FALSE, add = FALSE,
-  subplots = 1:14, seas = 1, colvec = c("red", "blue", "grey20"),
-  shadealpha = 0.1, legendloc = "topleft", plotdir = "default",
-  labels = c("Length (cm)", "Age (yr)", "Maturity",
-  "Mean weight (kg) in last year", "Spawning output",
+  subplots = 1:32, seas = 1, morphs = NULL, forecast = FALSE,
+  minyr = -Inf, maxyr = Inf, colvec = c("red", "blue", "grey20"),
+  ltyvec = c(1, 2), shadealpha = 0.1, imageplot_text = FALSE,
+  imageplot_text_round = 0, legendloc = "topleft",
+  plotdir = "default", labels = c("Length (cm)", "Age (yr)",
+  "Maturity", "Mean weight (kg) in last year", "Spawning output",
   "Length (cm, beginning of the year)", "Natural mortality",
   "Female weight (kg)", "Female length (cm)", "Fecundity",
-  "Default fecundity label", "Year"), pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+  "Default fecundity label", "Year", "Hermaphroditism transition rate",
+  "Fraction females by age at equilibrium"), pwidth = 6.5, pheight = 5,
+  punits = "in", res = 300, ptsize = 10, cex.main = 1,
+  mainTitle = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{replist}{List created by \code{SS_output}}
@@ -23,15 +27,64 @@ SSplotBiology(replist, plot = TRUE, print = FALSE, add = FALSE,
 
 \item{add}{add to existing plot}
 
-\item{subplots}{vector controlling which subplots to create}
+\item{subplots}{vector controlling which subplots to create
+Numbering of subplots is as follows:
+\itemize{
+  \item 1 growth curve only
+  \item 2    growth curve with CV and SD
+  \item 3    growth curve with maturity and weight
+  \item 4    distribution of length at age (still in development)
+  \item 5    length or wtatage matrix
+  \item 6    maturity
+  \item 7    fecundity from model parameters
+  \item 8    fecundity at weight from BIOLOGY section
+  \item 9    fecundity at length from BIOLOGY section
+  \item 10    spawning output at length
+  \item 11    spawning output at age
+  \item 21    Natural mortality (if age-dependent)
+  \item 22    Time-varying growth persp
+  \item 23    Time-varying growth contour
+  \item 24    plot time-series of any time-varying quantities
+  \item 31    hermaphroditism transition probability
+  \item 32    hermaphroditism cumulative probability
+}
+Additional plots not created by default
+\itemize{
+  \item 101    diagram with labels showing female growth curve
+  \item 102    diagram with labels showing female growth curve & male offsets
+  \item 103    diagram with labels showing female CV = f(A) (offset type 2)
+  \item 104    diagram with labels showing female CV = f(A) & male offset (type 2)
+  \item 105    diagram with labels showing female CV = f(A) (offset type 3)
+  \item 106    diagram with labels showing female CV = f(A) & male offset (type 3)
+}}
 
-\item{seas}{which season to plot (obviously only works in seasonal models,
-but maybe not fully implemented even then)}
+\item{seas}{which season to plot (values other than 1 only work in
+seasonal models but but maybe not fully implemented)}
+
+\item{morphs}{Which morphs to plot (if more than 1 per sex)? By default this
+will be replist$mainmorphs}
+
+\item{forecast}{Include forecast years in plots of time-varying biology?}
+
+\item{minyr}{optional input for minimum year to show in plots}
+
+\item{maxyr}{optional input for maximum year to show in plots}
 
 \item{colvec}{vector of length 3 with colors for various points/lines}
 
+\item{ltyvec}{vector of length 2 with lty for females/males in growth plots
+values can be applied to other plots in the future}
+
 \item{shadealpha}{Transparency parameter used to make default shadecol
 values (see ?rgb for more info)}
+
+\item{imageplot_text}{Whether to add numerical text to the image plots
+when using weight at age. Defaults to FALSE.}
+
+\item{imageplot_text_round}{The number of significant digits to which
+the image plot text is rounded. Defaults to 0, meaning whole numbers. If
+all your values are small and there's no contrast in the text, you might
+want to make this 1 or 2.}
 
 \item{legendloc}{Location of legend (see ?legend for more info)}
 
@@ -52,18 +105,17 @@ be the directory where the model was run.}
 
 \item{cex.main}{Character expansion for plot titles}
 
+\item{mainTitle}{Logical indicating if a title should be included at the top}
+
 \item{verbose}{Return updates of function progress to the R GUI?}
 }
 \description{
 Plot biology related quantities from Stock Synthesis model output, including
 mean weight, maturity, fecundity, and spawning output.
 }
-\author{
-Ian Stewart, Ian Taylor
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\keyword{aplot}
-\keyword{hplot}
-
+\author{
+Ian Stewart, Ian Taylor
+}

@@ -10,6 +10,8 @@
 #' @param print print to PNG files?
 #' @param add add to existing plot (not yet implemented)
 #' @param uncertainty include plots showing uncertainty?
+#' @param minyr optional input for minimum year to show in plots
+#' @param maxyr optional input for maximum year to show in plots
 #' @param forecastplot include points from forecast years?
 #' @param col1 first color used
 #' @param col2 second color used
@@ -29,25 +31,26 @@
 #' @author Ian Taylor, Ian Stewart
 #' @export
 #' @seealso \code{\link{SS_plots}}, \code{\link{SS_fitbiasramp}}
-#' @keywords hplot dplot
 SSplotRecdevs <-
-  function(replist, subplots=1:3, plot=TRUE, print=FALSE, add=FALSE,
-           uncertainty=TRUE,forecastplot=FALSE,
-           col1="black",col2="blue",col3="green3",col4="red",
-           legendloc="topleft",
-           labels=c("Year",                        #1
-             "Asymptotic standard error estimate", #2
-             "Log recruitment deviation",          #3
-             "Bias adjustment fraction, 1 - stddev^2 / sigmaR^2"), #4
-           pwidth=6.5,pheight=5.0,punits="in",res=300,ptsize=10,
-           cex.main=1, plotdir="default",
-           verbose=TRUE)
+  function(replist, subplots = 1:3, plot = TRUE, print = FALSE, add = FALSE,
+           uncertainty = TRUE, minyr = -Inf, maxyr = Inf, forecastplot = FALSE,
+           col1 = "black",col2 = "blue",col3 = "green3",col4 = "red",
+           legendloc = "topleft",
+           labels = c("Year",                        #1
+               "Asymptotic standard error estimate", #2
+               "Log recruitment deviation",          #3
+               "Bias adjustment fraction, 1 - stddev^2 / sigmaR^2"), #4
+           pwidth = 6.5,pheight = 5.0,punits = "in",res = 300,ptsize = 10,
+           cex.main = 1, plotdir = "default",
+           verbose = TRUE)
 {
   # Plot of recrecruitment deviations,  asymptotic error check, and bias adjustment
-  pngfun <- function(file,caption=NA){
-    png(filename=file,width=pwidth,height=pheight,
-        units=punits,res=res,pointsize=ptsize)
-    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+
+  # subfunction to write png files
+  pngfun <- function(file, caption=NA){
+    png(filename=file.path(plotdir, file),
+        width=pwidth, height=pheight, units=punits, res=res, pointsize=ptsize)
+    plotinfo <- rbind(plotinfo, data.frame(file=file, caption=caption))
     return(plotinfo)
   }
   plotinfo <- NULL
@@ -100,9 +103,10 @@ SSplotRecdevs <-
 
       Yr <- c(recdevEarly$Yr,recdev$Yr,recdevFore$Yr)
       if(forecastplot){
-        goodyrs <- rep(TRUE,length(Yr))
+        goodyrs <- ifelse(Yr >= minyr & Yr <= maxyr, TRUE,FALSE)
       }else{
-        goodyrs <- Yr<=endyr+1 # TRUE/FALSE of in range or not
+        # TRUE/FALSE of in range or not
+        goodyrs <- Yr <= endyr+1 & Yr >= minyr & Yr <= maxyr 
       }
       xlim <- range(Yr[goodyrs],na.rm=TRUE)
       ylim <- range(c(recdevEarly$Value,recdev$Value,recdevFore$Value)[goodyrs],
@@ -116,15 +120,15 @@ SSplotRecdevs <-
                     rep(col1,nrow(recdev)),
                     rep(col2,nrow(recdevFore)))[goodyrs]
         ## alldevs$Parm_StDev[is.na(alldevs$Parm_StDev)] <- 0
-        val <- alldevs$Value[goodyrs]
-        Yr <- alldevs$Yr[goodyrs]
+        val <- alldevs$Value
+        Yr <- alldevs$Yr
         if(uncertainty){
-          std <- alldevs$Parm_StDev[goodyrs]
+          std <- alldevs$Parm_StDev
           recdev_hi <- val + 1.96*std
           recdev_lo <- val - 1.96*std
-          ylim <- range(recdev_hi,recdev_lo,na.rm=TRUE)
+          ylim <- range(recdev_hi, recdev_lo, na.rm=TRUE)
         }else{
-          ylim <- range(val)
+          ylim <- range(val, na.rm=TRUE)
         }
         plot(Yr,Yr,type="n",xlab=labels[1],
              ylab=labels[3],ylim=ylim)
@@ -170,7 +174,7 @@ SSplotRecdevs <-
       }
       if(print){ # if printing to PNG files
         if(1 %in% subplots){
-          file <- paste(plotdir,"/recdevs1_points.png",sep="")
+          file <- "recdevs1_points.png"
           caption <- "Recruitment deviations"
           plotinfo <- pngfun(file=file, caption=caption)
           recdevfunc(uncertainty=FALSE)
@@ -178,14 +182,14 @@ SSplotRecdevs <-
         }
         if(uncertainty){
           if(2 %in% subplots){
-            file <- paste(plotdir,"/recdevs2_withbars.png",sep="")
+            file <- "recdevs2_withbars.png"
             caption <- "Recruitment deviations with 95% intervals"
             plotinfo <- pngfun(file=file, caption=caption)
             recdevfunc(uncertainty=TRUE)
             dev.off()
           }
           if(3 %in% subplots){
-            file <- paste(plotdir,"/recdevs3_varcheck.png",sep="")
+            file <- "recdevs3_varcheck.png"
             caption <-
               paste("Recruitment deviations variance check.<br>",
                     "See later figure of transformed variance values for comparison",

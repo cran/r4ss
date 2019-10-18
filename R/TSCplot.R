@@ -40,7 +40,6 @@
 #' @author Allan Hicks
 #' @export
 #' @seealso \code{\link{SS_output}} \code{\link{SSgetMCMC}}
-#' @keywords data manip list plot
 #' @examples
 #' 
 #'   \dontrun{
@@ -110,16 +109,16 @@ TSCplot <- function(SSout,
 
     if(!MCMC) {
         SBzero <- SSout$SBzero
-        SB <- SSout$derived_quants[substring(SSout$derived_quants$LABEL,1,4)=="SPB_",]
-        SB <- SB[match(as.character(yrs),substring(SB$LABEL,5)),]
-        depl <- SSout$derived_quants[substring(SSout$derived_quants$LABEL,1,7)=="Bratio_",]
-        depl <- depl[match(as.character(yrs),substring(depl$LABEL,8)),]
+        SB <- SSout$derived_quants[substring(SSout$derived_quants$Label,1,4)=="SSB_",]
+        SB <- SB[match(as.character(yrs),substring(SB$Label,5)),]
+        depl <- SSout$derived_quants[substring(SSout$derived_quants$Label,1,7)=="Bratio_",]
+        depl <- depl[match(as.character(yrs),substring(depl$Label,8)),]
         SP <- data.frame(Yr=yrs, SpawnBio=SB[,"Value"], Depl=depl[,"Value"],Dead_Catch=deadCatch[,1])
     }
     if(MCMC) {
         if(is.null(SSout$mcmc)) stop("There is no mcmc element on the model list.\nSet MCMC=F or add in the mcmc element to the list.\n")
-        SBzero <- median(SSout$mcmc$SPB_Virgin)
-        SB <- SSout$mcmc[,substring(names(SSout$mcmc),1,4)=="SPB_"]
+        SBzero <- median(SSout$mcmc$SSB_Virgin)
+        SB <- SSout$mcmc[,substring(names(SSout$mcmc),1,4)=="SSB_"]
         SB <- apply(SB[,match(as.character(yrs),substring(names(SB),5))],2,median)
         depl <- SSout$mcmc[,substring(names(SSout$mcmc),1,7)=="Bratio_"]
         tmp1 <- match(as.character(yrs),substring(names(depl),8))  #can have an NA in it and will cause an error

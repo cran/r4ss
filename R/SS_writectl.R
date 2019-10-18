@@ -1,71 +1,63 @@
-#' write control file
-#' 
-#' Write Stock Synthesis control file. Like \code{\link{SS_readctl}}, this
-#' function is not fully developed.
-#' 
-#' 
-#' @param ctllist List object created by \code{\link{SS_readctl}}.
+#' Srite Stock Synthesis control file
+#'
+#' Write Stock Synthesis control file from list object in R which was probably
+#' created using \code{\link{SS_readctl}}. This function is a
+#' wrapper which calls either SS_writectl_3.24 or SS_writectl_3.30
+#' (and potentially additional functions in the future).
+#'
+#' @param ctllist List object created by \code{\link{SS_readdat}}.
 #' @param outfile Filename for where to write new control file.
-#' @param overwrite Should existing files be overwritten? Default=F.
+#' @param version SS version number. Currently only "3.24" or "3.30" are supported,
+#' either as character or numeric values (noting that numeric 3.30 = 3.3).
+#' Defaults to NULL, which means that the function will attempt to determine the
+#' version from \code{ctllist}.
+#' @param overwrite Should existing files be overwritten? Defaults to FALSE.
 #' @param verbose Should there be verbose output while running the file?
-#' Default=T.
-#' @author Ian Taylor
+#' Defaults to TRUE.
+#' @author Ian G. Taylor, Yukio Takeuchi, Gwladys I. Lambert, Kathryn Doering
 #' @export
-#' @seealso \code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
-#' \code{\link{SS_readdat}}, \code{\link{SS_readctl}},
-#' \code{\link{SS_writestarter}}, \code{\link{SS_writeforecast}},
-#' \code{\link{SS_writedat}}, \code{\link{SS_writectl}}
-#' @keywords data manip
-SS_writectl <- function(ctllist,outfile,overwrite=F,verbose=T){
-  # function to write Stock Synthesis control files
-
-  stop("sorry, SS_writectl function is not written yet!")
-
-  if(verbose) cat("running SS_writectl\n")
-
-  if(ctllist$type!="Stock_Synthesis_control_file"){
-    stop("input 'ctllist' should be a list with $type=='Stock_Synthesis_control_file'")
+#' @seealso \code{\link{SS_writedat_3.24}}, \code{\link{SS_writedat_3.30}},
+#' \code{\link{SS_readdat}}, \code{\link{SS_makedatlist}},
+#' \code{\link{SS_readstarter}}, \code{\link{SS_writestarter}},
+#' \code{\link{SS_readforecast}}, \code{\link{SS_writeforecast}}
+SS_writectl <- function(ctllist, outfile, version = NULL, overwrite = FALSE,
+                        verbose = TRUE) {
+  # function to write Stock Synthesis data files
+  if (verbose) {
+    message("Running SS_writectl")
   }
-
-
-  # this command will hopefully prevent earlier issues of getting stuck with all R
-  # output written to the file after the function crashes before closing connection
-  ## on.exit({if(sink.number()>0) sink(); close(zz)})
-  on.exit({if(sink.number()>0) sink()})
-
-  if(file.exists(outfile)){
-    if(!overwrite){
-      stop(paste("File exists and input 'overwrite'=F:",outfile))
-    }else{
+  # Check user inputs are valid to avoid issues with functions.
+  # check ctllist
+  if (ctllist$type != "Stock_Synthesis_control_file") {
+    stop("Input 'ctllist' should be a list with component type == 'Stock_Synthesis_control_file")
+  }
+  # check version input
+  if(is.null(version)) {
+  version <- ctllist$ReadVersion
+  }
+  if(!(version == "3.24" | version == "3.30" | version == 3.3)) {
+    stop("Input 'version' should be either '3.24' or '3.30'")
+  }
+  # Check user inputs and/or prepare the file to be overwitten.
+  if(file.exists(outfile)) {
+    if(!overwrite) {
+      stop("Outfile called ", outfile," exists and input 'overwrite'= FALSE.",
+           "Please set overwrite = TRUE if you wish to overwrite the file.")
+    } else if(overwrite) {
       file.remove(outfile)
     }
   }
-  printdf <- function(dataframe){
-    # function to print data frame with hash mark before first column name
-    names(dataframe)[1] <- paste("#_",names(dataframe)[1],sep="")
-    print(dataframe, row.names=F, strip.white=T)
+  
+  # function call depends on user version
+  if(version == "3.24") {
+    # Specify nseas, N_areas, and Do_AgeKey as input.
+    SS_writectl_3.24(ctllist, outfile, overwrite = overwrite, verbose = verbose)
   }
-  oldwidth <- options()$width
-  options(width=1000)
-
-  if(verbose) cat("opening connection to",outfile,"\n")
-  zz <- file(outfile, open="at")
-  sink(zz)
-  wl <- function(name){
-    # simple function to clean up many repeated commands
-    value = ctllist[names(ctllist)==name]
-    writeLines(paste(value," #_",name,sep=""),con=zz)
+  if(version == "3.30" | version == 3.3) {
+    # This function will get nseas, N_areas, and Do_AgeKey from ctllist.
+    SS_writectl_3.30(ctllist, outfile, overwrite, verbose)
   }
-
-  writeLines("#C control file created using the SS_writectl function in the r4ss package")
-  writeLines(paste("#C should work with SS version:",ctllist$SSversion))
-  writeLines(paste("#C file write time:",Sys.time()))
-  writeLines("#")
-  writeLines("# function not written yet")
-  writeLines("#")
-  writeLines("999")
-  options(width=oldwidth)
-  sink()
-  close(zz)
-  if(verbose) cat("file written to",outfile,"\n")
+  # because this function is used for its side effects (i.e., writing to disk),
+  # return its first argument invisibly.
+  invisible(ctllist) 
 }

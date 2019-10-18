@@ -16,8 +16,12 @@
 #' retrospective year. Should be zero or negative values.
 #' @param overwrite Overwrite any input files with matching names in the
 #' subdirectories where models will be run.
+#' @param exefile Executable file found in directory with model files.
+#' On Windows systems, this value will be automatically updated if a single
+#' executable exists in the directory of model files. Input exefile=NULL if
+#' the executable is in your path and doesn't need copying.
 #' @param extras Additional commands to use when running SS. Default = "-nox"
-#' will reduce the amound of command-line output.
+#' will reduce the amount of command-line output.
 #' @param intern Display runtime information from SS in the R console (vs.
 #' saving to a file).
 #' @param CallType Either "system" or "shell" (choice depends on how you're running
@@ -29,7 +33,6 @@
 #' @author Ian Taylor, Jim Thorson
 #' @export
 #' @seealso \code{\link{SSgetoutput}}
-#' @keywords data manip
 #' @examples
 #' 
 #'   \dontrun{
@@ -47,8 +50,19 @@
 #' 
 SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
                        subdirstart='retro',years=0:-5,overwrite=TRUE,
-                       extras="-nox",intern=FALSE,CallType="system",
+                       exefile='ss', extras="-nox",intern=FALSE,CallType="system",
                        RemoveBlocks=FALSE){
+
+  # determine operating system in a relatively brute force way
+  OS <- "Mac" # don't know the version$os info for Mac
+  prefix <- "./" # prefix applied to start of command to run model
+  if(length(grep("linux",version$os)) > 0){
+    OS <- "Linux"
+  }
+  if(length(grep("mingw",version$os)) > 0){
+    OS <- "Windows"
+    prefix <- ""
+  }
 
   # save working directory
   oldwd <- getwd()
@@ -58,9 +72,25 @@ SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
   newdir <- file.path(masterdir,newsubdir)
   
   # make directories, modify starter file, and start retrospective analyses
-  
+
+  # for Windows users, automatically determine executable
+  if(!is.null(exefile) & OS=="Windows"){
+    exefiles <- dir(olddir)[grep(".exe",dir(olddir))]
+    # if exactly one executable found in model directory, use that instead
+    if(length(exefiles)==1){
+      exefile <- exefiles
+    }
+    # for cases where there is more than one exe and the file name is
+    # "ss" by default, add the exe automatically
+    if(exefile=="ss"){
+      exefile <- "ss.exe"
+    }
+    if(!exefile %in% exefiles){
+      stop("Missing executable file ", exefile, " in ", olddir)
+    }
+  }
+    
   # get model file names from olddir
-  exefile <- dir(olddir)[grep(".exe",dir(olddir))]
   startfile <- dir(olddir)[tolower(dir(olddir))=="starter.ss"]
   forefile <- dir(olddir)[tolower(dir(olddir))=="forecast.ss"]
   wtatagefile <- dir(olddir)[tolower(dir(olddir))=="wtatage.ss"]
@@ -72,31 +102,35 @@ SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
 ## print(startfile)
   startfile <- file.path(olddir,startfile)
   
-  cat("Get input file names from starter file:",startfile,"\n")
+  message("Getting input file names from starter file:\n",startfile)
   starter <- SS_readstarter(startfile,verbose=FALSE)
   ctlfile <- starter$ctlfile
   datfile <- starter$datfile
 
   filenames <- c(exefile,forefile,ctlfile,datfile,wtatagefile,testfile)
-  cat('copying model files from\n',olddir,'\nto\n',newdir,'\n')
-  cat('model files to copy:',filenames,sep='\n ')
+  message('copying model files from\n',olddir,'\n  to\n',newdir)
+  message('model files to copy:\n ', paste(filenames, collapse='\n '))
       
     
   if(!file.exists(newdir)) dir.create(newdir)
   
-  subdirnames <- paste(subdirstart, years, sep='')
+  subdirnames <- paste0(subdirstart, years)
 
   for(iyr in 1:length(years)){
     # create directory
     if(!file.exists(file.path(newdir,subdirnames[iyr])))
       dir.create(file.path(newdir,subdirnames[iyr]))
     # copy files
-    file.copy(file.path(olddir,filenames),
-              file.path(newdir,subdirnames[iyr],filenames),
-              overwrite=TRUE)
+    copy.test <- file.copy(file.path(olddir,filenames),
+                           file.path(newdir,subdirnames[iyr],filenames),
+                           overwrite=TRUE)
+    # make sure there weren't any errors copying the files
+    if(!all(copy.test)){
+      stop("error copying file(s): ",filenames[!copy.test])
+    }
     # change starter file to do retrospectives
     starter$retro_yr <- years[iyr]
-    starter$init_values_src = 0
+    starter$init_values_src <- 0
     setwd(file.path(newdir,subdirnames[iyr]))
     SS_writestarter(starter, dir=getwd(), verbose=FALSE, overwrite=TRUE)
 
@@ -109,16 +143,34 @@ SS_doRetro <- function(masterdir, oldsubdir, newsubdir='retrospectives',
     }
     file.remove(ctlfile)
     writeLines(ctl, ctlfile)
-    
+
+    # if spaces in exe file, then put the filename in quotes
+    if(length(grep(" ", exefile)) > 0){
+      exefile_to_run <- paste0('"', exefile, '"')
+    }else{
+      # but avoid otherwise in case they mess something up
+      exefile_to_run <- exefile
+    }
+    command <- paste0(prefix, exefile_to_run, " ", extras)
+
     # run model
-    cat("Running model in ",getwd(),"\n",sep="")
+    message("Running model in ", getwd(), "\n",
+            "using the command:\n   ", command, sep="")
+    
     if(file.exists("covar.sso")) file.remove("covar.sso")
-    if(intern) cat("ADMB output generated during model run will be written to:\n   ",
-                   getwd(),"/ADMBoutput.txt. \n   To change this, set intern=FALSE\n",
-                   "Note: ignore message about 'Error trying to open data input file ss3.dat'\n",
-                   sep="")
-    if(CallType=="system") ADMBoutput <- system(paste(exefile,extras),intern=intern)
-    if(CallType=="shell") ADMBoutput <- shell(paste(exefile,extras),intern=intern)
+    if(intern){
+      message("ADMB output generated during model run will be written to:\n   ",
+          getwd(),"/ADMBoutput.txt. \n   To change this, set intern=FALSE\n",
+          "Note: ignore message about 'Error trying to open data input file ss3.dat'\n",
+          sep="")
+    }
+
+    if(CallType=="system"){
+      ADMBoutput <- system(command, intern=intern)
+    }
+    if(CallType=="shell"){
+      ADMBoutput <- shell(command, intern=intern)
+    }
     if(intern) writeLines(c("###","ADMB output",as.character(Sys.time()),
                             "###"," ",ADMBoutput), con = 'ADMBoutput.txt')
     setwd('..')

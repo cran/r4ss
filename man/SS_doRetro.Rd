@@ -6,8 +6,8 @@
 \usage{
 SS_doRetro(masterdir, oldsubdir, newsubdir = "retrospectives",
   subdirstart = "retro", years = 0:-5, overwrite = TRUE,
-  extras = "-nox", intern = FALSE, CallType = "system",
-  RemoveBlocks = FALSE)
+  exefile = "ss", extras = "-nox", intern = FALSE,
+  CallType = "system", RemoveBlocks = FALSE)
 }
 \arguments{
 \item{masterdir}{Directory where everything takes place.}
@@ -27,8 +27,13 @@ retrospective year. Should be zero or negative values.}
 \item{overwrite}{Overwrite any input files with matching names in the
 subdirectories where models will be run.}
 
+\item{exefile}{Executable file found in directory with model files.
+On Windows systems, this value will be automatically updated if a single
+executable exists in the directory of model files. Input exefile=NULL if
+the executable is in your path and doesn't need copying.}
+
 \item{extras}{Additional commands to use when running SS. Default = "-nox"
-will reduce the amound of command-line output.}
+will reduce the amount of command-line output.}
 
 \item{intern}{Display runtime information from SS in the R console (vs.
 saving to a file).}
@@ -62,12 +67,9 @@ to exclude.
   }
 
 }
-\author{
-Ian Taylor, Jim Thorson
-}
 \seealso{
 \code{\link{SSgetoutput}}
 }
-\keyword{data}
-\keyword{manip}
-
+\author{
+Ian Taylor, Jim Thorson
+}

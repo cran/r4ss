@@ -9,12 +9,14 @@ PinerPlot(summaryoutput, plot = TRUE, print = FALSE,
   main = "Changes in length-composition likelihoods by fleet",
   models = "all", fleets = "all", fleetnames = "default",
   profile.string = "R0", profile.label = expression(log(italic(R)[0])),
-  ylab = "Change in -log-likelihood", col = "default", pch = "default",
-  lty = 1, lty.total = 1, lwd = 2, lwd.total = 3, cex = 1,
-  cex.total = 1.5, xlim = "default", ymax = "default", xaxs = "r",
-  yaxs = "r", type = "o", legend = TRUE, legendloc = "topright",
-  pwidth = 6.5, pheight = 5, punits = "in", res = 300, ptsize = 10,
-  cex.main = 1, plotdir = NULL, verbose = TRUE, fleetgroups = NULL,
+  exact = FALSE, ylab = "Change in -log-likelihood", col = "default",
+  pch = "default", lty = 1, lty.total = 1, lwd = 2,
+  lwd.total = 3, cex = 1, cex.total = 1.5, xlim = "default",
+  ymax = "default", xaxs = "r", yaxs = "r", type = "o",
+  legend = TRUE, legendloc = "topright", pwidth = 6.5, pheight = 5,
+  punits = "in", res = 300, ptsize = 10, cex.main = 1,
+  plotdir = NULL, add_cutoff = FALSE, cutoff_prob = 0.95,
+  verbose = TRUE, fleetgroups = NULL,
   likelihood_type = "raw_times_lambda", minfraction = 0.01)
 }
 \arguments{
@@ -38,12 +40,17 @@ columns in summary tables.}
 \item{fleetnames}{Optional character vector of names for each fleet.}
 
 \item{profile.string}{Character string used to find parameter over which the
-profile was conducted. Needs to match substring of one of the SS parameter
-labels found in the Report.sso file. For instance, the default input 'steep'
-matches the parameter 'SR_BH_steep'.}
+profile was conducted. If \code{exact=FALSE}, this can be a substring of
+one of the SS parameter labels found in the Report.sso file.
+For instance, the default input 'R0'
+matches the parameter 'SR_LN(R0)'. If \code{exact=TRUE}, then
+profile.string needs to be an exact match to the parameter label.}
 
 \item{profile.label}{Label for x-axis describing the parameter over which
 the profile was conducted.}
+
+\item{exact}{Should the \code{profile.string} have to match the parameter
+label exactly, or is a substring OK.}
 
 \item{ylab}{Label for y-axis. Default is "Change in -log-likelihood".}
 
@@ -51,11 +58,11 @@ the profile was conducted.}
 
 \item{pch}{Optional vector of plot characters for the points.}
 
-\item{lty}{Line total for the liklihood components.}
+\item{lty}{Line total for the likelihood components.}
 
 \item{lty.total}{Line type for the total likelihood.}
 
-\item{lwd}{Line width for the liklihood components.}
+\item{lwd}{Line width for the likelihood components.}
 
 \item{lwd.total}{Line width for the total likelihood.}
 
@@ -98,6 +105,13 @@ plotted.}
 \item{plotdir}{Directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
+\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95% confidence interval
+based on common cutoff of half of chi-squared of p=.95 with 1 degree of
+freedom: \code{0.5*qchisq(p=cutoff_prob, df=1)}. The probability value
+can be adjusted using the \code{cutoff_prob} below.}
+
+\item{cutoff_prob}{Probability associated with \code{add_cutoff} above.}
+
 \item{verbose}{Return updates of function progress to the R GUI? (Doesn't do
 anything yet.)}
 
@@ -120,11 +134,10 @@ honor of Kevin Piner's contributions to interpreting likelihood
 profiles. He's surely not the first person to make such a plot
 but the name seems to have stuck.
 }
-\author{
-Ian Taylor, Kevin Piner, Jim Thorson
-}
 \references{
 Kevin Piner says that he's not the originator of this idea so
 Athol Whitten is going to add a reference here.
 }
-
+\author{
+Ian Taylor, Kevin Piner, Jim Thorson
+}

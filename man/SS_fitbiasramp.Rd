@@ -6,8 +6,9 @@
 \usage{
 SS_fitbiasramp(replist, verbose = FALSE, startvalues = NULL,
   method = "BFGS", twoplots = TRUE, transform = FALSE, plot = TRUE,
-  print = FALSE, plotdir = "default", shownew = TRUE, oldctl = NULL,
-  newctl = NULL, altmethod = "nlminb", pwidth = 6.5, pheight = 5,
+  print = FALSE, plotdir = "default", shownew = TRUE,
+  oldctl = NULL, newctl = NULL, altmethod = "nlminb",
+  exclude_forecast = FALSE, pwidth = 6.5, pheight = 5,
   punits = "in", ptsize = 10, res = 300, cex.main = 1)
 }
 \arguments{
@@ -47,6 +48,9 @@ estimated bias adjustment values. Default=NULL.}
 \item{altmethod}{Optimization tool to use in place of optim, either "nlminb"
 or "psoptim". If not equal to either of these, then optim is used.}
 
+\item{exclude_forecast}{Exclude forecast values in the estimation of
+alternative bias adjustment inputs?}
+
 \item{pwidth}{Default width of plots printed to files in units of
 \code{punits}. Default=7.}
 
@@ -67,9 +71,6 @@ help("png") in R for details). Default=12.}
 Uses standard error of estimated recruitment deviates to estimate the 5
 controls for the bias adjustment in Stock Synthesis
 }
-\author{
-Ian Taylor
-}
 \references{
 Methot, R.D. and Taylor, I.G., 2011. Adjusting for bias due to
 variability of estimated recruitments in fishery assessment models.  Can. J.
@@ -78,7 +79,6 @@ Fish. Aquat. Sci., 68:1744-1760.
 \seealso{
 \code{\link{SS_output}}
 }
-\keyword{data}
-\keyword{hplot}
-\keyword{manip}
-
+\author{
+Ian Taylor
+}

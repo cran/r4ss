@@ -25,10 +25,9 @@
 #' @author Ian Taylor
 #' @export
 #' @seealso \code{\link{SS_plots}}, \code{\link{SS_output}}
-#' @keywords aplot hplot
 #' 
 SS_html <- function(replist=NULL,
-                    plotdir="plots",
+                    plotdir=NULL,
                     plotInfoTable=NULL,
                     title="SS Output",
                     width=500,
@@ -39,14 +38,14 @@ SS_html <- function(replist=NULL,
   cat("Running 'SS_html':\n",
       "  By default, this function will look in the directory where PNG files were created\n",
       "  for CSV files with the name 'plotInfoTable...' written by 'SS_plots.'\n",
-      "  HTML files are written to link to these plots and put in the same directory.\n",
-      "  Please provide feedback on any bugs, annoyances, or suggestions for improvement.\n\n")
-  
+      "  HTML files are written to link to these plots and put in the same directory.\n\n")
+  if(is.null(plotdir)){
+    stop("input 'plotdir' required")
+  }
   # check for table in directory with PNG files
   if(is.null(plotInfoTable)){
     if(!is.null(replist)){
-      dir <- replist$inputs$dir
-      filenames <- dir(file.path(dir,plotdir))
+      filenames <- dir(plotdir)
       # look for all files beginning with the name 'plotInfoTable'
       filenames <- filenames[grep("plotInfoTable",filenames)]
       filenames <- filenames[grep(".csv",filenames)]
@@ -54,13 +53,13 @@ SS_html <- function(replist=NULL,
       plotInfoTable <- NULL
       # loop over matching CSV files and combine them
       for(ifile in 1:length(filenames)){
-        filename <- file.path(dir,plotdir,filenames[ifile])
+        filename <- file.path(plotdir,filenames[ifile])
         temp <- read.csv(filename,colClasses = "character")
         plotInfoTable <- rbind(plotInfoTable,temp)
       }
       plotInfoTable$png_time <- as.POSIXlt(plotInfoTable$png_time)
       # look for duplicate models
-      runs <- unique(plotInfoTable$Run_time)
+      runs <- unique(plotInfoTable$StartTime)
       if(length(runs)>1){
         if(multimodel){
           msg <- c("Warning!: CSV files with name 'plotInfoTable...' are from multiple model runs.\n",
@@ -81,7 +80,7 @@ SS_html <- function(replist=NULL,
       duplicates <- names(filetable[filetable>1])
       # loop over duplicates and remove rows for older instance
       if(length(duplicates)>0){
-        if(verbose) cat("Removing duplicate rows in combined plotInfoTable based on mutliple CSV files\n")
+        if(verbose) cat("Removing duplicate rows in combined plotInfoTable based on multiple CSV files\n")
         for(idup in 1:length(duplicates)){
           duprows <- grep(duplicates[idup], plotInfoTable$file, fixed=TRUE)
           duptimes <- plotInfoTable$png_time[duprows]
@@ -109,14 +108,14 @@ SS_html <- function(replist=NULL,
   for(icat in 0:length(categories)){
     if(icat==0){
       category <- "Home"
-      htmlfile <- file.path(dir,plotdir,"SS_output.html")
+      htmlfile <- file.path(plotdir,"SS_output.html")
       htmlhome <- htmlfile
       if(verbose){
         cat("Home HTML file with output will be:\n",htmlhome,'\n')
       }
     }else{
       category <- categories[icat]
-      htmlfile <- file.path(dir,plotdir,paste("SS_output_",category,".html",sep=""))
+      htmlfile <- file.path(plotdir,paste("SS_output_",category,".html",sep=""))
     }
     # write HTML head including some CSS stuff about fonts and whatnot
     # source for text below is http://unraveled.com/publications/css_tabs/
@@ -238,13 +237,27 @@ SS_html <- function(replist=NULL,
     
     # add text on "Home" page
     if(category=="Home"){
-      cat('\n\n<h2><a name="',category,'">',category,'</h2>\n',sep="", file=htmlfile, append=TRUE)
+      cat('\n\n<h2><a name="', category, '">', category, '</h2>\n', sep="",
+          file=htmlfile, append=TRUE)
       if(is.null(replist)){
         cat('<p>Model info not available (need to supply "replist" input to SS_HTML function)</p>\n',
             sep="", file=htmlfile, append=TRUE)
       }else{
+        r4ss_info <- packageDescription('r4ss')
+        if(!is.list(r4ss_info)){
+          r4ss_info_text <- NULL
+        }else{
+          goodnames <- c("Version", "Date", "Built",
+                         grep("Remote", names(r4ss_info), value=TRUE))
+          r4ss_info_text <- '<p><b>r4ss info:<br></b>\n'
+          for(name in goodnames){
+            r4ss_info_text <- c(r4ss_info_text,
+                                paste0(name, ": ", r4ss_info[name], "<br>"))
+          }
+        }
         cat('<p><b>SS version:</b>\n',
             replist$SS_version,'</p>\n\n',
+            r4ss_info_text,
             '<p><b>Starting time of model:</b>\n',
             substring(replist$StartTime,12),'</p>\n\n',
             sep="", file=htmlfile, append=TRUE)
@@ -284,14 +297,33 @@ SS_html <- function(replist=NULL,
           }
         }
       }
-    }else{
+    }else if(category=="DiagnosticTables"){
+      plotinfo <- plotInfoTable[plotInfoTable$category==category, ]
+      cat('\n\n<h2><a name="', category, '">', category, '</h2>\n', sep="",
+          file=htmlfile,  append=TRUE)
+      for(i in 1:nrow(plotinfo)){
+        txtfilename <- file.path(plotdir, plotinfo$basename[i])
+        table_text <- readLines(txtfilename)
+        cat("<p align=left>",
+            table_text ,
+            "<br>", plotinfo$caption[i], "<br><i><small>file: <a href='",
+            txtfilename, "'>", plotinfo$basename[i], "</a></small></i>\n",
+            sep="", file=htmlfile, append=TRUE)
+      }
+      
+    }else {
       plotinfo <- plotInfoTable[plotInfoTable$category==category,]
       
-      cat('\n\n<h2><a name="',category,'">',category,'</h2>\n',sep="", file=htmlfile, append=TRUE)
+      cat('\n\n<h2><a name="', category, '">', category, '</h2>\n', sep="",
+          file=htmlfile, append=TRUE)
       for(i in 1:nrow(plotinfo)){
-        cat("<p align=left><a href='",plotinfo$basename[i],"'><img src='",plotinfo$basename[i],
-            "' border=0 width=",width,"></a><br>",plotinfo$caption[i],"<br><i><small>file: <a href='",plotinfo$basename[i],"'>",plotinfo$basename[i],"</a></small></i>\n",
-            sep="", file=htmlfile, append=TRUE)
+        cat("<p align=left><a href='", plotinfo$basename[i],
+            "'><img src='", plotinfo$basename[i],
+            "' border=0 width=", width, "></a><br>",
+            plotinfo$caption[i],
+            "<br><i><small>file: <a href='", plotinfo$basename[i],
+            "'>", plotinfo$basename[i], "</a></small></i>\n",
+            sep="",  file=htmlfile,  append=TRUE)
       }
     }
   }

@@ -4,11 +4,12 @@
 \alias{bubble3}
 \title{Create a bubble plot.}
 \usage{
-bubble3(x, y, z, col = 1, cexZ1 = 5, maxsize = NULL, do.sqrt = TRUE,
-  bg.open = gray(0.95, 0.3), legend = TRUE, legendloc = "top",
-  legend.z = "default", legend.yadj = 1.1, main = "", cex.main = 1,
-  xlab = "", ylab = "", minnbubble = 3, xlim = NULL, ylim = NULL,
-  axis1 = TRUE, xlimextra = 1, add = FALSE, las = 1, allopen = TRUE)
+bubble3(x, y, z, col = 1, cexZ1 = 5, maxsize = NULL,
+  do.sqrt = TRUE, bg.open = gray(0.95, 0.3), legend = TRUE,
+  legendloc = "top", legend.z = "default", legend.yadj = 1.1,
+  main = "", cex.main = 1, xlab = "", ylab = "", minnbubble = 3,
+  xlim = NULL, ylim = NULL, axis1 = TRUE, xlimextra = 1,
+  add = FALSE, las = 1, allopen = TRUE)
 }
 \arguments{
 \item{x}{Vector of x-values.}
@@ -18,11 +19,12 @@ bubble3(x, y, z, col = 1, cexZ1 = 5, maxsize = NULL, do.sqrt = TRUE,
 \item{z}{Vector of bubble sizes, where positive sizes will be plotted as
 closed bubbles and negative as open unless \code{allopen==TRUE}.}
 
-\item{col}{Color for bubbles.}
+\item{col}{Color for bubbles. Should be either a single value or vector
+of length equal to x, y, and z vectors.}
 
 \item{cexZ1}{Character expansion (cex) value for a proportion of 1.0.}
 
-\item{maxsize}{Size of largest bubble. Prefered option is now an expansion
+\item{maxsize}{Size of largest bubble. Preferred option is now an expansion
 factor for a bubble with z=1 (see \code{cexZ1} above).}
 
 \item{do.sqrt}{Should size be based on the area? (Diameter proportional to
@@ -43,7 +45,7 @@ expanded to make space for it.}
 
 \item{main}{Title of plot. Default="".}
 
-\item{cex.main}{Charecter expansion for title. Default=1.}
+\item{cex.main}{Character expansion for title. Default=1.}
 
 \item{xlab}{X-axis label.}
 
@@ -75,6 +77,3 @@ and negative values have open bubbles.
 \author{
 Ian Stewart and Ian Taylor
 }
-\keyword{aplot}
-\keyword{hplot}
-

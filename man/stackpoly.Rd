@@ -5,8 +5,8 @@
 \title{modified from "stackpoly" by Jim Lemon from "plotrix" package}
 \usage{
 stackpoly(x, y, main = "", xlab = "", ylab = "", xat = NA,
-  xaxlab = NA, xlim = NA, ylim = NA, lty = 1, border = NA, col = NA,
-  axis4 = F, x.hash = NULL, density = 20, ...)
+  xaxlab = NA, xlim = NA, ylim = NA, lty = 1, border = NA,
+  col = NA, axis4 = F, x.hash = NULL, density = 20, ...)
 }
 \arguments{
 \item{x}{A numeric data frame or matrix with the 'x' values. If 'y' is NULL,
@@ -48,11 +48,9 @@ generate the colors. If NA, the polygons will not be filled.}
 Plot one or more columns of numeric values as the top edges of polygons
 instead of lines.
 }
-\author{
-Jim Lemon, Ian Taylor
-}
 \references{
 \url{https://cran.r-project.org/package=plotrix}
 }
-\keyword{hplot}
-
+\author{
+Jim Lemon, Ian Taylor
+}

@@ -9,28 +9,64 @@ SSplotComparisons(summaryoutput, subplots = 1:20, plot = TRUE,
   endyrvec = "default", indexfleets = NULL, indexUncertainty = FALSE,
   indexQlabel = TRUE, indexQdigits = 4, indexSEvec = "default",
   indexPlotEach = FALSE, labels = c("Year", "Spawning biomass (t)",
-  "Relative spawning biomass", "Age-0 recruits (1,000s)",
-  "Recruitment deviations", "Index", "Log index", "SPR ratio", "Density",
+  "Fraction of unfished", "Age-0 recruits (1,000s)",
+  "Recruitment deviations", "Index", "Log index", "1 - SPR", "Density",
   "Management target", "Minimum stock size threshold", "Spawning output",
-  "Harvest rate"), col = NULL, shadecol = NULL, pch = NULL, lty = 1,
-  lwd = 2, spacepoints = 10, staggerpoints = 1, initpoint = 0,
-  tickEndYr = TRUE, shadeForecast = TRUE, xlim = "default", ylimAdj = 1,
-  xaxs = "r", yaxs = "r", type = "o", uncertainty = TRUE,
-  shadealpha = 0.1, legend = TRUE, legendlabels = "default",
-  legendloc = "topright", legendorder = "default", legendncol = 1,
-  sprtarg = NULL, btarg = NULL, minbthresh = NULL, pwidth = 6.5,
-  pheight = 5, punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  plotdir = NULL, filenameprefix = "", densitynames = c("SPB_Virgin",
-  "R0"), densityxlabs = "default", densityscalex = 1, densityscaley = 1,
-  densityadjust = 1, densitysymbols = TRUE, densitytails = TRUE,
-  densitymiddle = FALSE, densitylwd = 1, fix0 = TRUE, new = TRUE,
-  add = FALSE, par = list(mar = c(5, 4, 1, 1) + 0.1), verbose = TRUE,
-  mcmcVec = "default")
+  "Harvest rate"), col = NULL, shadecol = NULL, pch = NULL,
+  lty = 1, lwd = 2, spacepoints = 10, staggerpoints = 1,
+  initpoint = 0, tickEndYr = TRUE, shadeForecast = TRUE,
+  xlim = "default", ylimAdj = 1.05, xaxs = "i", yaxs = "i",
+  type = "o", uncertainty = TRUE, shadealpha = 0.1, legend = TRUE,
+  legendlabels = "default", legendloc = "topright",
+  legendorder = "default", legendncol = 1, sprtarg = NULL,
+  btarg = NULL, minbthresh = NULL, pwidth = 6.5, pheight = 5,
+  punits = "in", res = 300, ptsize = 10, cex.main = 1,
+  plotdir = NULL, filenameprefix = "", densitynames = c("SSB_Virgin",
+  "R0"), densityxlabs = "default", rescale = TRUE, densityscalex = 1,
+  densityscaley = 1, densityadjust = 1, densitysymbols = TRUE,
+  densitytails = TRUE, densitymiddle = FALSE, densitylwd = 1,
+  fix0 = TRUE, new = TRUE, add = FALSE, par = list(mar = c(5, 4, 1,
+  1) + 0.1), verbose = TRUE, mcmcVec = FALSE,
+  show_equilibrium = TRUE)
 }
 \arguments{
 \item{summaryoutput}{List created by \code{SSsummarize}}
 
-\item{subplots}{Vector of subplots to be created.}
+\item{subplots}{Vector of subplots to be created
+Numbering of subplots is as follows:
+\itemize{
+  \item 1  spawning biomass
+  \item 2  spawning biomass with uncertainty intervals
+  \item 3  biomass ratio (hopefully equal to fraction of unfished)
+  \item 4  biomass ratio with uncertainty
+  \item 5  SPR ratio
+  \item 6  SPR ratio with uncertainty
+  \item 7  F value
+  \item 8  F value with uncertainty
+  \item 9  recruits
+  \item 10  recruits with uncertainty
+  \item 11  recruit devs
+  \item 12  recruit devs with uncertainty
+  \item 13  index fits
+  \item 14  index fits on a log scale
+  \item 15  phase plot
+  \item 16  densities
+  \item 17  cumulative densities
+}
+Note that this represents a revision in the numbering for 7 and higher
+from the numbering used up to r4ss version 1.36.0 which was as follows:
+\itemize{
+  \item 18  F value with uncertainty
+  \item 7  recruits
+  \item 8  recruits with uncertainty
+  \item 9  recruit devs
+  \item 10  recruit devs with uncertainty
+  \item 11  index fits
+  \item 12  index fits on a log scale
+  \item 13  phase plot
+  \item 14  densities
+  \item 15  cumulative densities
+}}
 
 \item{plot}{Plot to active plot device?}
 
@@ -106,7 +142,7 @@ the maximum ending year of the models}
 \item{xlim}{Optional x limits}
 
 \item{ylimAdj}{Multiplier for ylim parameter. Allows additional white space
-to fit legend if necessary. Default=1.}
+to fit legend if necessary. Default=1.05.}
 
 \item{xaxs}{Choice of xaxs parameter (see ?par for more info)}
 
@@ -127,7 +163,9 @@ values (implemented as \code{adjustcolor(col=col, alpha.f=shadealpha)})}
 \item{legendlabels}{Optional vector of labels to include in legend. Default
 is 'model1','model2',etc.}
 
-\item{legendloc}{Location of legend. See ?legend for more info.}
+\item{legendloc}{Location of legend. Either a string like "topleft" or a vector
+of two numeric values representing the fraction of the maximum in the x and y
+dimensions, respectively. See ?legend for more info on the string options.}
 
 \item{legendorder}{Optional vector of model numbers that can be used to have
 the legend display the model names in an order that is different than that
@@ -141,7 +179,7 @@ plots and phase plot.}
 \item{btarg}{Target biomass value at which to show a line (set to 0 to
 remove)}
 
-\item{minbthresh}{Minimum biomass threshhold at which to show a line (set to
+\item{minbthresh}{Minimum biomass threshold at which to show a line (set to
 0 to remove)}
 
 \item{pwidth}{Width of plot}
@@ -169,6 +207,9 @@ summaryoutput$quants$Label for which to make density plots}
 \item{densityxlabs}{Optional vector of x-axis labels to use in the density
 plots (must be equal in length to the printed vector of quantities that
 match the \code{densitynames} input)}
+
+\item{rescale}{TRUE/FALSE control of automatic rescaling of units into
+thousands, millions, or billions}
 
 \item{densityscalex}{Scalar for upper x-limit in density plots (values below
 1 will cut off the right tail to provide better contrast among narrower
@@ -204,19 +245,49 @@ function}
 \item{verbose}{Report progress to R GUI?}
 
 \item{mcmcVec}{Vector of TRUE/FALSE values (or single value) indicating
-whether input values are from MCMC or to use normal distribution around MLE}
+whether input values are from MCMC or to use normal distribution around
+MLE}
+
+\item{show_equilibrium}{Whether to show the equilibrium values for
+SSB. For some model comparisons, these might not be comparable and thus
+useful to turn off. Defaults to TRUE.}
 }
 \description{
 Creates a user-chosen set of plots comparing model output from a summary of
 multiple models, where the collection was created using the
 \code{SSsummarize} function.
 }
-\author{
-Ian Taylor
+\examples{
+
+  \dontrun{
+# directories where models were run need to be defined
+dir1 <- 'c:/SS/mod1'
+dir2 <- 'c:/SS/mod2'
+
+# read two models
+mod1 <- SS_output(dir=dir1)
+mod2 <- SS_output(dir=dir2)
+
+# create list summarizing model results
+mod.sum <- SSsummarize(list(mod1, mod2))
+
+# plot comparisons
+SSplotComparisons(mod.sum, legendlabels=c("First model", "Second model"))
+
+# Example showing comparison of MLE to MCMC results where the mcmc would have
+# been run in the subdirectory 'c:/SS/mod1/mcmc'
+mod1 <- SS_output(dir='c:/SS/mod1', dir.mcmc='mcmc')
+# pass the same model twice to SSsummarize in order to plot it twice 
+mod.sum <- SSsummarize(list(mod1, mod1))
+# compare MLE to MCMC
+SSplotComparisons(mod.sum, legendlabels=c("MCMC", "MLE"), mcmcVec=c(TRUE,FALSE))
+
+}
 }
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SSsummarize}},
 \code{\link{SS_output}}, \code{\link{SSgetoutput}}
 }
-\keyword{hplot}
-
+\author{
+Ian G. Taylor, John R. Wallace
+}

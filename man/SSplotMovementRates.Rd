@@ -4,11 +4,12 @@
 \alias{SSplotMovementRates}
 \title{Plot movement rates from model output}
 \usage{
-SSplotMovementRates(replist, plot = TRUE, print = FALSE, subplots = 1:2,
-  plotdir = "default", colvec = "default", ylim = "default",
-  legend = TRUE, legendloc = "topleft", moveseas = "all",
-  min.move.age = 0.5, pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+SSplotMovementRates(replist, plot = TRUE, print = FALSE,
+  subplots = 1:2, plotdir = "default", colvec = "default",
+  ylim = "default", legend = TRUE, legendloc = "topleft",
+  moveseas = "all", min.move.age = 0.5, pwidth = 6.5, pheight = 5,
+  punits = "in", res = 300, ptsize = 10, cex.main = 1,
+  verbose = TRUE)
 }
 \arguments{
 \item{replist}{list created by \code{\link{SS_output}}}
@@ -32,7 +33,7 @@ areas?}
 
 \item{legendloc}{location passed to legend function (if used)}
 
-\item{moveseas}{choice of season for which movemement rates are shown}
+\item{moveseas}{choice of season for which movement rates are shown}
 
 \item{min.move.age}{Minimum age of movement (in future will come from Report file)}
 
@@ -51,7 +52,7 @@ areas?}
 \item{verbose}{Print information on function progress.}
 }
 \description{
-Plots estimated movement rates in final year for each area/seaon with movement as
+Plots estimated movement rates in final year for each area/season with movement as
 reported in Report.sso. If movement is time-varying, an additional figure shows
 pattern across years.
 }
@@ -62,12 +63,9 @@ pattern across years.
   }
 
 }
+\seealso{
+\code{\link{SS_output}}, \code{\link{SSplotMovementRates}},
+}
 \author{
 Ian Taylor
 }
-\seealso{
-\code{\link{SS_output}}, \code{\link{SSplotMovementRates}},
-\code{\link{IOTCmove}}
-}
-\keyword{hplot}
-

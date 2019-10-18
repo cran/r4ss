@@ -10,9 +10,9 @@
 #' @param print print to PNG files?
 #' @param areanames optional vector to replace c("Area1","Area2",...)
 #' @param seasnames optional vector to replace c("Season1","Season2",...)
-#' @param xlab optional x-axis label (if the area names aren't informative
+#' @param xlab optional x-axis label (if the area names aren\'t informative
 #' enough)
-#' @param ylab optional y-axis label (if the season names aren't informative
+#' @param ylab optional y-axis label (if the season names aren\'t informative
 #' enough)
 #' @param main title for plot
 #' @param plotdir directory where PNG files will be written. by default it will
@@ -27,7 +27,6 @@
 #' @author Ian Taylor
 #' @export
 #' @seealso \code{\link{SS_plots}}, \code{\link{SSplotRecdevs}}
-#' @keywords hplot
 SSplotRecdist <-
   function(replist,plot=TRUE,print=FALSE,
            areanames=NULL,
@@ -40,10 +39,12 @@ SSplotRecdist <-
            verbose=TRUE)
 {
   # plot of recruitment distribution between seasons and areas
-  pngfun <- function(file,caption=NA){
-    png(filename=file,width=pwidth,height=pheight,
-        units=punits,res=res,pointsize=ptsize)
-    plotinfo <- rbind(plotinfo,data.frame(file=file,caption=caption))
+
+  # subfunction to write png files
+  pngfun <- function(file, caption=NA){
+    png(filename=file.path(plotdir, file),
+        width=pwidth, height=pheight, units=punits, res=res, pointsize=ptsize)
+    plotinfo <- rbind(plotinfo, data.frame(file=file, caption=caption))
     return(plotinfo)
   }
   plotinfo <- NULL
@@ -90,7 +91,7 @@ SSplotRecdist <-
   
   if(plot) recdistfun()
   if(print){
-    file <- paste(plotdir,"recruitment_distribution.png",sep="")
+    file <- "recruitment_distribution.png"
     caption <- "Recruitment distribution by area and season"
     plotinfo <- pngfun(file=file, caption=caption)
     recdistfun()

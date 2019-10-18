@@ -8,8 +8,8 @@ SSplotRetroRecruits(retroSummary, endyrvec, cohorts, ylim = NULL,
   uncertainty = FALSE, labels = c("Recruitment deviation",
   "Recruitment (billions)", "relative to recent estimate", "Age"),
   main = "Retrospective analysis of recruitment deviations",
-  mcmcVec = FALSE, devs = TRUE, relative = FALSE, labelyears = TRUE,
-  legend = FALSE, leg.ncols = 4)
+  mcmcVec = FALSE, devs = TRUE, relative = FALSE,
+  labelyears = TRUE, legend = FALSE, leg.ncols = 4)
 }
 \arguments{
 \item{retroSummary}{List object created by \code{\link{SSsummarize}} that
@@ -78,9 +78,6 @@ examine retrospective patterns in estimation of recruitment deviations.
  }
 
 }
-\author{
-Ian Taylor
-}
 \references{
 Ianelli et al. (2011) Assessment of the walleye pollock stock in
 the Eastern Bering Sea.
@@ -90,5 +87,6 @@ which is on an absolute, rather than log scale.)
 \seealso{
 \code{\link{SSsummarize}}
 }
-\keyword{hplot}
-
+\author{
+Ian Taylor
+}

@@ -4,24 +4,28 @@
 \alias{SSplotProfile}
 \title{Plot likelihood profile results}
 \usage{
-SSplotProfile(summaryoutput, plot = TRUE, print = FALSE, models = "all",
-  profile.string = "steep", profile.label = "Spawner-recruit steepness (h)",
+SSplotProfile(summaryoutput, plot = TRUE, print = FALSE,
+  models = "all", profile.string = "steep",
+  profile.label = "Spawner-recruit steepness (h)", exact = FALSE,
   ylab = "Change in -log-likelihood", components = c("TOTAL", "Catch",
-  "Equil_catch", "Survey", "Discard", "Mean_body_wt", "Length_comp", "Age_comp",
-  "Size_at_age", "SizeFreq", "Morphcomp", "Tag_comp", "Tag_negbin",
-  "Recruitment", "Forecast_Recruitment", "Parm_priors", "Parm_softbounds",
-  "Parm_devs", "F_Ballpark", "Crash_Pen"), component.labels = c("Total",
-  "Catch", "Equilibrium catch", "Index data", "Discard", "Mean body weight",
+  "Equil_catch", "Survey", "Discard", "Mean_body_wt", "Length_comp",
+  "Age_comp", "Size_at_age", "SizeFreq", "Morphcomp", "Tag_comp",
+  "Tag_negbin", "Recruitment", "InitEQ_Regime", "Forecast_Recruitment",
+  "Parm_priors", "Parm_softbounds", "Parm_devs", "F_Ballpark",
+  "Crash_Pen"), component.labels = c("Total", "Catch",
+  "Equilibrium catch", "Index data", "Discard", "Mean body weight",
   "Length data", "Age data", "Size-at-age data", "Generalized size data",
-  "Morph composition data", "Tag recapture distribution", "Tag recapture total",
-  "Recruitment", "Forecast recruitment", "Priors", "Soft bounds",
-  "Parameter deviations", "F Ballpark", "Crash penalty"), minfraction = 0.01,
-  sort.by.max.change = TRUE, col = "default", pch = "default", lty = 1,
-  lty.total = 1, lwd = 2, lwd.total = 3, cex = 1, cex.total = 1.5,
-  xlim = "default", ymax = "default", xaxs = "r", yaxs = "r",
-  type = "o", legend = TRUE, legendloc = "topright", pwidth = 6.5,
-  pheight = 5, punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  plotdir = NULL, verbose = TRUE, ...)
+  "Morph composition data", "Tag recapture distribution",
+  "Tag recapture total", "Recruitment", "Initital equilibrium recruitment",
+  "Forecast recruitment", "Priors", "Soft bounds", "Parameter deviations",
+  "F Ballpark", "Crash penalty"), minfraction = 0.01,
+  sort.by.max.change = TRUE, col = "default", pch = "default",
+  lty = 1, lty.total = 1, lwd = 2, lwd.total = 3, cex = 1,
+  cex.total = 1.5, xlim = "default", ymax = "default", xaxs = "r",
+  yaxs = "r", type = "o", legend = TRUE, legendloc = "topright",
+  pwidth = 6.5, pheight = 5, punits = "in", res = 300,
+  ptsize = 10, cex.main = 1, plotdir = NULL, add_cutoff = FALSE,
+  cutoff_prob = 0.95, verbose = TRUE, ...)
 }
 \arguments{
 \item{summaryoutput}{List created by the function \code{\link{SSsummarize}}.}
@@ -35,12 +39,17 @@ SSplotProfile(summaryoutput, plot = TRUE, print = FALSE, models = "all",
 columns in summary tables.}
 
 \item{profile.string}{Character string used to find parameter over which the
-profile was conducted. Needs to match substring of one of the SS parameter
-labels found in the Report.sso file. For instance, the default input 'steep'
-matches the parameter 'SR_BH_steep'.}
+profile was conducted. If \code{exact=FALSE}, this can be a substring of
+one of the SS parameter labels found in the Report.sso file.
+For instance, the default input 'steep'
+matches the parameter 'SR_BH_steep'. If \code{exact=TRUE}, then
+profile.string needs to be an exact match to the parameter label.}
 
 \item{profile.label}{Label for x-axis describing the parameter over which
 the profile was conducted.}
+
+\item{exact}{Should the \code{profile.string} have to match the parameter
+label exactly, or is a substring OK.}
 
 \item{ylab}{Label for y-axis. Default is "Change in -log-likelihood".}
 
@@ -64,11 +73,11 @@ Default=TRUE.}
 
 \item{pch}{Optional vector of plot characters for the points.}
 
-\item{lty}{Line total for the liklihood components.}
+\item{lty}{Line total for the likelihood components.}
 
 \item{lty.total}{Line type for the total likelihood.}
 
-\item{lwd}{Line width for the liklihood components.}
+\item{lwd}{Line width for the likelihood components.}
 
 \item{lwd.total}{Line width for the total likelihood.}
 
@@ -111,6 +120,13 @@ plotted.}
 \item{plotdir}{Directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
+\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95% confidence interval
+based on common cutoff of half of chi-squared of p=.95 with 1 degree of
+freedom: \code{0.5*qchisq(p=cutoff_prob, df=1)}. The probability value
+can be adjusted using the \code{cutoff_prob} below.}
+
+\item{cutoff_prob}{Probability associated with \code{add_cutoff} above.}
+
 \item{verbose}{Return updates of function progress to the R GUI? (Doesn't do
 anything yet.)}
 
@@ -128,13 +144,10 @@ well together. Thus, even if \code{\link{SS_profile}} is used, the output
 should be read using \code{\link{SSgetoutput}} or by multiple calls to
 \code{\link{SS_output}}.
 }
-\author{
-Ian Taylor, Ian Stewart
-}
 \seealso{
 \code{\link{SSsummarize}}, \code{\link{SS_profile}},
 \code{\link{SS_output}}, \code{\link{SSgetoutput}}
 }
-\keyword{aplot}
-\keyword{hplot}
-
+\author{
+Ian Taylor, Ian Stewart
+}

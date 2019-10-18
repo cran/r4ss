@@ -4,14 +4,20 @@
 \alias{SSplotSpawnrecruit}
 \title{Plot spawner-recruit curve.}
 \usage{
-SSplotSpawnrecruit(replist, subplot = 1:2, add = FALSE, plot = TRUE,
+SSplotSpawnrecruit(replist, subplot = 1:3, add = FALSE, plot = TRUE,
   print = FALSE, xlim = NULL, ylim = NULL,
-  xlab = "Spawning biomass (mt)", ylab = "Recruitment (1,000s)",
-  bioscale = "default", plotdir = "default", pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1, verbose = TRUE,
-  colvec = c("blue", "green3", "black", "red"), legend = TRUE,
-  legendloc = "topleft", minyr = "default", textmindev = 0.5,
-  virg = TRUE, init = TRUE, forecast = FALSE)
+  labels = c("Spawning biomass (mt)", "Recruitment (1,000s)",
+  "Spawning output", expression(paste("Spawning output (relative to ",
+  italic(B)[0], ")")), expression(paste("Recruitment (relative to  ",
+  italic(R)[0], ")")), "Log recruitment deviation"),
+  bioscale = "default", plotdir = "default", pwidth = 6.5,
+  pheight = 5, punits = "in", res = 300, ptsize = 10,
+  verbose = TRUE, colvec = c("blue", "black", "black", gray(0, 0.7)),
+  ltyvec = c(1, 2, 1, NA), ptcol = "default", legend = TRUE,
+  legendloc = NULL, minyr = "default", textmindev = 0.5,
+  relative = FALSE, expected = TRUE, estimated = TRUE,
+  bias_adjusted = TRUE, show_env = TRUE, virg = TRUE, init = TRUE,
+  forecast = FALSE)
 }
 \arguments{
 \item{replist}{list created by \code{SS_output}}
@@ -29,9 +35,9 @@ SSplotSpawnrecruit(replist, subplot = 1:2, add = FALSE, plot = TRUE,
 
 \item{ylim}{optional control of y range}
 
-\item{xlab}{x-axis label}
-
-\item{ylab}{y-axis label}
+\item{labels}{vector containing x-axis label for models with spawning biomass
+in metric tons, y-axis label, and alternative x-axis for models with a fecundity
+relationship making spawning output not equal to spawning biomass.}
 
 \item{bioscale}{multiplier on spawning biomass, set to 0.5 for single-sex
 models}
@@ -49,21 +55,44 @@ be the directory where the model was run.}
 
 \item{ptsize}{point size for PNG file}
 
-\item{cex.main}{character expansion for plot titles}
-
 \item{verbose}{report progress to R GUI?}
 
-\item{colvec}{vector of length 4 with colors for 3 lines and 1 set of points}
+\item{colvec}{vector of length 4 with colors for 3 lines and 1 set of points
+(where the 4th value for the points is the color of the circle around the
+background color provided by \code{ptcol}}
+
+\item{ltyvec}{vector of length 4 with line types for the 3 lines and 1 set
+of points, where the points are disconnected (lty=NA) by default}
+
+\item{ptcol}{vector or single value for the color of the points, "default"
+will by replaced by a vector of colors of length equal to
+nrow(replist$recruit)}
 
 \item{legend}{add a legend to the figure?}
 
-\item{legendloc}{location of legend. See ?legend for more info}
+\item{legendloc}{location of legend. By default it is chosen as the first
+value in the set of "topleft", "topright", "bottomright" that results in no
+overlap with the points in the plot, but the user can override this with their
+choice of location. See ?legend for more info on the options.}
 
 \item{minyr}{minimum year of recruitment deviation to show in plot}
 
 \item{textmindev}{minimum recruitment deviation for label to be added so
 only extreme devs are labeled (labels are added to first and last years as
 well).  Default=0.7.}
+
+\item{relative}{scale both axes so that B0 and R0 are at 1
+to show spawning output and recruitment relative to the equilibrium}
+
+\item{expected}{show line for expected recruitment (stock-recruit curve)}
+
+\item{estimated}{show points for estimated recruitment values
+(including deviations)}
+
+\item{bias_adjusted}{show lines for bias adjusted expected recruitment}
+
+\item{show_env}{add line for expected recruitment with environmental
+variability}
 
 \item{virg}{add point for equilibrium conditions (x=B0,y=R0)}
 
@@ -75,11 +104,9 @@ if this point differs from virgin values}
 \description{
 Plot spawner-recruit curve based on output from Stock Synthesis model.
 }
-\author{
-Ian Stewart, Ian Taylor
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\keyword{hplot}
-
+\author{
+Ian Stewart, Ian Taylor
+}

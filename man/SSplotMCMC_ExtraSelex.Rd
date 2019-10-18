@@ -32,6 +32,3 @@ was chosen in the optional extra "more stddev reporting"
 \author{
 Ian Taylor
 }
-\keyword{aplot}
-\keyword{hplot}
-

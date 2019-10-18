@@ -25,15 +25,11 @@ Default=TRUE.}
 write Stock Synthesis starter file from list object in R which was probably
 created using \code{\link{SS_readstarter}}
 }
+\seealso{
+\code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
+\code{\link{SS_writestarter}},
+\code{\link{SS_writeforecast}}, \code{\link{SS_writedat}}
+}
 \author{
 Ian Taylor
 }
-\seealso{
-\code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
-\code{\link{SS_readctl}}, \code{\link{SS_writestarter}},
-\code{\link{SS_writeforecast}}, \code{\link{SS_writedat}},
-\code{\link{SS_writectl}}
-}
-\keyword{data}
-\keyword{manip}
-

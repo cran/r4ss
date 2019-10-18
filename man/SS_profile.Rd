@@ -7,10 +7,12 @@
 SS_profile(dir = "C:/myfiles/mymodels/myrun/",
   masterctlfile = "control.ss_new", newctlfile = "control_modified.ss",
   linenum = NULL, string = NULL, profilevec = NULL, usepar = FALSE,
-  globalpar = FALSE, parfile = NULL, parlinenum = NULL,
-  parstring = NULL, dircopy = TRUE, exe.delete = FALSE, model = "ss3",
-  extras = "-nox", systemcmd = FALSE, saveoutput = TRUE,
-  overwrite = TRUE, whichruns = NULL, verbose = TRUE)
+  globalpar = FALSE, parfile = "ss.par", parlinenum = NULL,
+  parstring = NULL, dircopy = TRUE, exe.delete = FALSE,
+  model = "ss", extras = "-nox", systemcmd = FALSE,
+  saveoutput = TRUE, overwrite = TRUE, whichruns = NULL,
+  SSversion = "3.30", prior_check = TRUE, read_like = TRUE,
+  verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory where input files and executable are located.}
@@ -30,11 +32,13 @@ be used instead of \code{linenum} or left as NULL.}
 
 \item{usepar}{Use PAR file from previous profile step for starting values?}
 
-\item{globalpar}{Use global par file for all runs instead of the par file
-from each successive run}
+\item{globalpar}{Use global par file ("parfile_original_backup.sso", which is
+automatically copied from original \code{parfile}) for all runs instead
+of the par file from each successive run}
 
-\item{parfile}{Name of par file to use (Ian says "I don't remember how this
-interacts with the globalpar input")}
+\item{parfile}{Name of par file to use (for 3.30 models, this needs to
+remain 'ss.par'). When \code{globalpar=TRUE}, the backup copy of this
+is used for all runs.}
 
 \item{parlinenum}{Line number in par file to change.}
 
@@ -44,12 +48,12 @@ interacts with the globalpar input")}
 
 \item{exe.delete}{Delete exe files in each directory?  NOT IMPLEMENTED YET.}
 
-\item{model}{Name of executable. Default = "ss3".}
+\item{model}{Name of executable. Default = "ss".}
 
 \item{extras}{Additional commands to use when running SS. Default = "-nox"
-will reduce the amound of command-line output.}
+will reduce the amount of command-line output.}
 
-\item{systemcmd}{Should R call SS using "system" function intead of "shell".
+\item{systemcmd}{Should R call SS using "system" function instead of "shell".
 This may be required when running R in Emacs. Default = FALSE.}
 
 \item{saveoutput}{Copy output .SSO files to unique names.  Default = TRUE.}
@@ -59,8 +63,19 @@ then some runs may be skipped.}
 
 \item{whichruns}{Optional vector of run indices to do. This can be used to
 re-run a subset of the cases in situations where the function was
-interupted or some runs fail to converge. Must be a subset of 1:n, where n
+interrupted or some runs fail to converge. Must be a subset of 1:n, where n
 is the length of profilevec.}
+
+\item{SSversion}{SS version number. Currently only "3.24" or "3.30" are
+supported, either as character or numeric values
+(noting that numeric 3.30  = 3.3).}
+
+\item{prior_check}{Check to make sure the starter file is set to include
+the prior likelihood contribution in the total likelihood.  Default = TRUE.}
+
+\item{read_like}{Read the table of likelihoods from each model as it finishes.
+Default = TRUE. Changing to FALSE should allow the function to play through
+even if something is wrong with reading the table.}
 
 \item{verbose}{Controls amount of info output to command line.  Default =
 TRUE.}
@@ -106,7 +121,7 @@ Nprofile <- length(h.vec)
 profile <- SS_profile(dir=mydir, # directory
                       # "NatM" is a subset of one of the
                       # parameter labels in control.ss_new
-                      model="ss3_safe",
+                      model="ss",
                       masterctlfile="control.ss_new",
                       newctlfile="control_modified.ss",
                       string="steep",
@@ -135,13 +150,10 @@ SSplotComparisons(profilesummary,legendlabels=paste("h =",h.vec))
 }
 
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SSplotProfile}}, \code{\link{SSgetoutput}},
 \code{\link{SS_changepars}}, \code{\link{SS_parlines}}
 }
-\keyword{data}
-\keyword{manip}
-
+\author{
+Ian Taylor
+}

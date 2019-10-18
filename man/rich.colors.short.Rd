@@ -20,5 +20,3 @@ as well)
 \author{
 Arni Magnusson, Ian Taylor
 }
-\keyword{color}
-

@@ -1,109 +1,146 @@
-#' read control file
-#' 
-#' read Stock Synthesis control file into list object in R
-#' 
-#' This function is not fully implemented. The logic to figure out all the
-#' details of a Stock Synthesis control file is very complex, so this function
-#' may be completed in a way that is not totally consistent with the other
-#' similar files. Or it may never be completed at all. The functions
-#' \code{\link{SS_changepars}} and \code{\link{SS_parlines}} offer alternatives
-#' for working with SS control files.
-#' 
+#' read control file from SS
+#'
+#' Read Stock Synthesis control file into list object in R. This function is a
+#' wrapper which calls either SS_readctl_3.24 or SS_readctl_3.30 (not yet written).
+#' This setup allows those functions to be cleaner (if somewhat redundant)
+#' than a single function that attempts to do everything.
+#'
+#'
 #' @param file Filename either with full path or relative to working directory.
-#' @seealso \code{\link{SS_changepars}}, \code{\link{SS_parlines}},
-#' \code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
-#' \code{\link{SS_readdat}}, \code{\link{SS_writestarter}},
-#' \code{\link{SS_writeforecast}}, \code{\link{SS_writedat}},
-#' \code{\link{SS_writectl}}
-#' @author Ian Taylor
+#' @param version SS version number. Currently only "3.24" or "3.30" are supported,
+#' either as character or numeric values (noting that numeric 3.30  = 3.3).
+#' @param verbose Should there be verbose output while running the file?
+#' Default=TRUE.
+#' @param echoall Debugging tool (not fully implemented) of echoing blocks of
+#' data as it is being read.
+#' @param nseas number of season in the model. This information is not
+#'  explicitly available in control file
+#' @param N_areas number of spatial areas in the model. This information is also not
+#'  explicitly available in control file
+#' @param Nages oldest age in the model. This information is also not
+#'  explicitly available in control file
+#' @param Ngenders number of genders in the model. This information is also not
+#'  explicitly available in control file
+#' @param Npopbins number of population bins in the model. This information is
+#' also not explicitly available in control file and this information is only
+#' required if length based
+#'  maturity vector is directly supplied (Maturity option of 6), and not yet tested
+#' @param Nfleet number of fisheries in the model. This information is also not
+#'  explicitly available in control file
+#' @param Nsurveys number of survey fleets in the model. This information is also not
+#'  explicitly available in control file
+#' @param N_tag_groups number of tag release groups in the model.
+#' This information is also not explicitly available in control file.
+#' @param N_CPUE_obs number of CPUE observations.
+#' @param use_datlist LOGICAL if TRUE, use datlist to derive parameters which can not be
+#'  determined from control file
+#' @param datlist list or character. if list : produced from SS_writedat
+#'  or character : file name of dat file.
+#' @param ptype include a column in the output indicating parameter type?
+#'  (Can be useful, but causes problems for SS_writectl.) Only possible to use
+#'  for 3.24 control files.
+#' @author Ian G. Taylor, Yukio Takeuchi, Neil L Klaer
 #' @export
-#' @keywords data
-SS_readctl <- function(file){
-  cat("Warning!\n",
-      "  SS_readctl is not fully implemented. The logic to figure out\n",
-      "  all the details of a Stock Synthesis control file is very complex,\n",
-      "  so this function may be completed in a way that is not totally\n",
-      "  consistent with the other similar files. Or it may never be\n",
-      "  completed at all. The functions 'SS_changepars' and 'SS_parlines'\n",
-      "  offer alternatives for working with SS control files.\n")
+#' @seealso \code{\link{SS_readctl_3.24}}, \code{\link{SS_readdat}},
+#' \code{\link{SS_readdat_3.24}}
 
-  ctl <- readLines(file,warn=FALSE)
+SS_readctl <- function(file, version=NULL, verbose=TRUE,echoall=FALSE,
+                       ## Parameters that are not defined in control file
+                       nseas=4,
+                       N_areas=1,
+                       Nages=20,
+                       Ngenders=1,
+                       Npopbins=NA,
+                       Nfleet=2,
+                       Nsurveys=2,
+                       N_tag_groups=NA,
+                       N_CPUE_obs=NA,
+                       use_datlist=FALSE,
+                       datlist=NULL,
+                       ptype=TRUE){
 
-  if(strsplit(ctl[2]," ")[[1]][1]=="Start_time:") ctl <- ctl[-(1:2)]
-  allnums <- NULL
-  for(i in 1:length(ctl)){
-      mysplit <- strsplit(ctl[i],split="[[:blank:]]+")[[1]]
-      mysplit <- mysplit[mysplit!=""]
-      nums <- suppressWarnings(as.numeric(mysplit))
-      if(sum(is.na(nums)) > 0) maxcol <- min((1:length(nums))[is.na(nums)])-1
-      else maxcol <- length(nums)
-      if(maxcol > 0){
-          nums <- nums[1:maxcol]
-          allnums <- c(allnums, nums)
+  # wrapper function to call old or new version of SS_readctl
+
+  # automatic testing of version number
+  if(is.null(version)) {
+    # look for 3.24 or 3.30 at the top of the chosen file
+    version <- scan(file, what=character(), nlines=1, quiet=!verbose)
+    version <- substring(version,3,6)
+    # if that fails, look for data.ss_new file in the same directory
+    if(version %in% c("3.24", "3.30")){
+      if(verbose)cat("assuming version", version, "based on first line of control file\n")
+    }else{
+      newfile <- file.path(dirname(file), "control.ss_new")
+      if(file.exists(newfile)){
+        version <- scan(newfile, what=character(), nlines=1, quiet=!verbose)
+        version <- substring(version,3,6)
+        if(verbose)cat("assuming version", version, "based on first line of control.ss_new\n")
+      }else{
+        stop("input 'version' required due to missing value at top of", file)
       }
-  }
-  i <- 1
-  ctllist <- list()
-
-  ctllist$sourcefile <- file
-  ctllist$type <- "Stock_Synthesis_control_file"
-  ctllist$SSversion <- "SSv3.10b_or_later"
-
-  # model dimensions
-  ctllist$N_Growth_Patterns <- N_Growth_Patterns <- allnums[i]; i <- i+1
-  ctllist$N_Morphs_Within_GrowthPattern <- N_Morphs_Within_GrowthPattern <- allnums[i]; i <- i+1
-
-  if(N_Growth_Patterns!=1 | N_Morphs_Within_GrowthPattern!=1){
-    stop("Error! SS_readctl doesn't yet handle fancy models with growth patterns or morphs")
+    }
   }
 
-  ctllist$zzz <- zzz <- allnums[i]; i <- i+1
-  ctllist$Nblock_Patterns <- Nblock_Patterns <- allnums[i]; i <- i+1
-  ctllist$fracfemale <- fracfemale <- allnums[i]; i <- i+1
-  ctllist$natM_type <- natM_type <- allnums[i]; i <- i+1
-  ctllist$GrowthModel <- GrowthModel <- allnums[i]; i <- i+1
-  ctllist$Growth_Age_for_L1 <- Growth_Age_for_L1 <- allnums[i]; i <- i+1
-  ctllist$Growth_Age_for_L2 <- Growth_Age_for_L2 <- allnums[i]; i <- i+1
-  ctllist$SD_add_to_LAA <- SD_add_to_LAA <- allnums[i]; i <- i+1
-  ctllist$CV_Growth_Pattern <- CV_Growth_Pattern <- allnums[i]; i <- i+1
-  ctllist$maturity_option <- maturity_option <- allnums[i]; i <- i+1
-  ctllist$First_Mature_Age <- First_Mature_Age <- allnums[i]; i <- i+1
-  ctllist$fecundity_option <- fecundity_option <- allnums[i]; i <- i+1
-  ctllist$hermaphroditism_option <- hermaphroditism_option <- allnums[i]; i <- i+1
-  ctllist$parameter_offset_approach <- parameter_offset_approach <- allnums[i]; i <- i+1
-  ctllist$adjust_method <- adjust_method <- allnums[i]; i <- i+1
+  nver=as.numeric(substring(version,1,4))
 
+  if(verbose) cat("Char version is ", version, "\n")
+  if(verbose) cat("Numeric version is ", nver, "\n")
 
-  # note: needs some logic in here to determine number of rows
-  Ncols <- 14
-  Nrows <- 24 # temporary placeholder for Ian Taylor's model
-  MGparms <- data.frame(matrix(
-    allnums[i:(i+Nrows*Ncols-1)],nrow=Nrows,ncol=Ncols,byrow=TRUE))
-  i <- i+Nrows*Ncols
-  names(MGparms) <- c("LO","HI","INIT","PRIOR","PR_type","SD","PHASE","env_var","use_dev","dev_minyr","dev_maxyr","dev_stddev","Block","Block_Fxn")
-  ctllist$MGparms <- MGparms
+  # call function for SS version 2.00
+  if(nver<3){
 
-  N_effects <- 10 # need better logic to determine this
-  ctllist$seasonal_effects <- allnums[i:(i+N_effects-1)]; i <- i+N_effects
+    stop("Function SS_readctl_2.00 has not been written yet")
 
-  ctllist$SR_function <- SR_function <- allnums[i]; i <- i+1
-  Ncols <- 7
-  Nrows <- 6
-  SRparms <- data.frame(matrix(
-    allnums[i:(i+Nrows*Ncols-1)],nrow=Nrows,ncol=Ncols,byrow=TRUE))
-  i <- i+Nrows*Ncols
-  names(MGparms) <- c("LO","HI","INIT","PRIOR","PR_type","SD","PHASE")
-  ctllist$MGparms <- MGparms
+  }
 
-  ctllist$SR_evn_link <- SR_evn_link <- allnums[i]; i <- i+1
-  ctllist$SR_evn_target <- SR_evn_target <- allnums[i]; i <- i+1
-  ctllist$do_recdev <- do_recdev <- allnums[i]; i <- i+1
-  ctllist$fyr_main_recdevs <- fyr_main_recdevs <- allnums[i]; i <- i+1
-  ctllist$lyr_main_recdevs <- lyr_main_recdevs <- allnums[i]; i <- i+1
-  ctllist$recdev_phase <- recdev_phase <- allnums[i]; i <- i+1
+  # call function for SS version 3.00
+  if((nver>=3)&&(nver<3.2)){
 
-  # a bunch more to come...this is a work in progress
+    stop("Function SS_readctl_3.00 has not been written yet")
 
-  # all done
+  }
+
+  # call function for SS version 3.24
+  if((nver>=3.2)&&(nver<3.3)){
+
+    ctllist <- SS_readctl_3.24(file         = file,
+                               version   = version,
+                               verbose      = verbose,
+                               echoall      = echoall,
+                               nseas        = nseas,
+                               N_areas      = N_areas,
+                               Nages        = Nages,
+                               Ngenders     = Ngenders,
+                               Npopbins     = Npopbins,
+                               Nfleet       = Nfleet,
+                               Nsurveys     = Nsurveys,
+                               N_tag_groups = N_tag_groups,
+                               N_CPUE_obs   = N_CPUE_obs,
+                               use_datlist  = use_datlist,
+                               datlist      = datlist,
+                               ptype        = ptype)
+  }
+
+  # call function for SS version 3.30
+  if(nver>=3.3){
+
+    ctllist <- SS_readctl_3.30(file         = file,
+                               version   = version,
+                               verbose      = verbose,
+                               echoall      = echoall,
+                               nseas        = nseas,
+                               N_areas      = N_areas,
+                               Nages        = Nages,
+                               Ngenders     = Ngenders,
+                               Npopbins     = Npopbins,
+                               Nfleet       = Nfleet,
+                               Nsurveys     = Nsurveys,
+                               N_tag_groups = N_tag_groups,
+                               N_CPUE_obs   = N_CPUE_obs,
+                               use_datlist  = use_datlist,
+                               datlist      = datlist)
+  }
+
+  # return the result
   return(ctllist)
 }

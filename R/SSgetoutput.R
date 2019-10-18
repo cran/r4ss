@@ -27,17 +27,16 @@
 #' @author Ian Taylor
 #' @export
 #' @seealso \code{\link{SS_output}} \code{\link{SSsummarize}}
-#' @keywords data manip list
 SSgetoutput <-
-function(keyvec=NULL,dirvec=NULL,getcovar=TRUE,getcomp=TRUE,forecast=FALSE,
+function(keyvec=NULL,dirvec=NULL,getcovar=TRUE,getcomp=TRUE,forecast=TRUE,
          verbose=TRUE,ncols=210,listlists=TRUE,underscore=FALSE,
          save.lists=FALSE)
 {
   # a function to run the function SS_output to create a list in the R workspace
   # for a Stock Synthesis model with output filenames ending with the same "key"
 
-  if(!is.null(keyvec)) cat('length(keyvec) as input to SSgetoutput:',length(keyvec),'\n')
-  if(!is.null(dirvec)) cat('length(dirvec) as input to SSgetoutput:',length(dirvec),'\n')
+  if(!is.null(keyvec) & verbose) cat('length(keyvec) as input to SSgetoutput:',length(keyvec),'\n')
+  if(!is.null(dirvec) & verbose) cat('length(dirvec) as input to SSgetoutput:',length(dirvec),'\n')
  
   # change inputs so that keyvec and dirvec have matching lengths or keyvec=NULL
   if(listlists) biglist <- list()
@@ -70,40 +69,42 @@ function(keyvec=NULL,dirvec=NULL,getcovar=TRUE,getcomp=TRUE,forecast=FALSE,
 
     if(verbose & !is.null(key)) cat("getting files with key =",key,"\n")
 
-    repfilename <- paste("Report",key2,".sso",sep="")
+    repFileName <- paste("Report",key2,".sso",sep="")
     covarname <- paste("covar",key2,".sso",sep="")
+    warnFileName <- paste("warning",key2,".sso",sep="")
     if(getcomp){
-      compfilename <- paste("CompReport",key2,".sso",sep="")
+      compFileName <- paste("CompReport",key2,".sso",sep="")
       NoCompOK <- FALSE
     }else{
-      compfilename <- "nothing"
+      compFileName <- "nothing"
       NoCompOK <- TRUE
     }
 
     # mycovar = TRUE/FALSE based on presence of file and user input
     mycovar <- file.exists(file.path(mydir,covarname)) & getcovar
     
-    fullfile <- paste(mydir,repfilename,sep="")
+    fullfile <- paste(mydir,repFileName,sep="")
     if(verbose) cat("reading output from",fullfile,"\n")
     repfilesize <- file.info(fullfile)$size
 
     output <- NA
     if(!is.na(repfilesize) && repfilesize>0){ # if there's a non-empty file
-      output <- SS_output(dir=mydir, repfile=repfilename, covarfile=covarname,
-                            compfile=compfilename, NoCompOK=NoCompOK, printstats=FALSE,
-                            covar=mycovar, forecast=forecast, verbose=FALSE, ncols=ncols)
+      output <- SS_output(dir=mydir, repfile=repFileName, covarfile=covarname,
+                          compfile=compFileName, NoCompOK=NoCompOK,
+                          warnfile=warnFileName, printstats=FALSE,
+                          covar=mycovar, forecast=forecast, verbose=FALSE, ncols=ncols)
       if(is.null(output)){
         # for some reason covarfile exists, but is old so SS_output rejects
         cat("output==NULL so trying again with covar=FALSE\n")
-        output <- SS_output(dir=mydir, repfile=repfilename, covarfile=covarname,
-                              compfile=compfilename, NoCompOK=NoCompOK, printstats=FALSE,
+        output <- SS_output(dir=mydir, repfile=repFileName, covarfile=covarname,
+                              compfile=compFileName, NoCompOK=NoCompOK, printstats=FALSE,
                               covar=FALSE, forecast=forecast, verbose=FALSE, ncols=ncols)
       }
       output$key <- as.character(key)
     }else{
       cat("!repfile doesn't exists or is empty\n")
     }
-    cat("added element '", newobject, "' to list\n",sep="")
+    if(verbose) cat("added element '", newobject, "' to list\n",sep="")
     if(listlists) biglist[[newobject]] <- output
     ## if(global)
     ## {

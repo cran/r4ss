@@ -4,27 +4,29 @@
 \alias{SS_plots}
 \title{plot many quantities related to output from Stock Synthesis}
 \usage{
-SS_plots(replist = NULL, plot = 1:24, print = NULL, pdf = FALSE,
+SS_plots(replist = NULL, plot = 1:25, print = NULL, pdf = FALSE,
   png = TRUE, html = png, printfolder = "plots", dir = "default",
   fleets = "all", areas = "all", fleetnames = "default",
   fleetcols = "default", fleetlty = 1, fleetpch = 1, lwd = 1,
   areacols = "default", areanames = "default", verbose = TRUE,
-  uncertainty = TRUE, forecastplot = FALSE, datplot = FALSE,
+  uncertainty = TRUE, forecastplot = TRUE, datplot = TRUE,
   Natageplot = TRUE, samplesizeplots = TRUE, compresidplots = TRUE,
   comp.yupper = 0.4, sprtarg = "default", btarg = "default",
   minbthresh = "default", pntscalar = NULL, bub.scale.pearson = 1.5,
   bub.scale.dat = 3, pntscalar.nums = 2.6, pntscalar.tags = 2.6,
   minnbubble = 8, aalyear = -1, aalbin = -1, aalresids = TRUE,
-  maxneff = 5000, cohortlines = c(), smooth = TRUE, showsampsize = TRUE,
-  showeffN = TRUE, sampsizeline = FALSE, effNline = FALSE,
-  showlegend = TRUE, pwidth = 6.5, pheight = 5, punits = "in",
-  ptsize = 10, res = 300, cex.main = 1, selexlines = 1:6, rows = 1,
-  cols = 1, maxrows = 4, maxcols = 4, maxrows2 = 2, maxcols2 = 4,
-  andrerows = 3, tagrows = 3, tagcols = 3, fixdims = TRUE, new = TRUE,
-  SSplotDatMargin = 8, filenotes = NULL, catchasnumbers = NULL,
-  catchbars = TRUE, legendloc = "topleft", minyr = NULL, maxyr = NULL,
-  sexes = "all", scalebins = FALSE, scalebubbles = FALSE,
-  tslabels = NULL, catlabels = NULL, ...)
+  maxneff = 5000, cohortlines = c(), smooth = TRUE,
+  showsampsize = TRUE, showeffN = TRUE, sampsizeline = FALSE,
+  effNline = FALSE, showlegend = TRUE, pwidth = 6.5, pheight = 5,
+  punits = "in", ptsize = 10, res = 300, mainTitle = FALSE,
+  cex.main = 1, selexlines = 1:6, rows = 1, cols = 1,
+  maxrows = 4, maxcols = 4, maxrows2 = 2, maxcols2 = 4,
+  andrerows = 3, tagrows = 3, tagcols = 3, fixdims = TRUE,
+  new = TRUE, SSplotDatMargin = 8, filenotes = NULL,
+  catchasnumbers = NULL, catchbars = TRUE, legendloc = "topleft",
+  minyr = -Inf, maxyr = Inf, sexes = "all", scalebins = FALSE,
+  scalebubbles = FALSE, tslabels = NULL, catlabels = NULL,
+  maxsize = 1, ...)
 }
 \arguments{
 \item{replist}{List created by \code{SS_output}}
@@ -32,9 +34,37 @@ SS_plots(replist = NULL, plot = 1:24, print = NULL, pdf = FALSE,
 \item{plot}{Plot sets to be created, see list of plots below.  Use to
 specify only those plot sets of interest, e.g., c(1,2,5,10). Plots for data
 not available in the model run will automatically be skipped, whether called
-or not.}
+or not.
+Current grouping of plots is as follows:
+\enumerate{
+  \item Biology
+  \item Selectivity and retention
+  \item Timeseries
+  \item Recruitment deviations
+  \item Recruitment bias adjustment
+  \item Spawner-recruit
+  \item Catch
+  \item SPR
+  \item Discards
+  \item Mean weight
+  \item Indices
+  \item Numbers at age
+  \item Length comp data
+  \item Age comp data
+  \item Conditional age-at-length data
+  \item Length comp fits
+  \item Age comp fits
+  \item Conditional age-at-length fits
+  \item Francis and Punt conditional age-at-length comp fits
+  \item Mean length-at-age and mean weight-at-age
+  \item Tags
+  \item Yield
+  \item Movement
+  \item Data range
+  \item Diagnostic tables
+}}
 
-\item{print}{Deprecated input for backward compatability, now replaced by
+\item{print}{Deprecated input for backward compatibility, now replaced by
 \code{png = TRUE/FALSE}.}
 
 \item{pdf}{Send plots to PDF file instead of R GUI?}
@@ -44,13 +74,19 @@ or not.}
 \item{html}{Run \code{\link{SS_html}} on completion? By default has same
 value as \code{png}.}
 
-\item{printfolder}{Name of subfolder to create within the working directory
-into which any PNG files specified by \code{print} will be saved. By default
-the working directory is used with no subfolder.  Default="".}
+\item{printfolder}{The sub-directory under 'dir' (see below) in which the
+PNG files will be located.  The default sub-directory is "plots".
+The directory will be created if it doesn\'t exist.
+If 'printfolder' is set to "", it is ignored and the PNG files will be located
+in the directory specified by 'dir'.}
 
-\item{dir}{The directory in which any PNG files requested by \code{print}
-are created. By default it will be the same directory that the report file
-was read from by the \code{SS_output } function. Default="default".}
+\item{dir}{The directory in which a PDF file (if requested) will be created
+and within which the printfolder sub-directory (see above) will be created
+if png=TRUE. By default it will be the same directory that the report file
+was read from by the \code{SS_output} function. Alternatives to the default
+can be either relative (to the working directory) or absolute paths.
+The function will attempt to create the directory it doesn't exist, but it
+does not do so recursively.}
 
 \item{fleets}{Either the string "all", or a vector of numerical values, like
 c(1,3), listing fleets or surveys for which plots should be made. By
@@ -84,15 +120,16 @@ Default="default".}
 \item{verbose}{Return updates of function progress to the R GUI?  Default=T.}
 
 \item{uncertainty}{Include values in plots showing estimates of uncertainty
-(requires positive definite hessian in model and \code{covar}=T in
-\code{SS_output})?  Default=T.}
+(requires positive definite hessian in model?  Default=TRUE.}
 
-\item{forecastplot}{Include forecast years in the plots? Obviously requires
-forecast options to have been used in the model.  Default=T.}
+\item{forecastplot}{Include forecast years in the timeseries plots and
+plots of time-varying quantities? Default=TRUE.}
 
 \item{datplot}{Plot the data by itself? This is useful in document
-preparation. Setting datplot=F is equivalent to leaving off plots 15 and 16.
-Default=F.}
+preparation, but doesn't change across alternative model runs with the same
+data, so can be committed to save time once the plots have been created once.
+Setting datplot=FALSE is equivalent to leaving off plots 15 and 16.
+Default=TRUE.}
 
 \item{Natageplot}{Plot the expected numbers at age bubble plots and mean-age
 time series?  Default=T.}
@@ -107,11 +144,11 @@ with only a single observed fish in it. Default=0.4.}
 
 \item{sprtarg}{Specify the F/SPR proxy target. Default=0.4.}
 
-\item{btarg}{Target depletion to be used in plots showing depletion. May be
-omitted by setting to NA.  Default=0.4.}
+\item{btarg}{Target %unfished to be used in plots showing %unfished. May be
+omitted by setting to NA.}
 
 \item{minbthresh}{Threshold depletion to be used in plots showing depletion.
-May be omitted by setting to NA. Default=0.25.}
+May be omitted by setting to NA.}
 
 \item{pntscalar}{This scalar defines the maximum bubble size for bubble
 plots. This option is still available but a better choice is to use
@@ -184,10 +221,12 @@ help("png") in R for details). Default recently changed from 12 to 10.}
 
 \item{res}{Resolution of plots printed to files. Default=300.}
 
+\item{mainTitle}{Logical indicating if a title should be included at the top}
+
 \item{cex.main}{Character expansion parameter for plot titles (not yet
 implemented for all plots). Default=1.}
 
-\item{selexlines}{Vector controling which lines should be shown on
+\item{selexlines}{Vector controlling which lines should be shown on
 selectivity plots if the model includes retention. Default=1:5.}
 
 \item{rows}{Number of rows to use for single panel plots. Default=1.}
@@ -231,11 +270,10 @@ Default=F.}
 
 \item{legendloc}{Location for all legends. Default="topleft".}
 
-\item{minyr}{First year to show in time-series plots (changes xlim
-parameters).}
+\item{minyr}{First year to show in time-series and time-varying plots}
 
-\item{maxyr}{Last year to show in time-series plots (changes xlim
-parameters).}
+\item{maxyr}{Last year to show in time-series and time-varying plots. This
+can either be an alternative to, or redundant with, the forecastplot input.}
 
 \item{sexes}{Which sexes to show in composition plots. Default="all".}
 
@@ -252,6 +290,9 @@ a vector of appropriate length (currently 11) with labels for each figure}
 \item{catlabels}{Either NULL to have default labels for catch plots or
 a vector of appropriate length (currently 10) with labels for each figure}
 
+\item{maxsize}{The size of the largest bubble in the datasize
+plot. Default is 1.0.}
+
 \item{\dots}{Additional arguments that will be passed to some subfunctions.}
 }
 \description{
@@ -259,9 +300,6 @@ Creates a user-chosen set of plots, including biological quantities, time
 series, and fits to data.  Plots are sent to R GUI, single PDF file, or
 multiple PNG files. This is now just a wrapper which calls on separate
 functions to make all the plots.
-}
-\author{
-Ian Stewart, Ian Taylor
 }
 \references{
 Walters, Hilborn, and Christensen, 2008, Surplus production
@@ -278,5 +316,6 @@ Sci. 65: 2536-2551.
 \code{\link{SSplotTags}}, \code{\link{SSplotTimeseries}},
 \code{\link{SSplotYield}}
 }
-\keyword{hplot}
-
+\author{
+Ian Stewart, Ian Taylor
+}

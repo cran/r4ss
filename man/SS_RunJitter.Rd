@@ -4,9 +4,8 @@
 \alias{SS_RunJitter}
 \title{Iteratively apply the jitter option in SS}
 \usage{
-SS_RunJitter(mydir, model = "ss3",
-  extras = "-nohess -cbs 500000000 -gbs 500000000", Njitter, Intern = TRUE,
-  systemcmd = FALSE, printlikes = TRUE)
+SS_RunJitter(mydir, model = "ss", extras = "-nohess", Njitter,
+  Intern = TRUE, systemcmd = FALSE, printlikes = TRUE)
 }
 \arguments{
 \item{mydir}{Directory where model files are located}
@@ -30,10 +29,34 @@ A vector of likelihoods for each jitter iteration.
 }
 \description{
 Iteratively runs SS model with different jittered starting parameter values
-(jitter value must be mannually set in starter.ss). Output files are renamed
+(jitter value must be manually set in starter.ss). Output files are renamed
 in the format Report1.sso, Report2.sso, etc.
 }
-\author{
-James T. Thorson, Kelli F. Johnson
-}
+\examples{
+  \dontrun{
+    #### Change starter file appropriately (can also edit file directly)
+    starter <- SS_readstarter(file.path(mydir, 'starter.ss'))
+    # Change to use .par file
+    starter$init_values_src = 1
+    # Change jitter (0.1 is an arbitrary, but common choice for jitter amount)
+    starter$jitter_fraction = 0.1
+    # write modified starter file
+    SS_writestarter(starter, dir=mydir, overwrite=TRUE)
 
+    #### Run jitter using this function
+    jit.likes <- SS_RunJitter(mydir=mydir, Njitter=25)
+
+    #### Read in results using other r4ss functions
+    # (note that un-jittered model can be read using keyvec=0:Njitter)
+    profilemodels <- SSgetoutput(dirvec=mydir, keyvec=1:Njitter, getcovar=FALSE)
+    # summarize output
+    profilesummary <- SSsummarize(profilemodels)
+    # Likelihoods
+    profilesummary$likelihoods[1,]
+    # Parameters
+    profilesummary$pars
+  }
+}
+\author{
+James T. Thorson, Kelli F. Johnson, Ian G. Taylor
+}

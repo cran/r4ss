@@ -4,11 +4,12 @@
 \alias{SStableComparisons}
 \title{make table comparing quantities across models}
 \usage{
-SStableComparisons(summaryoutput, models = "all", likenames = c("TOTAL",
-  "Survey", "Length_comp", "Age_comp", "priors", "Size_at_age"),
-  names = c("R0", "steep", "NatM", "L_at_Amax", "VonBert_K", "SPB_Virg",
-  "Bratio_2015", "SPRratio_2014"), digits = NULL, modelnames = "default",
-  csv = FALSE, csvdir = "workingdirectory",
+SStableComparisons(summaryoutput, models = "all",
+  likenames = c("TOTAL", "Survey", "Length_comp", "Age_comp", "priors",
+  "Size_at_age"), names = c("Recr_Virgin", "R0", "steep", "NatM",
+  "L_at_Amax", "VonBert_K", "SSB_Virg", "Bratio_2017", "SPRratio_2016"),
+  digits = NULL, modelnames = "default", csv = FALSE,
+  csvdir = "workingdirectory",
   csvfile = "parameter_comparison_table.csv", verbose = TRUE,
   mcmc = FALSE)
 }
@@ -47,12 +48,10 @@ Creates a table comparing key quantities from multiple models, which is a
 reduction of the full information in various parts of the list created using
 the \code{SSsummarize} function.
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SSsummarize}}, \code{\link{SSplotComparisons}},
 \code{\link{SS_output}}
 }
-\keyword{data}
-
+\author{
+Ian Taylor
+}

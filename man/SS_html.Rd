@@ -4,9 +4,9 @@
 \alias{SS_html}
 \title{Create HTML files to view figures in browser.}
 \usage{
-SS_html(replist = NULL, plotdir = "plots", plotInfoTable = NULL,
-  title = "SS Output", width = 500, openfile = TRUE, multimodel = FALSE,
-  filenotes = NULL, verbose = TRUE)
+SS_html(replist = NULL, plotdir = NULL, plotInfoTable = NULL,
+  title = "SS Output", width = 500, openfile = TRUE,
+  multimodel = FALSE, filenotes = NULL, verbose = TRUE)
 }
 \arguments{
 \item{replist}{Object created by \code{\link{SS_output}}}
@@ -42,12 +42,9 @@ were created for CSV files with the name 'plotInfoTable...' written by
 directory. Please provide feedback on any bugs, annoyances, or suggestions
 for improvement.
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\keyword{aplot}
-\keyword{hplot}
-
+\author{
+Ian Taylor
+}

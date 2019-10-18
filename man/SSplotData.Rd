@@ -5,10 +5,12 @@
 \title{Timeline of presence/absence of data by type, year, and fleet.}
 \usage{
 SSplotData(replist, plot = TRUE, print = FALSE, plotdir = "default",
-  fleetcol = "default", datatypes = "all", fleets = "all",
-  fleetnames = "default", ghost = FALSE, pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  margins = c(5.1, 2.1, 2.1, 8.1), cex = 2, lwd = 12, verbose = TRUE)
+  subplot = 1:2, fleetcol = "default", datatypes = "all",
+  fleets = "all", fleetnames = "default", ghost = FALSE,
+  pwidth = 6.5, pheight = 5, punits = "in", res = 300,
+  ptsize = 10, cex.main = 1, margins = c(5.1, 2.1, 2.1, 8.1),
+  cex = 2, lwd = 12, maxsize = 1, alphasize = 1,
+  mainTitle = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{replist}{list created by \code{\link{SS_output}}}
@@ -20,13 +22,21 @@ SSplotData(replist, plot = TRUE, print = FALSE, plotdir = "default",
 \item{plotdir}{directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
+\item{subplot}{vector controlling which subplots to create
+Currently there are only 2 subplots:
+\itemize{
+  \item 1 equal size points showing presence/absence of data type by year/fleet
+  \item 2 points scaled to indicate quantity or precision of data
+}}
+
 \item{fleetcol}{Either the string "default", or a vector of colors to use
-for each fleet.}
+for each fleet. If tagging data is included, an additional color needs to be
+added for the tag releases which are not assigned to a fleet.}
 
 \item{datatypes}{Either the string "all", or a vector including some subset
 of the following: "catch", "cpue", "lendbase", "sizedbase", "agedbase",
 "condbase", "ghostagedbase", "ghostcondbase", "ghostlendbase", "ladbase",
-"wadbase", "mnwgt", "discard", "tagdbase1", "tagdbase2".}
+"wadbase", "mnwgt", "discard", "tagrelease", and "tagdbase1".}
 
 \item{fleets}{Either the string "all", or a vector of numerical values, like
 c(1,3), listing fleets or surveys to be included in the plot.}
@@ -57,6 +67,15 @@ be increased if fleet names run off right-hand margin}
 
 \item{lwd}{Line width for lines showing ranges of years of data}
 
+\item{maxsize}{The size (cex) of the largest bubble in the datasize
+plot. Default is 1.}
+
+\item{alphasize}{The transparency of the bubbles in the datasize
+plot. Defaults to 1 (no transparency). Useful for models with lots of
+overlapping points.}
+
+\item{mainTitle}{TRUE/FALSE switch to turn on/off the title on the plot.}
+
 \item{verbose}{report progress to R GUI?}
 }
 \description{
@@ -64,12 +83,10 @@ Plot shows graphical display of what data is being used in the model.  Some
 data types may not yet be included. Note, this is based on output from the
 model, not the input data file.
 }
-\author{
-Ian Taylor, Chantel Wetzel
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}},
 \code{\link{SS_readdat}}
 }
-\keyword{hplot}
-
+\author{
+Ian Taylor, Chantel Wetzel, Cole Monnahan
+}

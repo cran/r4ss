@@ -17,7 +17,7 @@
 #' connected by the arrows representing movement rates. The order should match
 #' the order of areas in \code{polygonlist} and in the SS model. Not necessary
 #' if no arrows are shown on the map.
-#' @param moveage age for which movemement rates will be represented
+#' @param moveage age for which movement rates will be represented
 #' @param moveseas season for which movement rates will be represented
 #' @param lwdscale scaling factor for arrows in the plot. The largest rate of
 #' movement shown will be scaled to have a line width equal to this value.
@@ -31,9 +31,7 @@
 #' Langley
 #' @author Ian Taylor
 #' @export
-#' @seealso \code{\link{SS_output}}, \code{\link{SSplotMovementRates}},
-#' \code{\link{IOTCmove}}
-#' @keywords hplot
+#' @seealso \code{\link{SS_output}}, \code{\link{SSplotMovementRates}}
 SSplotMovementMap <-
   function(replist=NULL, xlim, ylim,
            polygonlist, colvec, land="grey", xytable=NULL,
@@ -43,11 +41,11 @@ SSplotMovementMap <-
   # plot movement rates on map to help visualize patterns
  
   par(mar=c(3,3,3,3))
-  map(xlim=xlim,ylim=ylim,xaxs='i',yaxs='i')
+  maps::map(xlim=xlim,ylim=ylim,xaxs='i',yaxs='i')
   for(i in 1:length(polygonlist)){
     polygon(polygonlist[[i]],col=colvec[i],lwd=2)
   }
-  map(xlim=xlim,ylim=ylim,xaxs='i',yaxs='i',
+  maps::map(xlim=xlim,ylim=ylim,xaxs='i',yaxs='i',
       add=T,fill=T,col="grey")
 #  map.axes()
 

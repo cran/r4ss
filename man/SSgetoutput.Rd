@@ -5,7 +5,7 @@
 \title{Get output from multiple Stock Synthesis models.}
 \usage{
 SSgetoutput(keyvec = NULL, dirvec = NULL, getcovar = TRUE,
-  getcomp = TRUE, forecast = FALSE, verbose = TRUE, ncols = 210,
+  getcomp = TRUE, forecast = TRUE, verbose = TRUE, ncols = 210,
   listlists = TRUE, underscore = FALSE, save.lists = FALSE)
 }
 \arguments{
@@ -43,13 +43,9 @@ filenaming convention based on iteration and date stamp.}
 Apply the function \code{\link{SS_output}} multiple times and save output as
 individual objects or a list of lists.
 }
-\author{
-Ian Taylor
-}
 \seealso{
 \code{\link{SS_output}} \code{\link{SSsummarize}}
 }
-\keyword{data}
-\keyword{list}
-\keyword{manip}
-
+\author{
+Ian Taylor
+}

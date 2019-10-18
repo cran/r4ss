@@ -51,11 +51,9 @@ want to consider.}
 Summarize nuisance MCMC output (used in combination with
 \code{\link{mcmc.out}} for key parameters).
 }
-\author{
-Ian Stewart
-}
 \seealso{
 \code{\link{mcmc.out}}, \code{\link{SSgetMCMC}}
 }
-\keyword{data}
-
+\author{
+Ian Stewart
+}

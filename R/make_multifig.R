@@ -15,6 +15,8 @@
 #' @param effN optional effective sample size vector of same length as ptsx
 #' @param showsampsize show sample size values on plot?
 #' @param showeffN show effective sample size values on plot?
+#' @param sampsize_label label on sampsize
+#' @param effN_label label on effN
 #' @param sampsizeround rounding level for sample size values
 #' @param maxrows maximum (or fixed) number or rows of panels in the plot
 #' @param maxcols maximum (or fixed) number or columns of panels in the plot
@@ -101,10 +103,13 @@
 #' @author Ian Taylor
 #' @export
 #' @seealso \code{\link{SS_plots}},\code{\link{SSplotComps}}
-#' @keywords aplot hplot
 make_multifig <-
   function(ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
-           sampsize=0, effN=0, showsampsize=TRUE, showeffN=TRUE, sampsizeround=1,
+           sampsize=0, effN=0,
+           showsampsize=TRUE, showeffN=TRUE,
+           sampsize_label="N=",
+           effN_label="effN=",
+           sampsizeround=1,
            maxrows=6, maxcols=6, rows=1, cols=1, fixdims=TRUE, main="",cex.main=1,
            xlab="",ylab="",size=1,cexZ1=1.5,bublegend=TRUE,
            maxsize=NULL,do.sqrt=TRUE,minnbubble=8,allopen=TRUE,
@@ -138,7 +143,6 @@ make_multifig <-
     male_mult <- -1
   }
 
-#print(paste("twosex: ",twosex)  )
   # define dimensions
   yrvec <- sort(unique(yr))
   npanels <- length(yrvec)
@@ -152,6 +156,25 @@ make_multifig <-
     ncols <- maxcols
   }
 
+  # deal with bin scaling
+  # all unique bins included in the data
+  # (tail compression might cause this to differ by year and be unreliable)
+  allbins.obs <- sort(unique(ptsx))
+  if(scalebins){ # if bin scaling turned on
+    if(diff(range(allbins.obs)) > 0 &&     # & if the range of bins is non-zero
+       length(allbins.obs) > 2 &&          # & if there are more than 2 bins
+       length(unique(diff(allbins.obs)))){ # & if there are different bin widths
+      diffs <- diff(allbins.obs)
+      # repeat final width to treating plus group as same width as previous bin
+      diffs <- c(diffs, diffs[length(diffs)]) 
+      bin.width.table <- data.frame(bin=allbins.obs,
+                                    width=diffs)
+    }else{
+      scalebins <- FALSE
+      warning("Setting scalebins=FALSE. Bins are equal length or too few.")
+    }
+  }
+  
   npages <- ceiling(npanels/nrows/ncols) # how many pages of plots
   # doSD is TRUE/FALSE switch for whether to add error bars on points
   doSD <- length(ptsSD)==length(ptsx) & max(ptsSD) > 0
@@ -274,29 +297,37 @@ make_multifig <-
     z_i2 <- size[yr==yr_i & sexvec==2]
 
     # optional rescaling of bins for line plots
-    #!! (not yet applied to males in 2-sex plots)
     scaled <- FALSE
     if(scalebins){
-      bins <- sort(unique(ptsx_i1))
-      binwidths <- diff(bins)
-      if(diff(range(binwidths))>0){
-        warning("NOTE: scaling comps based on variable bin widths\n",
-                "hasn't yet been adapted to 2-sex plots")
-        if(FALSE){
-          binwidths <- c(binwidths,tail(binwidths,1))
-          allbinwidths <- apply(as.matrix(ptsx_i1),1,
-                                function(x){(binwidths)[bins==x]})
-          ptsy_i1   <- ptsy_i1/allbinwidths
-          linesy_i1 <- linesy_i1/allbinwidths
-          scaled <- TRUE
+      # function to lookup width associated with each bin in the table crated above
+      # IGT 2019-05-02: surely there is a more efficient way to do this
+      getwidths <- function(ptsx){
+        if(length(ptsx) > 0){
+          widths <- rep(NA, length(ptsx))
+          for(ibin in 1:length(ptsx)){
+            widths[ibin] <- bin.width.table$width[bin.width.table$bin == ptsx[ibin]]
+          }
+        }else{
+          widths <- NULL
         }
+        return(widths)
       }
-      if(scaled){
-        # change y-axis label if comps are scaled
-        anyscaled <- TRUE
-        if(ylab=="Proportion"){
-          ylab <- "Proportion / bin width"
-        }
+      widths_i0 <- getwidths(ptsx_i0)
+      widths_i1 <- getwidths(ptsx_i1)
+      widths_i2 <- getwidths(ptsx_i2)
+      ptsy_i0   <- ptsy_i0/widths_i0
+      ptsy_i1   <- ptsy_i1/widths_i1
+      ptsy_i2   <- ptsy_i2/widths_i2
+      linesy_i0 <- linesy_i0/widths_i0
+      linesy_i1 <- linesy_i1/widths_i1
+      linesy_i2 <- linesy_i2/widths_i2
+      scaled <- TRUE
+    }
+    if(scaled){
+      # change y-axis label if comps are scaled
+      anyscaled <- TRUE
+      if(ylab=="Proportion"){
+        ylab <- "Proportion / bin width"
       }
     }
 
@@ -415,8 +446,8 @@ make_multifig <-
         }
         # make arrows showing uncertainty for males
         if(length(ptsx_i2)>0){
-          arrows(x0=ptsx_i2,y0=-qnorm(p=0.05,mean=ptsy_i2,sd=ptsSD_i2),
-                 x1=ptsx_i2,y1=-qnorm(p=0.95,mean=ptsy_i2,sd=ptsSD_i2),
+          arrows(x0=ptsx_i2,y0=qnorm(p=0.05,mean=ptsy_i2,sd=ptsSD_i2),
+                 x1=ptsx_i2,y1=qnorm(p=0.95,mean=ptsy_i2,sd=ptsSD_i2),
                  length=0.01, angle=90, code=3, col=ptscol)
         }
         options(warn=old_warn)  #returning to old value
@@ -442,29 +473,29 @@ make_multifig <-
           if(legtext_i=="sampsize" & showsampsize){	      # sample sizes
             vals <- unique(sampsize[sexvec==sex & yr==yr_i])
             if(length(vals)>1){
-              cat("Warning: sampsize values are not all equal",
-                  "--choosing the first value: ",vals[1], "\n",
-                  "  yr=",yr_i,", and all sampsize values:",
-                  paste(vals,collapse=","),sep="")
+              warning("sampsize values are not all equal",
+                      "--choosing the first value: ",vals[1], "\n",
+                      "  yr=",yr_i,", and all sampsize values: ",
+                      paste(vals,collapse=","),sep="")
               vals <- vals[1]
             }
-            text_i <- paste("N=",round(vals,sampsizeround),sep="")
+            text_i <- paste(sampsize_label,round(vals,sampsizeround),sep="")
             if(twosex & sex==2){
-              text_i2 <- paste("N=",round(vals,sampsizeround),sep="")
+              text_i2 <- paste(sampsize_label,round(vals,sampsizeround),sep="")
             }
           }
           if(legtext_i=="effN" & showeffN){          # effective sample sizes
             vals <- unique(effN[sexvec==sex & yr==yr_i])
             if(length(vals)>1){
-              cat("Warning: effN values are not all equal",
-                  "--choosing the first value: ",vals[1], "\n",
-                  "  yr=",yr_i,", and all effN values:",
-                  paste(vals,collapse=","),sep="")
+              warning("effN values are not all equal",
+                      "--choosing the first value: ",vals[1], "\n",
+                      "  yr=",yr_i,", and all effN values: ",
+                      paste(vals,collapse=","),sep="")
               vals <- vals[1]
             }
-            text_i <- paste("effN=",round(vals,sampsizeround),sep="")
+            text_i <- paste(effN_label,round(vals,sampsizeround),sep="")
             if(twosex & sex==2){
-              text_i2 <- paste("effN=",round(vals,sampsizeround),sep="")
+              text_i2 <- paste(effN_label,round(vals,sampsizeround),sep="")
             }
           }
         }

@@ -7,8 +7,8 @@
 SSplotMnwt(replist, subplots = 1:2, ymax = NULL, plot = TRUE,
   print = FALSE, fleets = "all", fleetnames = "default",
   datplot = FALSE, labels = c("Year", "discard", "retained catch",
-  "whole catch", "Mean individual body weight (kg)", "Mean weight in", "for"),
-  col1 = "blue", col2 = "black", pwidth = 6.5, pheight = 5,
+  "whole catch", "Mean individual body weight (kg)", "Mean weight in",
+  "for"), col1 = "blue", col2 = "black", pwidth = 6.5, pheight = 5,
   punits = "in", res = 300, ptsize = 10, cex.main = 1,
   plotdir = "default", verbose = TRUE)
 }
@@ -59,11 +59,9 @@ be the directory where the model was run.}
 Plot mean weight data and fits from Stock Synthesis output. Intervals are
 based on T-distributions as specified in model.
 }
-\author{
-Ian Taylor, Ian Stewart
-}
 \seealso{
 \code{\link{SS_plots}}, \code{\link{SS_output}}
 }
-\keyword{hplot}
-
+\author{
+Ian Taylor, Ian Stewart
+}

@@ -12,27 +12,37 @@
 #' @param string String partially matching name of parameter to be changed. Can
 #' be used instead of \code{linenum} or left as NULL.
 #' @param usepar Use PAR file from previous profile step for starting values?
-#' @param globalpar Use global par file for all runs instead of the par file
-#' from each successive run
-#' @param parfile Name of par file to use (Ian says "I don't remember how this
-#' interacts with the globalpar input")
+#' @param globalpar Use global par file ("parfile_original_backup.sso", which is
+#' automatically copied from original \code{parfile}) for all runs instead
+#' of the par file from each successive run
+#' @param parfile Name of par file to use (for 3.30 models, this needs to
+#' remain 'ss.par'). When \code{globalpar=TRUE}, the backup copy of this
+#' is used for all runs.
 #' @param parlinenum Line number in par file to change.
 #' @param parstring String in par file preceding line number to change.
 #' @param dircopy Copy directories for each run? NOT IMPLEMENTED YET.
 #' @param exe.delete Delete exe files in each directory?  NOT IMPLEMENTED YET.
 #' @param profilevec Vector of values to profile over.  Default = NULL.
-#' @param model Name of executable. Default = "ss3".
+#' @param model Name of executable. Default = "ss".
 #' @param extras Additional commands to use when running SS. Default = "-nox"
-#' will reduce the amound of command-line output.
-#' @param systemcmd Should R call SS using "system" function intead of "shell".
+#' will reduce the amount of command-line output.
+#' @param systemcmd Should R call SS using "system" function instead of "shell".
 #' This may be required when running R in Emacs. Default = FALSE.
 #' @param saveoutput Copy output .SSO files to unique names.  Default = TRUE.
 #' @param overwrite Overwrite any existing .SSO files. Default = TRUE. If FALSE,
 #' then some runs may be skipped.
 #' @param whichruns Optional vector of run indices to do. This can be used to
 #' re-run a subset of the cases in situations where the function was
-#' interupted or some runs fail to converge. Must be a subset of 1:n, where n
+#' interrupted or some runs fail to converge. Must be a subset of 1:n, where n
 #' is the length of profilevec.
+#' @param SSversion SS version number. Currently only "3.24" or "3.30" are
+#' supported, either as character or numeric values
+#' (noting that numeric 3.30  = 3.3).
+#' @param prior_check Check to make sure the starter file is set to include
+#' the prior likelihood contribution in the total likelihood.  Default = TRUE.
+#' @param read_like Read the table of likelihoods from each model as it finishes.
+#' Default = TRUE. Changing to FALSE should allow the function to play through
+#' even if something is wrong with reading the table.
 #' @param verbose Controls amount of info output to command line.  Default =
 #' TRUE.
 #' @note The starting values used in this profile are not ideal and some models
@@ -49,7 +59,6 @@
 #' @export
 #' @seealso \code{\link{SSplotProfile}}, \code{\link{SSgetoutput}},
 #' \code{\link{SS_changepars}}, \code{\link{SS_parlines}}
-#' @keywords data manip
 #' @examples
 #' 
 #'   \dontrun{
@@ -76,7 +85,7 @@
 #' profile <- SS_profile(dir=mydir, # directory
 #'                       # "NatM" is a subset of one of the
 #'                       # parameter labels in control.ss_new
-#'                       model="ss3_safe",
+#'                       model="ss",
 #'                       masterctlfile="control.ss_new",
 #'                       newctlfile="control_modified.ss",
 #'                       string="steep",
@@ -110,37 +119,28 @@ function(
          masterctlfile="control.ss_new",
          newctlfile="control_modified.ss", # must match entry in starter file
          linenum=NULL, string=NULL, profilevec=NULL,
-         usepar=FALSE, globalpar=FALSE, parfile=NULL,
+         usepar=FALSE, globalpar=FALSE, parfile="ss.par",
          parlinenum=NULL, parstring=NULL,
          dircopy=TRUE, exe.delete=FALSE,
-         model='ss3',extras="-nox",systemcmd=FALSE,saveoutput=TRUE,
-         overwrite=TRUE,whichruns=NULL,
+         model='ss', extras="-nox", systemcmd=FALSE, saveoutput=TRUE,
+         overwrite=TRUE, whichruns=NULL, SSversion="3.30", prior_check=TRUE,
+         read_like=TRUE,
          verbose=TRUE)
 {
-  ################################################################################
-  #
-  # SS_profile
-  #
-  # This function comes with no warranty or guarantee of accuracy
-  #
-  # Purpose: run a likelihood profile by iteratively modifying
-  #          a Stock Synthesis control file
-  # Written: Ian Taylor, NWFSC/UW. Ian.Taylor-at-noaa.gov
-  # Returns: Plots of prior distributions used in Stock Synthesis model
-  # Notes:   requires SS_parlines and SS_changepars
-  #          hosted at http://code.google.com/p/r4ss/
-  # Required packages: none
-  #
-  ################################################################################
-
+  # Ensure wd is not changed by the function
+  orig_wd <- getwd()
+  on.exit(setwd(orig_wd))
+  
   OS <- "Mac" # don't know the version$os info for Mac
   if(length(grep("linux",version$os)) > 0) OS <- "Linux"
   if(length(grep("mingw",version$os)) > 0) OS <- "Windows"
 
   # figure out name of executable based on 'model' input which may contain .exe
-  if(length(grep(".exe",tolower(model)))){
+  if(length(grep(".exe",tolower(model))) == 1){
+    # if input 'model' includes .exe then assume it's Windows and just use the name
     exe <- model
   }else{
+    # if 'model' doesn't include .exe then append it (for Windows computers only)
     exe <- paste(model,ifelse(OS=="Windows",".exe",""),sep="")
   }
   # check whether exe is in directory
@@ -151,15 +151,21 @@ function(
   }
 
   # figure out which line to change in control file
+  # if not using parfile, info still needed to set phase negative in control file
   if(is.null(linenum) & is.null(string))
     stop("You should input either 'linenum' or 'string' (but not both)")
   if(!is.null(linenum) & !is.null(string))
     stop("You should input either 'linenum' or 'string', but not both")
-  if(usepar){
-    if(is.null(parlinenum) & is.null(parstring))
-      stop("Using par file. You should input either 'parlinenum' or 'parstring', but not both")
-    if(!is.null(parlinenum) & !is.null(parstring))
+  if(usepar) { # if using parfile
+    if(parfile!="ss.par" & (SSversion=="3.30" | SSversion==3.3)){
+      stop("'parfile' input needs to be 'ss.par' for SS version 3.30 models")
+    }
+    if(is.null(parlinenum) & is.null(parstring)){
       stop("Using par file. You should input either 'parlinenum' or 'parstring' (but not both)")
+    }
+    if(!is.null(parlinenum) & !is.null(parstring)){
+      stop("Using par file. You should input either 'parlinenum' or 'parstring' (but not both)")
+    }
   }
   
   # figure out length of profile vec and sort out which runs to do
@@ -178,7 +184,8 @@ function(
   totallike <- rep(NA,n)
   liketable <- NULL
 
-  cat("changing working directory to",dir,"\n")
+  cat("changing working directory to ",dir,",\n",
+      " but will be changed back on exit from function.\n", sep = "")
   setwd(dir) # change working directory
   stdfile <- paste(model,'.std',sep='')
 
@@ -192,7 +199,7 @@ function(
          "'",starter$ctlfile,"' to '",newctlfile,"'")
   }
   # check for prior in likelihood
-  if(starter$prior_like==0){
+  if(prior_check & starter$prior_like==0){
     stop("for likelihood profile, you should change the starter file value of\n",
          " 'Include prior likelihood for non-estimated parameters'\n",
          " from 0 to 1 and re-run the estimation.\n")
@@ -203,8 +210,17 @@ function(
          " for initial value source from 0 (ctl file) to 1 (par file).\n")
   }
 
-  if(is.null(parfile)) parfile <- paste(model,'.par',sep='')
-  if(usepar) file.copy(parfile, "parfile_original_backup.sso")
+  if(is.null(parfile)){
+    # in 3.24, the par file name matched the executable
+    parfile <- paste0(model,'.par')
+    if(SSversion=="3.30" | SSversion==3.3){ # turns out 3.30 != "3.30" in R
+      # in 3.30, it should always be ss.par
+      parfile <- "ss.par"
+    }
+  }
+  if(usepar){
+    file.copy(parfile, "parfile_original_backup.sso")
+  }
 
   # run loop over profile values
   for(i in whichruns){
@@ -219,10 +235,22 @@ function(
       
       # change initial values in the control file
       # this also sets phase negative which is needed even when par file is used
-      SS_changepars(dir=dir,ctlfile=masterctlfile,newctlfile=newctlfile,
+      # dir set as NULL because the wd was already changed to dir earlier in the
+      # script.
+      SS_changepars(dir=NULL,ctlfile=masterctlfile,newctlfile=newctlfile,
                     linenums=linenum,strings=string,
                     newvals=profilevec[i], estimate=FALSE,
                     verbose=TRUE, repeat.vals=TRUE)
+
+      # read parameter lines of control file
+      ctltable_new <- SS_parlines(ctlfile=newctlfile)
+      # which parameters are estimated in phase 1
+      if(!any(ctltable_new$PHASE == 1)){
+        warning("At least one parameter needs to be estimated in phase 1.\n",
+                "Edit control file to add a parameter\n",
+                "which isn't being profiled over to phase 1.")
+      }
+      
       if(usepar){
         # alternatively change initial values in the par file
         # read file
@@ -232,13 +260,18 @@ function(
           par <- readLines(parfile)
         }
         # find value
-        if(!is.null(parstring)) parlinenum <- grep(parstring,par,fixed=TRUE)+1
-        if(length(parlinenum)==0) stop("Problem with input parstring = '",parstring,"'",sep="")
+        if(!is.null(parstring)){
+          parlinenum <- grep(parstring,par,fixed=TRUE)+1
+        }
+        if(length(parlinenum)==0){
+          stop("Problem with input parstring = '",parstring,"'",sep="")
+        }
         parline <- par[parlinenum]
         parval <- as.numeric(parline)
-        if(is.na(parval))
+        if(is.na(parval)){
           stop("Problem with parlinenum or parstring for par file.\n",
                "line as read: ", parline)
+        }
         # replace value
         par[parlinenum] <- profilevec[i]
         # add new header
@@ -247,8 +280,8 @@ function(
         par <- c(par,"#",note)
         print(note)
         # write new file
-        writeLines(par, paste("ss3.par_input_",i,".ss",sep=""))
-        writeLines(par, "ss3.par")
+        writeLines(par, paste0(parfile, "_input_",i,".ss"))
+        writeLines(par, parfile)
       }
       if(file.exists(stdfile)) file.remove(stdfile)
       if(file.exists('Report.sso')) file.remove('Report.sso')
@@ -266,9 +299,9 @@ function(
 
       converged[i] <- file.exists(stdfile)
       onegood <- FALSE
-      if(file.exists('Report.sso') & file.info('Report.sso')$size>0){
+      if(read_like && file.exists('Report.sso') & file.info('Report.sso')$size>0){
         onegood <- TRUE
-        Rep <- readLines('Report.sso',n=120)
+        Rep <- readLines('Report.sso',n=200)
         like <- read.table('Report.sso',skip=grep('LIKELIHOOD',Rep)[2]+0,nrows=11,header=TRUE,fill=TRUE)
         liketable <- rbind(liketable,as.numeric(like$logL.Lambda))
       }else{
@@ -279,6 +312,8 @@ function(
         file.copy('Report.sso',paste('Report',i,".sso",sep=""),overwrite=overwrite)
         file.copy('CompReport.sso',paste('CompReport',i,".sso",sep=""),overwrite=overwrite)
         file.copy('covar.sso',paste('covar',i,".sso",sep=""),overwrite=overwrite)
+        file.copy('warning.sso',paste('warning',i,".sso",sep=""),overwrite=overwrite)
+        file.copy('admodel.hes',paste('admodel',i,".hes",sep=""),overwrite=overwrite)
         file.copy(parfile,paste(model,'.par_',i,'.sso',sep=""),overwrite=overwrite)
       }
     } # end running stuff
