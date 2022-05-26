@@ -4,8 +4,13 @@
 \alias{SS_parlines}
 \title{Get parameter lines from Stock Synthesis control file}
 \usage{
-SS_parlines(ctlfile = "control.ss_new", dir = NULL, version = "3.30",
-  verbose = TRUE, active = FALSE)
+SS_parlines(
+  ctlfile = "control.ss_new",
+  dir = NULL,
+  version = "3.30",
+  verbose = TRUE,
+  active = FALSE
+)
 }
 \arguments{
 \item{ctlfile}{File name of control file including path.}
@@ -39,9 +44,8 @@ followed by a non-numeric element. It's possible that this system could
 break down under certain circumstances
 }
 \examples{
-
 \dontrun{
-parlines <- SS_parlines(ctlfile='c:/ss/Simple/Control.SS_New')
+parlines <- SS_parlines(ctlfile = "c:/ss/Simple/Control.SS_New")
 head(parlines)
 #       LO    HI     INIT PRIOR PR_type   SD PHASE              Label Line_num
 # 42  0.05  0.15  0.10000  0.10       0  0.8    -3  NatM_p_1_Fem_GP_1       42
@@ -54,8 +58,8 @@ head(parlines)
 
 }
 \seealso{
-\code{\link{SS_changepars}}, \code{\link{SS_readctl}},
-\code{\link{SS_readctl_3.24}}
+\code{\link[=SS_changepars]{SS_changepars()}}, \code{\link[=SS_readctl]{SS_readctl()}},
+\code{\link[=SS_readctl_3.24]{SS_readctl_3.24()}}
 }
 \author{
 Ian Taylor

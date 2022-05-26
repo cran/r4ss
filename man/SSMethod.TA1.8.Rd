@@ -4,11 +4,25 @@
 \alias{SSMethod.TA1.8}
 \title{Apply Francis composition weighting method TA1.8}
 \usage{
-SSMethod.TA1.8(fit, type, fleet, part = 0:2, sexes = 0:3,
-  seas = NULL, method = NULL, plotit = TRUE, printit = TRUE,
-  datonly = FALSE, plotadj = !datonly, maxpanel = 1000,
-  fleetnames = NULL, label.part = TRUE, label.sex = TRUE,
-  set.pars = TRUE)
+SSMethod.TA1.8(
+  fit,
+  type,
+  fleet,
+  part = 0:2,
+  sexes = 0:3,
+  seas = NULL,
+  method = NULL,
+  plotit = TRUE,
+  printit = FALSE,
+  datonly = FALSE,
+  plotadj = !datonly,
+  maxpanel = 1000,
+  fleetnames = NULL,
+  label.part = TRUE,
+  label.sex = TRUE,
+  set.pars = TRUE,
+  add = FALSE
+)
 }
 \arguments{
 \item{fit}{Stock Synthesis output as read by r4SS function SS_output}
@@ -64,6 +78,8 @@ of fleets in the model, not the number of fleets considered in this function.}
 \item{set.pars}{Set the graphical parameters such as mar and mfrow.
 Can be set to FALSE in order to add plots form multiple calls to
 this function as separate panels in one larger figure.}
+
+\item{add}{add to existing plot}
 }
 \description{
 Uses method TA1.8 (described in Appendix A of Francis 2011) to do
@@ -81,32 +97,37 @@ difficult to be sure that what this function does is
 appropriate for all combinations of options.  The following
 notes might help anyone wanting to check or correct the code.
 \enumerate{
-  \item The code first takes the appropriate database (lendbase, sizedbase,
-        agedbase, or condbase) and removes un-needed rows.
-  \item The remaining rows of the database are grouped into individual
-        comps (indexed by vector indx) and relevant statistics (e.g.,
-        observed and expected mean length or age), and ancillary data,
-        are calculated for each comp (these are stored in pldat - one row
-        per comp).
-        If the data are to be plotted, the comps are grouped, with each
-        group corresponding to a panel in the plot, and groups are indexed
-        by plindx.
-  \item A single multiplier is calculated to apply to all the comps.
+\item The code first takes the appropriate database (lendbase, sizedbase,
+agedbase, or condbase) and removes unneeded rows.
+\item The remaining rows of the database are grouped into individual
+comps (indexed by vector indx) and relevant statistics (e.g.,
+observed and expected mean length or age), and ancillary data,
+are calculated for each comp (these are stored in pldat - one row
+per comp).
+If the data are to be plotted, the comps are grouped, with each
+group corresponding to a panel in the plot, and groups are indexed
+by plindx.
+\item A single multiplier is calculated to apply to all the comps.
 }
 }
 \examples{
 \dontrun{
-Nfleet <- length(myreplist$FleetNames)
-for (Ifleet in 1:Nfleet)
-  SSMethod.TA1.8(myreplist,"len",fleet=Ifleet,maxpanel=maxpanel)
-for (Ifleet in 1:Nfleet)
-  SSMethod.TA1.8(myreplist,"age",fleet=Ifleet,maxpanel=maxpanel)
-for (Ifleet in 1:Nfleet)
-  SSMethod.TA1.8(myreplist,"size",fleet=Ifleet,maxpanel=maxpanel)
-for (Ifleet in 1:Nfleet)
-  SSMethod.TA1.8(myreplist,"con",fleet=Ifleet,maxpanel=maxpanel)
-for (Ifleet in 1:Nfleet)
-  SSMethod.Cond.TA1.8(myreplist,fleet=Ifleet,maxpanel=maxpanel)
+Nfleet <- length(myreplist[["FleetNames"]])
+for (Ifleet in 1:Nfleet) {
+  SSMethod.TA1.8(myreplist, "len", fleet = Ifleet, maxpanel = maxpanel)
+}
+for (Ifleet in 1:Nfleet) {
+  SSMethod.TA1.8(myreplist, "age", fleet = Ifleet, maxpanel = maxpanel)
+}
+for (Ifleet in 1:Nfleet) {
+  SSMethod.TA1.8(myreplist, "size", fleet = Ifleet, maxpanel = maxpanel)
+}
+for (Ifleet in 1:Nfleet) {
+  SSMethod.TA1.8(myreplist, "con", fleet = Ifleet, maxpanel = maxpanel)
+}
+for (Ifleet in 1:Nfleet) {
+  SSMethod.Cond.TA1.8(myreplist, fleet = Ifleet, maxpanel = maxpanel)
+}
 }
 
 }
@@ -116,7 +137,7 @@ fisheries stock assessment models. Canadian Journal of
 Fisheries and Aquatic Sciences 68: 1124-1138.
 }
 \seealso{
-\code{\link{SSMethod.Cond.TA1.8}}
+\code{\link[=SSMethod.Cond.TA1.8]{SSMethod.Cond.TA1.8()}}
 }
 \author{
 Chris Francis, Andre Punt, Ian Taylor

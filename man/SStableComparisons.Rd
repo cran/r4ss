@@ -4,14 +4,20 @@
 \alias{SStableComparisons}
 \title{make table comparing quantities across models}
 \usage{
-SStableComparisons(summaryoutput, models = "all",
-  likenames = c("TOTAL", "Survey", "Length_comp", "Age_comp", "priors",
-  "Size_at_age"), names = c("Recr_Virgin", "R0", "steep", "NatM",
-  "L_at_Amax", "VonBert_K", "SSB_Virg", "Bratio_2017", "SPRratio_2016"),
-  digits = NULL, modelnames = "default", csv = FALSE,
+SStableComparisons(
+  summaryoutput,
+  models = "all",
+  likenames = c("TOTAL", "Survey", "Length_comp", "Age_comp", "priors", "Size_at_age"),
+  names = c("Recr_Virgin", "R0", "steep", "NatM", "L_at_Amax", "VonBert_K", "SSB_Virg",
+    "Bratio_2021", "SPRratio_2020"),
+  digits = NULL,
+  modelnames = "default",
+  csv = FALSE,
   csvdir = "workingdirectory",
-  csvfile = "parameter_comparison_table.csv", verbose = TRUE,
-  mcmc = FALSE)
+  csvfile = "parameter_comparison_table.csv",
+  verbose = TRUE,
+  mcmc = FALSE
+)
 }
 \arguments{
 \item{summaryoutput}{list created by \code{SSsummarize}}
@@ -21,11 +27,11 @@ SStableComparisons(summaryoutput, models = "all",
 columns in summary tables.}
 
 \item{likenames}{Labels for likelihood values to include, should match
-substring of labels in \code{summaryoutput$likelihoods}.}
+substring of labels in \code{summaryoutput[["likelihoods"]]}.}
 
 \item{names}{Labels for parameters or derived quantities to include, should
-match substring of labels in \code{summaryoutput$pars} or
-\code{summaryoutput$quants}.}
+match substring of labels in \code{summaryoutput[["pars"]]} or
+\code{summaryoutput[["quants"]]}.}
 
 \item{digits}{Optional vector of the number of decimal digits to use in
 reporting each quantity.}
@@ -49,8 +55,8 @@ reduction of the full information in various parts of the list created using
 the \code{SSsummarize} function.
 }
 \seealso{
-\code{\link{SSsummarize}}, \code{\link{SSplotComparisons}},
-\code{\link{SS_output}}
+\code{\link[=SSsummarize]{SSsummarize()}}, \code{\link[=SSplotComparisons]{SSplotComparisons()}},
+\code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor

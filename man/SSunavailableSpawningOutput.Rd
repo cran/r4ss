@@ -4,12 +4,21 @@
 \alias{SSunavailableSpawningOutput}
 \title{Plot unavailable spawning output}
 \usage{
-SSunavailableSpawningOutput(replist, plot = TRUE, print = FALSE,
-  plotdir = "default", pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1)
+SSunavailableSpawningOutput(
+  replist,
+  plot = TRUE,
+  print = FALSE,
+  plotdir = "default",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1
+)
 }
 \arguments{
-\item{replist}{List created by \code{\link{SS_output}}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{plot}{Plot to active plot device?}
 
@@ -24,7 +33,8 @@ be the directory where the model was run.}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{Point size for PNG file}
 

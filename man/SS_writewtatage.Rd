@@ -4,11 +4,17 @@
 \alias{SS_writewtatage}
 \title{Write weight-at-age file}
 \usage{
-SS_writewtatage(mylist, dir = NULL, file = "wtatage.ss",
-  overwrite = FALSE, verbose = TRUE, warn = TRUE)
+SS_writewtatage(
+  mylist,
+  dir = NULL,
+  file = "wtatage.ss",
+  overwrite = FALSE,
+  verbose = TRUE,
+  warn = TRUE
+)
 }
 \arguments{
-\item{mylist}{Object created by \code{\link{SS_readwtatage}}.}
+\item{mylist}{Object created by \code{\link[=SS_readwtatage]{SS_readwtatage()}}.}
 
 \item{dir}{A file path to the directory of interest.
 Typically used with \code{file}, an additional input argument,
@@ -18,7 +24,7 @@ the current working directory, and thus, full file paths should
 not be specified for other arguments as they will be appended
 to \code{dir}.}
 
-\item{file}{Filename for new weight-at-age file, which 
+\item{file}{Filename for new weight-at-age file, which
 will be appended to \code{dir} to create a full file path.
 Default="wtatage.ss".}
 
@@ -26,19 +32,19 @@ Default="wtatage.ss".}
 should be overwritten. The default value is \code{overwrite = FALSE}.}
 
 \item{verbose}{A logical value specifying if output should be printed
-to the screen. The default is \code{verbose = TRUE}.}
+to the screen.}
 
 \item{warn}{A logical value specifying if a warning should be
-generated if overwriting \code{file}. 
+generated if overwriting \code{file}.
 The default value is \code{warn = TRUE}.}
 }
 \description{
 Write Stock Synthesis weight-at-age file from R object that was probably
-created using \code{\link{SS_readwtatage}}
+created using \code{\link[=SS_readwtatage]{SS_readwtatage()}}
 }
 \seealso{
-\code{\link{SS_readwtatage}}
+\code{\link[=SS_readwtatage]{SS_readwtatage()}}
 }
 \author{
-Kelli Faye Johnson
+Kelli F. Johnson
 }

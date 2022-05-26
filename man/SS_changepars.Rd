@@ -4,11 +4,23 @@
 \alias{SS_changepars}
 \title{Change parameters, bounds, or phases in the control file.}
 \usage{
-SS_changepars(dir = NULL, ctlfile = "control.ss_new",
-  newctlfile = "control_modified.ss", linenums = NULL,
-  strings = NULL, newvals = NULL, repeat.vals = FALSE,
-  newlos = NULL, newhis = NULL, newprior = NULL, newprsd = NULL,
-  newprtype = NULL, estimate = NULL, verbose = TRUE, newphs = NULL)
+SS_changepars(
+  dir = NULL,
+  ctlfile = "control.ss_new",
+  newctlfile = "control_modified.ss",
+  linenums = NULL,
+  strings = NULL,
+  newvals = NULL,
+  repeat.vals = FALSE,
+  newlos = NULL,
+  newhis = NULL,
+  newprior = NULL,
+  newprsd = NULL,
+  newprtype = NULL,
+  estimate = NULL,
+  verbose = TRUE,
+  newphs = NULL
+)
 }
 \arguments{
 \item{dir}{Directory with control file to change.}
@@ -49,21 +61,21 @@ value to the given parameter but change the remainder parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 
-\item{newprior}{Vector of new prior values. 
+\item{newprior}{Vector of new prior values.
 Default=NULL.
 The vector can contain \code{NA} values, which will assign the original
 value to the given parameter but change the remainder parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 
-\item{newprsd}{Vector of new prior sd values. 
+\item{newprsd}{Vector of new prior sd values.
 Default=NULL.
 The vector can contain \code{NA} values, which will assign the original
 value to the given parameter but change the remainder parameters, where
 the vector of values needs to be in the same order as either
 \code{linenums} or \code{strings}.}
 
-\item{newprtype}{Vector of new prior type. 
+\item{newprtype}{Vector of new prior type.
 Default=NULL.
 The vector can contain \code{NA} values, which will assign the original
 value to the given parameter but change the remainder parameters, where
@@ -91,26 +103,27 @@ the vector of values needs to be in the same order as either
 Loops over a subset of control file to change parameter lines.
 Current initial value, lower and upper bounds, and phase can be modified,
 but function could be expanded to control other columns.
-Depends on \code{\link{SS_parlines}}.
-Used by \code{\link{SS_profile}} and the \pkg{ss3sim} package.
+Depends on \code{\link[=SS_parlines]{SS_parlines()}}.
+Used by \code{\link[=SS_profile]{SS_profile()}} and the \pkg{ss3sim} package.
 }
 \examples{
-
 \dontrun{
-SS_changepars(dir='C:/ss/SSv3.30.03.05_May11/Simple - Copy',
-              strings=c("steep","sigmaR"), newvals=c(.4,.6))
+SS_changepars(
+  dir = "C:/ss/SSv3.30.03.05_May11/Simple - Copy",
+  strings = c("steep", "sigmaR"), newvals = c(.4, .6)
+)
 ## parameter names in control file matching input vector 'strings' (n=2):
-## [1] "SR_BH_steep" "SR_sigmaR"  
+## [1] "SR_BH_steep" "SR_sigmaR"
 ## These are the ctl file lines as they currently exist:
-##     LO HI     INIT PRIOR PR_type SD PHASE env-var use_dev dev_minyr dev_maxyr
+##     LO HI     INIT PRIOR PR_type SD PHASE env_var&link dev_link dev_minyr dev_maxyr
 ## 95 0.2  1 0.613717   0.7    0.05  1     4       0       0         0         0
 ## 96 0.0  2 0.600000   0.8    0.80  0    -4       0       0         0         0
-##    dev_stddev Block Block_Fxn       Label Linenum
+##        dev_PH Block Block_Fxn       Label Linenum
 ## 95          0     0         0 SR_BH_steep      95
 ## 96          0     0         0   SR_sigmaR      96
 ## line numbers in control file (n=2):
 ## [1] 95 96
-## 
+##
 ## wrote new file to control_modified.ss with the following changes:
 ##    oldvals newvals oldphase newphase oldlos newlos oldhis newhis       comment
 ## 1 0.613717     0.4        4       -4    0.2    0.2      1      1 # SR_BH_steep
@@ -118,7 +131,7 @@ SS_changepars(dir='C:/ss/SSv3.30.03.05_May11/Simple - Copy',
 }
 }
 \seealso{
-\code{\link{SS_parlines}}, \code{\link{SS_profile}}
+\code{\link[=SS_parlines]{SS_parlines()}}, \code{\link[=SS_profile]{SS_profile()}}
 }
 \author{
 Ian Taylor, Christine Stawitz, Chantel Wetzel

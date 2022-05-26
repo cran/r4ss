@@ -4,14 +4,27 @@
 \alias{SSplotRecdist}
 \title{Plot of recruitment distribution among areas and seasons}
 \usage{
-SSplotRecdist(replist, plot = TRUE, print = FALSE, areanames = NULL,
-  seasnames = NULL, xlab = "", ylab = "",
+SSplotRecdist(
+  replist,
+  plot = TRUE,
+  print = FALSE,
+  areanames = NULL,
+  seasnames = NULL,
+  xlab = "",
+  ylab = "",
   main = "Distribution of recruitment by area and season",
-  plotdir = "default", pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+  plotdir = "default",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{plot}{plot to active plot device?}
 
@@ -38,7 +51,8 @@ be the directory where the model was run.}
 
 \item{punits}{units for PNG file}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -52,7 +66,7 @@ season. This is based on the RECRUITMENT_DIST section of the Report.sso
 file.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SSplotRecdevs}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SSplotRecdevs]{SSplotRecdevs()}}
 }
 \author{
 Ian Taylor

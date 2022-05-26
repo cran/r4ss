@@ -4,10 +4,21 @@
 \alias{SSMethod.Cond.TA1.8}
 \title{Apply Francis composition weighting method TA1.8 for conditional age-at-length fits}
 \usage{
-SSMethod.Cond.TA1.8(fit, fleet, part = 0:2, seas = NULL,
-  plotit = TRUE, printit = TRUE, datonly = FALSE,
-  plotadj = !datonly, maxpanel = 1000, FullDiagOut = FALSE,
-  ShowVersionB = FALSE, fleetnames = NULL)
+SSMethod.Cond.TA1.8(
+  fit,
+  fleet,
+  part = 0:2,
+  seas = NULL,
+  plotit = TRUE,
+  printit = FALSE,
+  datonly = FALSE,
+  plotadj = !datonly,
+  maxpanel = 1000,
+  FullDiagOut = FALSE,
+  ShowVersionB = FALSE,
+  fleetnames = NULL,
+  add = FALSE
+)
 }
 \arguments{
 \item{fit}{Stock Synthesis output as read by r4SS function SS_output}
@@ -46,6 +57,8 @@ the adjusted sample sizes (TRUE by default unless datonly = TRUE)}
 \item{fleetnames}{Vector of alternative fleet names to draw from for
 plot titles and captions. It should have length equal to the number
 of fleets in the model, not the number of fleets considered in this function.}
+
+\item{add}{add to existing plot}
 }
 \description{
 Uses an extension of method TA1.8 (described in Appendix A of Francis, 2011)
@@ -73,15 +86,15 @@ very difficult to be sure that what this function does is appropriate for all
 combinations of options. The following notes (for version A) might help anyone
 wanting to check or correct the code.
 \enumerate{
-  \item The code first removes un-needed rows
+\item The code first removes unneeded rows
 from database condbase.
-  \item The remaining rows of the database are grouped
+\item The remaining rows of the database are grouped
 (indexed by vector indx) and relevant statistics (e.g., observed and expected
 mean age), and ancillary data, are calculated for each group (these are stored
 in pldat - one row per group).
-  \item If the data are to be plotted they are further
+\item If the data are to be plotted they are further
 grouped by fleet, with one panel of the plot per fleet.
-  \item A single multiplier, \emph{w}, is calculated to apply to all the
+\item A single multiplier, \emph{w}, is calculated to apply to all the
 selected data.
 }
 }
@@ -90,10 +103,10 @@ Francis, R.I.C.C. (2011). Data weighting in statistical
 fisheries stock assessment models. Can. J. Fish. Aquat. Sci. 68: 1124-1138.
 
 Punt, A.E. (2015). Some insights into data weighting in integrated stock assessments.
-Fish. Res. \url{http://dx.doi.org/10.1016/j.fishres.2015.12.006}
+Fish. Res.
 }
 \seealso{
-\code{\link{SSMethod.TA1.8}}
+\code{\link[=SSMethod.TA1.8]{SSMethod.TA1.8()}}
 }
 \author{
 Chris Francis, Andre Punt, Ian Taylor

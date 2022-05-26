@@ -4,31 +4,57 @@
 \alias{SSplotProfile}
 \title{Plot likelihood profile results}
 \usage{
-SSplotProfile(summaryoutput, plot = TRUE, print = FALSE,
-  models = "all", profile.string = "steep",
-  profile.label = "Spawner-recruit steepness (h)", exact = FALSE,
-  ylab = "Change in -log-likelihood", components = c("TOTAL", "Catch",
-  "Equil_catch", "Survey", "Discard", "Mean_body_wt", "Length_comp",
-  "Age_comp", "Size_at_age", "SizeFreq", "Morphcomp", "Tag_comp",
-  "Tag_negbin", "Recruitment", "InitEQ_Regime", "Forecast_Recruitment",
-  "Parm_priors", "Parm_softbounds", "Parm_devs", "F_Ballpark",
-  "Crash_Pen"), component.labels = c("Total", "Catch",
-  "Equilibrium catch", "Index data", "Discard", "Mean body weight",
-  "Length data", "Age data", "Size-at-age data", "Generalized size data",
-  "Morph composition data", "Tag recapture distribution",
-  "Tag recapture total", "Recruitment", "Initital equilibrium recruitment",
-  "Forecast recruitment", "Priors", "Soft bounds", "Parameter deviations",
-  "F Ballpark", "Crash penalty"), minfraction = 0.01,
-  sort.by.max.change = TRUE, col = "default", pch = "default",
-  lty = 1, lty.total = 1, lwd = 2, lwd.total = 3, cex = 1,
-  cex.total = 1.5, xlim = "default", ymax = "default", xaxs = "r",
-  yaxs = "r", type = "o", legend = TRUE, legendloc = "topright",
-  pwidth = 6.5, pheight = 5, punits = "in", res = 300,
-  ptsize = 10, cex.main = 1, plotdir = NULL, add_cutoff = FALSE,
-  cutoff_prob = 0.95, verbose = TRUE, ...)
+SSplotProfile(
+  summaryoutput,
+  plot = TRUE,
+  print = FALSE,
+  models = "all",
+  profile.string = "steep",
+  profile.label = "Spawner-recruit steepness (h)",
+  exact = FALSE,
+  ylab = "Change in -log-likelihood",
+  components = c("TOTAL", "Catch", "Equil_catch", "Survey", "Discard", "Mean_body_wt",
+    "Length_comp", "Age_comp", "Size_at_age", "SizeFreq", "Morphcomp", "Tag_comp",
+    "Tag_negbin", "Recruitment", "InitEQ_Regime", "Forecast_Recruitment", "Parm_priors",
+    "Parm_softbounds", "Parm_devs", "F_Ballpark", "Crash_Pen"),
+  component.labels = c("Total", "Catch", "Equilibrium catch", "Index data", "Discard",
+    "Mean body weight", "Length data", "Age data", "Size-at-age data",
+    "Generalized size data", "Morph composition data", "Tag recapture distribution",
+    "Tag recapture total", "Recruitment", "Initital equilibrium recruitment",
+    "Forecast recruitment", "Priors", "Soft bounds", "Parameter deviations",
+    "F Ballpark", "Crash penalty"),
+  minfraction = 0.01,
+  sort.by.max.change = TRUE,
+  col = "default",
+  pch = "default",
+  lty = 1,
+  lty.total = 1,
+  lwd = 2,
+  lwd.total = 3,
+  cex = 1,
+  cex.total = 1.5,
+  xlim = "default",
+  ymax = "default",
+  xaxs = "r",
+  yaxs = "r",
+  type = "o",
+  legend = TRUE,
+  legendloc = "topright",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  plotdir = NULL,
+  add_cutoff = FALSE,
+  cutoff_prob = 0.95,
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
-\item{summaryoutput}{List created by the function \code{\link{SSsummarize}}.}
+\item{summaryoutput}{List created by the function \code{\link[=SSsummarize]{SSsummarize()}}.}
 
 \item{plot}{Plot to active plot device?}
 
@@ -111,7 +137,8 @@ plotted.}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{Point size for PNG file}
 
@@ -120,7 +147,7 @@ plotted.}
 \item{plotdir}{Directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
-\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95% confidence interval
+\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95\% confidence interval
 based on common cutoff of half of chi-squared of p=.95 with 1 degree of
 freedom: \code{0.5*qchisq(p=cutoff_prob, df=1)}. The probability value
 can be adjusted using the \code{cutoff_prob} below.}
@@ -138,15 +165,15 @@ component that contributes more than some minimum fraction of change in
 total.
 }
 \note{
-Someday the function \code{\link{SS_profile}} will be improved and
+Someday the function \code{\link[=SS_profile]{SS_profile()}} will be improved and
 made to work directly with this plotting function, but they don't yet work
-well together. Thus, even if \code{\link{SS_profile}} is used, the output
-should be read using \code{\link{SSgetoutput}} or by multiple calls to
-\code{\link{SS_output}}.
+well together. Thus, even if \code{\link[=SS_profile]{SS_profile()}} is used, the output
+should be read using \code{\link[=SSgetoutput]{SSgetoutput()}} or by multiple calls to
+\code{\link[=SS_output]{SS_output()}}.
 }
 \seealso{
-\code{\link{SSsummarize}}, \code{\link{SS_profile}},
-\code{\link{SS_output}}, \code{\link{SSgetoutput}}
+\code{\link[=SSsummarize]{SSsummarize()}}, \code{\link[=SS_profile]{SS_profile()}},
+\code{\link[=SS_output]{SS_output()}}, \code{\link[=SSgetoutput]{SSgetoutput()}}
 }
 \author{
 Ian Taylor, Ian Stewart

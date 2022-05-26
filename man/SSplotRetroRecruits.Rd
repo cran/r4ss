@@ -4,15 +4,25 @@
 \alias{SSplotRetroRecruits}
 \title{Make squid plot of retrospectives of recruitment deviations.}
 \usage{
-SSplotRetroRecruits(retroSummary, endyrvec, cohorts, ylim = NULL,
-  uncertainty = FALSE, labels = c("Recruitment deviation",
-  "Recruitment (billions)", "relative to recent estimate", "Age"),
+SSplotRetroRecruits(
+  retroSummary,
+  endyrvec,
+  cohorts,
+  ylim = NULL,
+  uncertainty = FALSE,
+  labels = c("Recruitment deviation", "Recruitment (billions)",
+    "relative to recent estimate", "Age"),
   main = "Retrospective analysis of recruitment deviations",
-  mcmcVec = FALSE, devs = TRUE, relative = FALSE,
-  labelyears = TRUE, legend = FALSE, leg.ncols = 4)
+  mcmcVec = FALSE,
+  devs = TRUE,
+  relative = FALSE,
+  labelyears = TRUE,
+  legend = FALSE,
+  leg.ncols = 4
+)
 }
 \arguments{
-\item{retroSummary}{List object created by \code{\link{SSsummarize}} that
+\item{retroSummary}{List object created by \code{\link[=SSsummarize]{SSsummarize()}} that
 summarizes the results of a set of retrospective analysis models.ss}
 
 \item{endyrvec}{Vector of years representing the final year of values to
@@ -49,43 +59,45 @@ Inspired by Jim Ianelli and named by Sean Cox, the squid plot is a way to
 examine retrospective patterns in estimation of recruitment deviations.
 }
 \examples{
+\dontrun{
+# run retrospective analysis
+SS_doRetro(olddir = "2013hake_12", years = 0:-10)
+# read in output
+retroModels <- SSgetoutput(dirvec = paste("retrospectives/retro", -10:0, sep = ""))
+# summarize output
+retroSummary <- SSsummarize(retroModels)
 
- \dontrun{
- # run retrospective analysis
- SS_doRetro(olddir='2013hake_12',years=0:-10)
- # read in output
- retroModels <- SSgetoutput(dirvec=paste('retrospectives/retro',-10:0,sep=''))
- # summarize output
- retroSummary <- SSsummarize(retroModels)
+# set the ending year of each model in the set
+endyrvec <- retroModels[[1]][["endyr"]] - 10:0
+# make comparison plot
+pdf("retrospectives/retrospective_comparison_plots.pdf")
+SSplotComparisons(retroSummary, endyrvec = endyrvec, new = FALSE)
+dev.off()
 
- # set the ending year of each model in the set
- endyrvec <- retroModels[[1]]$endyr-10:0
- # make comparison plot
- pdf('retrospectives/retrospective_comparison_plots.pdf')
- SSplotComparisons(retroSummary,endyrvec=endyrvec,new=FALSE)
- dev.off()
-
- # make Squid Plot of recdev retrospectives 
- pdf('retrospectives/retrospective_dev_plots.pdf',width=7,height=10)
- par(mfrow=c(2,1))
- # first scaled relative to most recent estimate
- SSplotRetroRecruits(retroSummary, endyrvec=endyrvec, cohorts=1999:2012,
-                     relative=TRUE, legend=FALSE)
- # second without scaling
- SSplotRetroDevs(retroSummary, endyrvec=endyrvec, cohorts=1999:2012,
-                 relative=FALSE, legend=FALSE)
- dev.off()
- }
+# make Squid Plot of recdev retrospectives
+pdf("retrospectives/retrospective_dev_plots.pdf", width = 7, height = 10)
+par(mfrow = c(2, 1))
+# first scaled relative to most recent estimate
+SSplotRetroRecruits(retroSummary,
+  endyrvec = endyrvec, cohorts = 1999:2012,
+  relative = TRUE, legend = FALSE
+)
+# second without scaling
+SSplotRetroDevs(retroSummary,
+  endyrvec = endyrvec, cohorts = 1999:2012,
+  relative = FALSE, legend = FALSE
+)
+dev.off()
+}
 
 }
 \references{
 Ianelli et al. (2011) Assessment of the walleye pollock stock in
 the Eastern Bering Sea.
-\url{http://www.afsc.noaa.gov/REFM/docs/2011/EBSpollock.pdf}. (Figure 1.31,
-which is on an absolute, rather than log scale.)
+(Figure 1.31, which is on an absolute, rather than log scale.)
 }
 \seealso{
-\code{\link{SSsummarize}}
+\code{\link[=SSsummarize]{SSsummarize()}}
 }
 \author{
 Ian Taylor

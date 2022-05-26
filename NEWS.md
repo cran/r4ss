@@ -1,3 +1,25 @@
+# r4ss 1.44.0 (23 May 2022)
+* Minor improvements and bug fixes
+* Compatibility with SS3 version 3.30.19
+* Submitted to CRAN
+
+# r4ss 1.43.2 (04 April 2022)
+* Standardize version = "3.30" in read and write functions and
+  deprecate NULL as an option
+
+# r4ss 1.43.1 (18 February 2022)
+* Added Common Utility Functions
+
+# r4ss 1.39.1 (18 August 2020)
+* Numerous bug fixes and minor improvements
+* Compatibility with SS version 3.30.16
+
+# r4ss 1.38.0 (25 March 2020)
+* Numerous bug fixes and minor improvements
+* Compatibility with SS version 3.30.15
+* Expansion of capabilities for functions to read and write SS input files
+* Dependent on fewer packages but now depends on R version 3.5.0 or newer
+
 # r4ss 1.36.1 (16 October 2019)
 * Numerous minor bug fixes and minor improvements
 * Compatibility with SS versions 3.24 through 3.30.14

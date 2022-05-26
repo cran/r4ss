@@ -2,37 +2,42 @@
 % Please edit documentation in R/SS_writectl.R
 \name{SS_writectl}
 \alias{SS_writectl}
-\title{Srite Stock Synthesis control file}
+\title{Write Stock Synthesis control file}
 \usage{
-SS_writectl(ctllist, outfile, version = NULL, overwrite = FALSE,
-  verbose = TRUE)
+SS_writectl(
+  ctllist,
+  outfile,
+  version = "3.30",
+  overwrite = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{ctllist}{List object created by \code{\link{SS_readdat}}.}
+\item{ctllist}{List object created by \code{\link[=SS_readdat]{SS_readdat()}}.}
 
 \item{outfile}{Filename for where to write new control file.}
 
-\item{version}{SS version number. Currently only "3.24" or "3.30" are supported,
-either as character or numeric values (noting that numeric 3.30 = 3.3).
-Defaults to NULL, which means that the function will attempt to determine the
-version from \code{ctllist}.}
+\item{version}{SS version number. Currently "3.24" or "3.30" are supported,
+either as character or numeric values (noting that numeric 3.30  = 3.3).
+\code{version = NULL} is no longer the default or an allowed entry.
+The default is \code{version = "3.30"}.}
 
 \item{overwrite}{Should existing files be overwritten? Defaults to FALSE.}
 
 \item{verbose}{Should there be verbose output while running the file?
-Defaults to TRUE.}
+Defaults to FALSE.}
 }
 \description{
 Write Stock Synthesis control file from list object in R which was probably
-created using \code{\link{SS_readctl}}. This function is a
+created using \code{\link[=SS_readctl]{SS_readctl()}}. This function is a
 wrapper which calls either SS_writectl_3.24 or SS_writectl_3.30
 (and potentially additional functions in the future).
 }
 \seealso{
-\code{\link{SS_writedat_3.24}}, \code{\link{SS_writedat_3.30}},
-\code{\link{SS_readdat}}, \code{\link{SS_makedatlist}},
-\code{\link{SS_readstarter}}, \code{\link{SS_writestarter}},
-\code{\link{SS_readforecast}}, \code{\link{SS_writeforecast}}
+\code{\link[=SS_writedat_3.24]{SS_writedat_3.24()}}, \code{\link[=SS_writedat_3.30]{SS_writedat_3.30()}},
+\code{\link[=SS_readdat]{SS_readdat()}},
+\code{\link[=SS_readstarter]{SS_readstarter()}}, \code{\link[=SS_writestarter]{SS_writestarter()}},
+\code{\link[=SS_readforecast]{SS_readforecast()}}, \code{\link[=SS_writeforecast]{SS_writeforecast()}}
 }
 \author{
 Ian G. Taylor, Yukio Takeuchi, Gwladys I. Lambert, Kathryn Doering

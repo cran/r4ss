@@ -4,74 +4,117 @@
 \alias{SS_readctl_3.30}
 \title{read control file from SS version 3.30}
 \usage{
-SS_readctl_3.30(file, verbose = TRUE, echoall = FALSE,
-  version = "3.30", nseas = 4, N_areas = 1, Nages = 20,
-  Ngenders = 1, Npopbins = NA, Nfleet = 2, Nsurveys = 2,
-  Do_AgeKey = FALSE, N_tag_groups = NA, N_CPUE_obs = c(0, 0, 9, 12),
-  use_datlist = FALSE, datlist = NULL)
+SS_readctl_3.30(
+  file,
+  verbose = FALSE,
+  echoall = lifecycle::deprecated(),
+  version = lifecycle::deprecated(),
+  use_datlist = TRUE,
+  datlist = "data.ss_new",
+  nseas = NULL,
+  N_areas = NULL,
+  Nages = NULL,
+  Ngenders = lifecycle::deprecated(),
+  Nsexes = NULL,
+  Npopbins = NULL,
+  Nfleets = NULL,
+  Ntag_fleets = NULL,
+  Do_AgeKey = NULL,
+  N_tag_groups = NULL,
+  catch_mult_fleets = NULL,
+  predM_fleets = NULL,
+  N_rows_equil_catch = NULL,
+  N_dirichlet_parms = NULL
+)
 }
 \arguments{
-\item{file}{Filename either with full path or relative to working directory.}
+\item{file}{Filename either with full path or relative to working directory.
+
+See the formal arguments for a possible default filename.}
 
 \item{verbose}{Should there be verbose output while running the file?
-Default=TRUE.}
+Defaults to FALSE.}
 
-\item{echoall}{Debugging tool (not fully implemented) of echoing blocks of
-data as it is being read.}
+\item{echoall}{Deprecated. Debugging tool (not fully implemented) of echoing
+blocks of values as it is being read.}
 
-\item{version}{SS version number. Currently only "3.24" or "3.30" are supported,
+\item{version}{Deprecated. SS version number. Currently only "3.24" or "3.30" are supported,
 either as character or numeric values (noting that numeric 3.30  = 3.3).}
 
-\item{nseas}{number of seasons in the model. This information is not
-explicitly available in control file}
+\item{use_datlist}{LOGICAL. If TRUE, use datlist to derive parameters which
+can not be determined from control file. Defaults to TRUE.}
 
-\item{N_areas}{number of spatial areas in the model. Default = 1. This information is also not
-explicitly available in control file}
+\item{datlist}{list or character. If list, should be a list produced from
+\code{\link[=SS_writedat]{SS_writedat()}}. If character, should be the file name of an SS data file.}
+
+\item{nseas}{number of seasons in the model. This information is not
+explicitly available in control file and used only if \code{use_datlist = FALSE}.}
+
+\item{N_areas}{number of spatial areas in the model. Default = 1. This information is not
+explicitly available in control file and used only if if \code{use_datlist = FALSE}.}
 
 \item{Nages}{oldest age in the model. This information is also not
-explicitly available in control file}
+explicitly available in control file and used only if \code{use_datlist = FALSE}.}
 
-\item{Ngenders}{number of genders in the model. This information is also not
-explicitly available in control file}
+\item{Ngenders}{Deprecated. Number of sexes in the model. This information is also not
+explicitly available in control file and used only if \code{use_datlist = FALSE}.}
+
+\item{Nsexes}{number of sexes in the model. This information is also not
+explicitly available in control file and used only if \code{use_datlist = FALSE}.}
 
 \item{Npopbins}{number of population bins in the model. This information is also not
 explicitly available in control file and this information is only required if length based
-maturity vector is directly supplied (Maturity option of 6), and not yet tested}
+maturity vector is directly supplied (Maturity option of 6).  and used only
+if \code{use_datlist = FALSE}.}
 
-\item{Nfleet}{number of fisheries in the model. This information is also not
+\item{Nfleets}{number of fishery and survey fleets in the model. This information is also not
 explicitly available in control file}
 
-\item{Nsurveys}{number of survey fleets in the model. This information is also not
-explicitly available in control file}
+\item{Ntag_fleets}{The number of catch fleets in the model (fleets of )
+type 1 or 2; not surveys). Used to set the number of survey parameters.
+Only used if tagging data is in the model and \code{use_datlist} is FALSE.}
 
-\item{Do_AgeKey}{Flag to indicate if 7 additional ageing error parameters to be read
-set 1 (but in fact any non zero numeric in R) or TRUE to enable to read them 0 or FALSE (default)
-to disable them. This information is not explicitly available in control file, too.}
+\item{Do_AgeKey}{Flag to indicate if 7 additional ageing error parameters to
+be read set 1 (but in fact any non zero numeric in R) or TRUE to enable to
+read them 0 or FALSE to disable them. This information is not
+explicitly available in control file and used only if \code{use_datlist = FALSE}.}
 
-\item{N_tag_groups}{number of tag release group. Default =NA. This information is not explicitly available
-control file. This information is only required if custom tag parameters is enabled (TG_custom=1)}
+\item{N_tag_groups}{number of tag release group. Default =NA. This information
+is not explicitly available control file  and used only if
+\code{use_datlist = FALSE}. This information is only required if custom tag
+parameters is enabled (TG_custom=1)}
 
-\item{N_CPUE_obs}{numeric vector of length=Nfleet+Nsurveys containing number of data points of each CPUE time series}
+\item{catch_mult_fleets}{integer vector of fleets using the catch multiplier
+option. Defaults to NULL and should be left as such if 1) the catch
+multiplier option is not used for any fleets or 2) use_datlist = TRUE and
+datlist is specified.}
 
-\item{use_datlist}{LOGICAL if TRUE, use datlist to derive parameters which can not be
-determined from control file}
+\item{predM_fleets}{integer vector of fleets with predator mortality included.
+Predator mortality fleets are only available in v3.30.18 and
+higher. Defaults to NULL and should be left as such if 1) predation mortality
+is not used for any fleets; 2) use_datlist = TRUE and datlist is specified;
+or 3) if comments in the control file should be used instead to determine
+the the predM_fleets.}
 
-\item{datlist}{list or character. If list, should be a list produced from 
-\code{\link{SS_writedat}}. If character, should be the file name of an
-SS data file.}
+\item{N_rows_equil_catch}{Integer value of the number of parameter lines to
+read for equilibrium catch. Defaults to NULL, which means the function will
+attempt to figure out how many lines of equilibrium catch to read from the
+control file comments.}
+
+\item{N_dirichlet_parms}{Integer value of the number of Dirichlet multinomial
+parameters. Defaults to 0.}
 }
 \description{
 Read Stock Synthesis (version 3.30) control file into list object in R.
-This function comes with its wrapper function SS_readctl
-that calls SS_readctl_3.24  or SS_readctl_3.30 (this function).
+This function should be called from SS_readctl.
 }
 \seealso{
-\code{\link{SS_readctl}}, \code{\link{SS_readdat}}
-\code{\link{SS_readdat_3.24}},\code{\link{SS_readdat_3.30}}
-\code{\link{SS_readctl_3.24}},
-\code{\link{SS_readstarter}}, \code{\link{SS_readforecast}},
-\code{\link{SS_writestarter}},
-\code{\link{SS_writeforecast}}, \code{\link{SS_writedat}}
+\code{\link[=SS_readctl]{SS_readctl()}}, \code{\link[=SS_readdat]{SS_readdat()}}
+\code{\link[=SS_readdat_3.24]{SS_readdat_3.24()}},\code{\link[=SS_readdat_3.30]{SS_readdat_3.30()}}
+\code{\link[=SS_readctl_3.24]{SS_readctl_3.24()}},
+\code{\link[=SS_readstarter]{SS_readstarter()}}, \code{\link[=SS_readforecast]{SS_readforecast()}},
+\code{\link[=SS_writestarter]{SS_writestarter()}},
+\code{\link[=SS_writeforecast]{SS_writeforecast()}}, \code{\link[=SS_writedat]{SS_writedat()}}
 }
 \author{
 Neil Klaer, Yukio Takeuchi, Watal M. Iwasaki, and Kathryn Doering

@@ -4,23 +4,45 @@
 \alias{SSplotSpawnrecruit}
 \title{Plot spawner-recruit curve.}
 \usage{
-SSplotSpawnrecruit(replist, subplot = 1:3, add = FALSE, plot = TRUE,
-  print = FALSE, xlim = NULL, ylim = NULL,
-  labels = c("Spawning biomass (mt)", "Recruitment (1,000s)",
-  "Spawning output", expression(paste("Spawning output (relative to ",
-  italic(B)[0], ")")), expression(paste("Recruitment (relative to  ",
-  italic(R)[0], ")")), "Log recruitment deviation"),
-  bioscale = "default", plotdir = "default", pwidth = 6.5,
-  pheight = 5, punits = "in", res = 300, ptsize = 10,
-  verbose = TRUE, colvec = c("blue", "black", "black", gray(0, 0.7)),
-  ltyvec = c(1, 2, 1, NA), ptcol = "default", legend = TRUE,
-  legendloc = NULL, minyr = "default", textmindev = 0.5,
-  relative = FALSE, expected = TRUE, estimated = TRUE,
-  bias_adjusted = TRUE, show_env = TRUE, virg = TRUE, init = TRUE,
-  forecast = FALSE)
+SSplotSpawnrecruit(
+  replist,
+  subplot = 1:3,
+  add = FALSE,
+  plot = TRUE,
+  print = FALSE,
+  xlim = NULL,
+  ylim = NULL,
+  labels = c("Spawning biomass (mt)", "Recruitment (1,000s)", "Spawning output",
+    expression(paste("Spawning output (relative to ", italic(B)[0], ")")),
+    expression(paste("Recruitment (relative to  ", italic(R)[0], ")")),
+    "Log recruitment deviation"),
+  bioscale = "default",
+  plotdir = "default",
+  pwidth = 6.5,
+  pheight = 6.5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  verbose = TRUE,
+  colvec = c("blue", "black", "black", gray(0, 0.7)),
+  ltyvec = c(1, 2, 1, NA),
+  ptcol = "default",
+  legend = TRUE,
+  legendloc = NULL,
+  minyr = "default",
+  textmindev = 0.5,
+  relative = FALSE,
+  expected = TRUE,
+  estimated = TRUE,
+  bias_adjusted = TRUE,
+  show_env = TRUE,
+  virg = TRUE,
+  init = TRUE,
+  forecast = FALSE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplot}{vector of which subplots to show.  1=plot without labels,
 2=plot with year labels.}
@@ -45,15 +67,22 @@ models}
 \item{plotdir}{directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
-\item{pwidth}{width of plot}
+\item{pwidth}{Default width of plots printed to files in units of
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{height of plot}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
 
-\item{punits}{units for PNG file}
+\item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
-\item{ptsize}{point size for PNG file}
+\item{ptsize}{Point size for plotted text in plots printed to files (see
+\code{help("png")} in R for details).}
 
 \item{verbose}{report progress to R GUI?}
 
@@ -66,7 +95,7 @@ of points, where the points are disconnected (lty=NA) by default}
 
 \item{ptcol}{vector or single value for the color of the points, "default"
 will by replaced by a vector of colors of length equal to
-nrow(replist$recruit)}
+\code{nrow(replist[["recruit"]])}}
 
 \item{legend}{add a legend to the figure?}
 
@@ -105,7 +134,7 @@ if this point differs from virgin values}
 Plot spawner-recruit curve based on output from Stock Synthesis model.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Stewart, Ian Taylor

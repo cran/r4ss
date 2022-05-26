@@ -4,21 +4,42 @@
 \alias{SSplotTags}
 \title{Plot tagging data and fits}
 \usage{
-SSplotTags(replist = replist, subplots = 1:8, latency = NULL,
-  taggroups = NULL, rows = 1, cols = 1, tagrows = 3, tagcols = 3,
-  plot = TRUE, print = FALSE, pntscalar = 2.6, minnbubble = 8,
-  pwidth = 6.5, pheight = 5, punits = "in", ptsize = 10,
-  res = 300, cex.main = 1, col1 = rgb(0, 0, 1, 0.7), col2 = "red",
-  col3 = "grey95", col4 = "grey70", labels = c("Year", "Frequency",
-  "Tag Group", "Fit to tag recaptures by tag group",
-  "Post-latency tag recaptures aggregated across tag groups",
-  "Observed tag recaptures by year and tag group",
-  "Residuals for post-latency tag recaptures: (obs-exp)/sqrt(exp)",
-  "Observed and expected post-latency tag recaptures by year and tag group"),
-  plotdir = "default", verbose = TRUE)
+SSplotTags(
+  replist = replist,
+  subplots = 1:10,
+  latency = NULL,
+  taggroups = NULL,
+  rows = 1,
+  cols = 1,
+  tagrows = 3,
+  tagcols = 3,
+  plot = TRUE,
+  print = FALSE,
+  pntscalar = 2.6,
+  minnbubble = 8,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  ptsize = 10,
+  res = 300,
+  cex.main = 1,
+  col1 = rgb(0, 0, 1, 0.7),
+  col2 = "red",
+  col3 = "grey95",
+  col4 = "grey70",
+  labels = c("Year", "Frequency", "Tag Group", "Fit to tag recaptures by tag group",
+    "Post-latency tag recaptures aggregated across tag groups",
+    "Observed tag recaptures by year and tag group",
+    "Residuals for post-latency tag recaptures: (obs-exp)/sqrt(exp)",
+    "Observed and expected post-latency tag recaptures by year and tag group",
+    "Summarized observed and expected numbers of recaptures by fleet",
+    "Pearson residuals by tag group"),
+  plotdir = "default",
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplots}{vector controlling which subplots to create}
 
@@ -60,7 +81,8 @@ added to bubble plots to avoid cropping}
 \item{ptsize}{point size for plotted text in plots printed to files (see
 help("png") in R for details). Default=12.}
 
-\item{res}{resolution of plots printed to files. Default=300}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{cex.main}{character expansion parameter for plot titles}
 
@@ -83,8 +105,8 @@ be the directory where the model was run.}
 Plot observed and expected tag recaptures in aggregate and by tag group.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
-Andre Punt, Ian Taylor
+Andre E. Punt, Ian G. Taylor, Ashleigh J. Novak
 }

@@ -4,24 +4,52 @@
 \alias{PinerPlot}
 \title{Make plot of likelihood contributions by fleet}
 \usage{
-PinerPlot(summaryoutput, plot = TRUE, print = FALSE,
+PinerPlot(
+  summaryoutput,
+  plot = TRUE,
+  print = FALSE,
   component = "Length_like",
   main = "Changes in length-composition likelihoods by fleet",
-  models = "all", fleets = "all", fleetnames = "default",
-  profile.string = "R0", profile.label = expression(log(italic(R)[0])),
-  exact = FALSE, ylab = "Change in -log-likelihood", col = "default",
-  pch = "default", lty = 1, lty.total = 1, lwd = 2,
-  lwd.total = 3, cex = 1, cex.total = 1.5, xlim = "default",
-  ymax = "default", xaxs = "r", yaxs = "r", type = "o",
-  legend = TRUE, legendloc = "topright", pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  plotdir = NULL, add_cutoff = FALSE, cutoff_prob = 0.95,
-  verbose = TRUE, fleetgroups = NULL,
-  likelihood_type = "raw_times_lambda", minfraction = 0.01)
+  models = "all",
+  fleets = "all",
+  fleetnames = "default",
+  profile.string = "R0",
+  profile.label = expression(log(italic(R)[0])),
+  exact = FALSE,
+  ylab = "Change in -log-likelihood",
+  col = "default",
+  pch = "default",
+  lty = 1,
+  lty.total = 1,
+  lwd = 2,
+  lwd.total = 3,
+  cex = 1,
+  cex.total = 1.5,
+  xlim = "default",
+  ymax = "default",
+  xaxs = "r",
+  yaxs = "r",
+  type = "o",
+  legend = TRUE,
+  legendloc = "topright",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  plotdir = NULL,
+  add_cutoff = FALSE,
+  cutoff_prob = 0.95,
+  verbose = TRUE,
+  fleetgroups = NULL,
+  likelihood_type = "raw_times_lambda",
+  minfraction = 0.01
+)
 }
 \arguments{
 \item{summaryoutput}{List created by the function
-\code{\link{SSsummarize}}.}
+\code{\link[=SSsummarize]{SSsummarize()}}.}
 
 \item{plot}{Plot to active plot device?}
 
@@ -75,7 +103,7 @@ likelihood.}
 \item{xlim}{Range for x-axis. Change in likelihood is calculated relative to
 values within this range.}
 
-\item{ymax}{Maximum y-value. Default is 10\% greater than largest value
+\item{ymax}{Maximum y-value. Default is 10\\% greater than largest value
 plotted.}
 
 \item{xaxs}{The style of axis interval calculation to be used for the x-axis
@@ -96,7 +124,8 @@ plotted.}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{Point size for PNG file}
 
@@ -105,7 +134,7 @@ plotted.}
 \item{plotdir}{Directory where PNG files will be written. by default it will
 be the directory where the model was run.}
 
-\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95% confidence interval
+\item{add_cutoff}{Add dashed line at ~1.92 to indicate 95\% confidence interval
 based on common cutoff of half of chi-squared of p=.95 with 1 degree of
 freedom: \code{0.5*qchisq(p=cutoff_prob, df=1)}. The probability value
 can be adjusted using the \code{cutoff_prob} below.}

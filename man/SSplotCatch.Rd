@@ -4,24 +4,79 @@
 \alias{SSplotCatch}
 \title{Plot catch related quantities.}
 \usage{
-SSplotCatch(replist, subplots = 1:16, add = FALSE, areas = 1,
-  plot = TRUE, print = FALSE, type = "l", fleetlty = 1,
-  fleetpch = 1, fleetcols = "default", fleetnames = "default",
-  lwd = 3, areacols = "default", areanames = "default",
-  minyr = -Inf, maxyr = Inf, annualcatch = TRUE,
-  forecastplot = FALSE, plotdir = "default", showlegend = TRUE,
-  legendloc = "topleft", order = "default", xlab = "Year",
-  labels = c("Harvest rate/Year", "Continuous F", "Landings",
-  "Total catch", "Predicted discards", "Discard fraction", "(mt)",
-  "(numbers x1000)", "Observed and expected", "aggregated across seasons"),
-  catchasnumbers = NULL, catchbars = TRUE, addmax = TRUE,
-  ymax = NULL, pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+SSplotCatch(
+  replist,
+  subplots = 1:16,
+  add = FALSE,
+  areas = 1,
+  plot = TRUE,
+  print = FALSE,
+  type = "l",
+  fleetlty = 1,
+  fleetpch = 1,
+  fleetcols = "default",
+  fleetnames = "default",
+  lwd = 3,
+  areacols = "default",
+  areanames = "default",
+  minyr = -Inf,
+  maxyr = Inf,
+  annualcatch = TRUE,
+  forecastplot = FALSE,
+  plotdir = "default",
+  showlegend = TRUE,
+  legendloc = "topleft",
+  order = "default",
+  xlab = "Year",
+  labels = c("Harvest rate/Year", "Continuous F", "Landings", "Total catch",
+    "Predicted discards", "Discard fraction", "(mt)", "(numbers x1000)",
+    "Observed and expected", "aggregated across seasons"),
+  catchasnumbers = NULL,
+  catchbars = TRUE,
+  addmax = TRUE,
+  ymax = NULL,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{List created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
-\item{subplots}{Vector controlling which subplots to create}
+\item{subplots}{Vector controlling which subplots to create
+Numbering of subplots is as follows,
+
+\emph{Basic plots for all models}
+\itemize{
+\item 1 landings
+\item 2 landings stacked
+\item 3 observed and expected landings (if different)
+\item 9 harvest rate
+}
+
+\emph{Plots for models with discards}
+\itemize{
+\item 4 total catch (including discards)
+\item 5 total catch (including discards) stacked
+\item 6 discards
+\item 7 discards stacked plot (depends on multiple fleets)
+\item 8 discard fraction
+\item 16 landings + dead discards
+}
+
+\emph{Plots for seasonal models}
+\itemize{
+\item 10 landings aggregated across seasons
+\item 11 landings aggregated across seasons stacked
+\item 12 total catch (if discards present) aggregated across seasons
+\item 13 total catch (if discards present) aggregated across seasons stacked
+\item 14 discards aggregated across seasons
+\item 15 discards aggregated across seasons stacked
+}}
 
 \item{add}{Add to existing plot? (not yet implemented)}
 
@@ -90,7 +145,8 @@ white space at the top of the figure)}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -103,7 +159,7 @@ Plot catch related quantities from Stock Synthesis output. Plots include
 harvest rate, continuous F, landings, and discard fraction.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor, Ian Stewart

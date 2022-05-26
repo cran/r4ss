@@ -2,17 +2,36 @@
 % Please edit documentation in R/SSplotSPR.R
 \name{SSplotSPR}
 \alias{SSplotSPR}
-\title{Plot SPR quantities.}
+\title{Plot Spawning Potential Ratio (SPR) quantities.}
 \usage{
-SSplotSPR(replist, add = FALSE, plot = TRUE, print = FALSE,
-  uncertainty = TRUE, subplots = 1:4, forecastplot = FALSE,
-  col1 = "black", col2 = "blue", col3 = "green3", col4 = "red",
-  sprtarg = "default", btarg = "default", labels = c("Year", "SPR",
-  "1-SPR"), pwidth = 6.5, pheight = 5, punits = "in", res = 300,
-  ptsize = 10, cex.main = 1, plotdir = "default", verbose = TRUE)
+SSplotSPR(
+  replist,
+  add = FALSE,
+  plot = TRUE,
+  print = FALSE,
+  uncertainty = TRUE,
+  subplots = 1:4,
+  forecastplot = FALSE,
+  col1 = "black",
+  col2 = "blue",
+  col3 = "green3",
+  col4 = "red",
+  sprtarg = "default",
+  btarg = "default",
+  labels = c("Year", "SPR", "1-SPR", "Relative fishing intensity",
+    "Relative spawning output"),
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  plotdir = "default",
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SSoutput}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{add}{add to existing plot (not yet implemented)}
 
@@ -22,7 +41,15 @@ SSplotSPR(replist, add = FALSE, plot = TRUE, print = FALSE,
 
 \item{uncertainty}{include plots showing uncertainty?}
 
-\item{subplots}{vector controlling which subplots to create}
+\item{subplots}{vector controlling which subplots to create
+Numbering of subplots is as follows:
+\enumerate{
+\item timeseries of SPR,
+\item timeseries of 1 - SPR,
+\item timeseries of SPR ratio (as specified in the starter file), and
+\item phase plot of Biomass ratio vs SPR ratio (as specified in the
+starter file).
+}}
 
 \item{forecastplot}{Include forecast years in plot?}
 
@@ -34,7 +61,13 @@ SSplotSPR(replist, add = FALSE, plot = TRUE, print = FALSE,
 
 \item{col4}{fourth color used}
 
-\item{sprtarg}{F/SPR proxy target. "default" chooses based on model output.}
+\item{sprtarg}{F/SPR proxy target. "default" chooses based on model output,
+where models which have SPR_report_basis = 0 or 1 specified in the starter
+file will use the SPR target specified in the forecast file. Models which
+have SPR_report_basis = 2 will use SPR at MSY for the SPR target
+and models which have the SPR_report_basis = 3 will use
+SPR at Btarget for the SPR target in these plots. Zero or negative values of
+sprtarg input here will cause no horizontal line to be plotted.}
 
 \item{btarg}{target depletion to be used in plots showing depletion. May be
 omitted by setting to NA. "default" chooses based on model output.}
@@ -47,7 +80,8 @@ omitted by setting to NA. "default" chooses based on model output.}
 
 \item{punits}{units for PNG file}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -59,10 +93,10 @@ be the directory where the model was run.}
 \item{verbose}{report progress to R GUI?}
 }
 \description{
-Plot SPR quantities, including 1-SPR and phase plot.
+Plot time series of SPR, 1-SPR, the chosen SPR ratio and the phase plot.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Stewart, Ian Taylor

@@ -4,12 +4,19 @@
 \alias{SSgetMCMC}
 \title{Read MCMC output.}
 \usage{
-SSgetMCMC(dir = NULL, verbose = TRUE, writecsv = FALSE,
-  postname = "posteriors.sso", derpostname = "derived_posteriors.sso",
-  csv1 = "keyposteriors.csv", csv2 = "nuisanceposteriors.csv",
+SSgetMCMC(
+  dir = NULL,
+  verbose = TRUE,
+  writecsv = FALSE,
+  postname = "posteriors.sso",
+  derpostname = "derived_posteriors.sso",
+  csv1 = "keyposteriors.csv",
+  csv2 = "nuisanceposteriors.csv",
   keystrings = c("NatM", "R0", "steep", "RecrDev_2008", "Q_extraSD"),
-  nuisancestrings = c("Objective_function", "SSB_", "InitAge",
-  "RecrDev"), burnin = 0, thin = 1)
+  nuisancestrings = c("Objective_function", "SSB_", "InitAge", "RecrDev"),
+  burnin = 0,
+  thin = 1
+)
 }
 \arguments{
 \item{dir}{Directory containing MCMC output.}
@@ -32,11 +39,11 @@ CSV file.}
 
 \item{keystrings}{Vector of strings that partially match parameter names to
 write to the file csv1. This file intended to feed into
-\code{\link{mcmc.out}}.}
+\code{\link[=mcmc.out]{mcmc.out()}}.}
 
 \item{nuisancestrings}{Vector of strings that partially match derived
 quantity names to write to the file csv2. This file intended to feed into
-\code{\link{mcmc.nuisance}}.}
+\code{\link[=mcmc.nuisance]{mcmc.nuisance()}}.}
 
 \item{burnin}{Optional burn-in value to apply on top of the option in the
 starter file.}
@@ -49,8 +56,8 @@ Reads the MCMC output (in the posteriors.sso and derived_posteriors.sso
 files) from a model.
 }
 \seealso{
-\code{\link{mcmc.out}}, \code{\link{mcmc.nuisance}},
-\code{\link{SSplotPars}}
+\code{\link[=mcmc.out]{mcmc.out()}}, \code{\link[=mcmc.nuisance]{mcmc.nuisance()}},
+\code{\link[=SSplotPars]{SSplotPars()}}
 }
 \author{
 Ian Taylor

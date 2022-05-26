@@ -4,15 +4,24 @@
 \alias{SSsummarize}
 \title{Summarize the output from multiple Stock Synthesis models.}
 \usage{
-SSsummarize(biglist, sizeselfactor = "Lsel", ageselfactor = "Asel",
-  selfleet = NULL, selyr = "startyr", selgender = 1,
-  SpawnOutputUnits = NULL, lowerCI = 0.025, upperCI = 0.975)
+SSsummarize(
+  biglist,
+  sizeselfactor = "Lsel",
+  ageselfactor = "Asel",
+  selfleet = NULL,
+  selyr = "startyr",
+  selgender = 1,
+  SpawnOutputUnits = NULL,
+  lowerCI = 0.025,
+  upperCI = 0.975,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{biglist}{A list of lists, one for each model. The individual lists can
-be created by \code{\link{SS_output}} or the list of lists can be
-created by \code{\link{SSgetoutput}} (which iteratively calls
-\code{\link{SS_output}}).}
+be created by \code{\link[=SS_output]{SS_output()}} or the list of lists can be
+created by \code{\link[=SSgetoutput]{SSgetoutput()}} (which iteratively calls
+\code{\link[=SS_output]{SS_output()}}).}
 
 \item{sizeselfactor}{A string or vector of strings indicating which elements
 of the selectivity at length output to summarize. Default=c("Lsel").}
@@ -38,13 +47,16 @@ be summarized. NULL=all genders. Default=NULL.}
 
 \item{upperCI}{Quantile for upper bound on calculated intervals. Default =
 0.975 for 95\% intervals.}
+
+\item{verbose}{A logical value specifying if output should be printed
+to the screen.}
 }
 \description{
 Summarize various quantities from the model output collected by
-\code{\link{SSgetoutput}} and return them in a list of tables and vectors.
+\code{\link[=SSgetoutput]{SSgetoutput()}} and return them in a list of tables and vectors.
 }
 \seealso{
-\code{\link{SSgetoutput}}
+\code{\link[=SSgetoutput]{SSgetoutput()}}
 }
 \author{
 Ian Taylor

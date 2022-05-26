@@ -4,11 +4,16 @@
 \alias{SS_writedat_3.30}
 \title{write data file for SS version 3.30}
 \usage{
-SS_writedat_3.30(datlist, outfile, overwrite = FALSE, faster = FALSE,
-  verbose = TRUE)
+SS_writedat_3.30(
+  datlist,
+  outfile,
+  overwrite = FALSE,
+  faster = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{datlist}{List object created by \code{\link{SS_readdat}}.}
+\item{datlist}{List object created by \code{\link[=SS_readdat]{SS_readdat()}}.}
 
 \item{outfile}{Filename for where to write new data file.}
 
@@ -21,14 +26,14 @@ the columns (by using write.table instead of print.data.frame)}
 }
 \description{
 Write Stock Synthesis data file from list object in R which was probably
-created using \code{\link{SS_readdat}} (which would have called on
-\code{\link{SS_readdat_3.30}}).
+created using \code{\link[=SS_readdat]{SS_readdat()}} (which would have called on
+\code{\link[=SS_readdat_3.30]{SS_readdat_3.30()}}).
 }
 \seealso{
-\code{\link{SS_writedat}}, \code{\link{SS_writedat_3.24}},
-\code{\link{SS_readdat}}, \code{\link{SS_makedatlist}},
-\code{\link{SS_readstarter}}, \code{\link{SS_writestarter}},
-\code{\link{SS_readforecast}}, \code{\link{SS_writeforecast}}
+\code{\link[=SS_writedat]{SS_writedat()}}, \code{\link[=SS_writedat_3.24]{SS_writedat_3.24()}},
+\code{\link[=SS_readdat]{SS_readdat()}},
+\code{\link[=SS_readstarter]{SS_readstarter()}}, \code{\link[=SS_writestarter]{SS_writestarter()}},
+\code{\link[=SS_readforecast]{SS_readforecast()}}, \code{\link[=SS_writeforecast]{SS_writeforecast()}}
 }
 \author{
 Ian G. Taylor, Yukio Takeuchi, Gwladys I. Lambert, Kelli F. Johnson,

@@ -4,27 +4,28 @@
 \alias{SS_writectl_3.30}
 \title{write control file for SS version 3.30}
 \usage{
-SS_writectl_3.30(ctllist, outfile, overwrite, verbose)
+SS_writectl_3.30(ctllist, outfile, overwrite = FALSE, verbose = FALSE)
 }
 \arguments{
-\item{ctllist}{List object created by \code{\link{SS_readctl}}.}
+\item{ctllist}{List object created by \code{\link[=SS_readctl]{SS_readctl()}}.}
 
 \item{outfile}{Filename for where to write new data file.}
 
 \item{overwrite}{Should existing files be overwritten? Default=FALSE.}
 
-\item{verbose}{Should there be verbose output while running the file?}
+\item{verbose}{Should there be verbose output while running the file?
+Defaults to FALSE.}
 }
 \description{
 write Stock Synthesis control file from list object in R which was created
-  using \code{\link{SS_readctl}}.This function is designed to be called 
-  using \code{\link{SS_writectl}} and should not be called directly.
+using \code{\link[=SS_readctl]{SS_readctl()}}.This function is designed to be called
+using \code{\link[=SS_writectl]{SS_writectl()}} and should not be called directly.
 }
 \seealso{
-\code{\link{SS_readctl}}, \code{\link{SS_readctl_3.30}},\code{\link{SS_readstarter}},
-\code{\link{SS_readforecast}},
-\code{\link{SS_writestarter}}, \code{\link{SS_writeforecast}},
-\code{\link{SS_writedat}}
+\code{\link[=SS_readctl]{SS_readctl()}}, \code{\link[=SS_readctl_3.30]{SS_readctl_3.30()}},\code{\link[=SS_readstarter]{SS_readstarter()}},
+\code{\link[=SS_readforecast]{SS_readforecast()}},
+\code{\link[=SS_writestarter]{SS_writestarter()}}, \code{\link[=SS_writeforecast]{SS_writeforecast()}},
+\code{\link[=SS_writedat]{SS_writedat()}}
 }
 \author{
 Kathryn Doering, Yukio Takeuchi, Neil Klaer, Watal M. Iwasaki

@@ -4,14 +4,30 @@
 \alias{TSCplot}
 \title{Create a plot for the TSC report}
 \usage{
-TSCplot(SSout, yrs = "default", ylimBar = "default", ylimDepl = c(0,
-  1.025), colBar = "yellow", cexBarLabels = 1.1, cex.axis = 1.1,
-  space = 0, pchDepl = 19, colDepl = "red", lwdDepl = 3,
-  shiftDepl = 0.25, pchSpace = 5, ht = 4, wd = 7,
-  labelLines = 2.8, makePDF = NULL, makePNG = NULL, MCMC = F)
+TSCplot(
+  SSout,
+  yrs = "default",
+  ylimBar = "default",
+  ylimDepl = c(0, 1.025),
+  colBar = "yellow",
+  cexBarLabels = 1.1,
+  cex.axis = 1.1,
+  space = 0,
+  pchDepl = 19,
+  colDepl = "red",
+  lwdDepl = 3,
+  shiftDepl = 0.25,
+  pchSpace = 5,
+  ht = 4,
+  wd = 7,
+  labelLines = 2.8,
+  makePDF = NULL,
+  makePNG = NULL,
+  MCMC = FALSE
+)
 }
 \arguments{
-\item{SSout}{The output from \code{\link{SS_output}}}
+\item{SSout}{The output from \code{\link[=SS_output]{SS_output()}}}
 
 \item{yrs}{The vector of years to plot}
 
@@ -62,50 +78,41 @@ and total dead catch.
 }
 \description{
 Creates a plot of catch and spawning biomass from the output of
-\code{\link{SS_output}} for the NOAA TSC report.
+\code{\link[=SS_output]{SS_output()}} for the NOAA TSC report.
 }
 \details{
 It creates a plot on the current graphics device, in a pdf file, or as a png
 image of the figure used in the TSC report produced by the NWFSC.  It
-expects the SS results read in by \code{\link{SS_output}}.  If MCMC results
+expects the SS results read in by \code{\link[=SS_output]{SS_output()}}.  If MCMC results
 are to be plotted, a 'mcmc' list element should be added using the
-\code{\link{SSgetMCMC}} function. See the examples below.
+\code{\link[=SSgetMCMC]{SSgetMCMC()}} function. See the examples below.
 }
 \examples{
+\dontrun{
 
-  \dontrun{
-  ######################################
-  #DO NOT RUN
-    library(r4ss)
-    update_r4ss_files()
+# define directory
+directory <- "C:\\\\NOAA2011\\\\Dover\\\\Models\\\\base_20110701"
+# read model output
+base <- SS_output(dir = directory, covar = FALSE, verbose = FALSE)
 
-    # ** CHANGE TO THE BASE DIRECTORY
-    directory <- "C:\\NOAA2011\\Dover\\Models\\base_20110701"
+# show the plot in R
+TSCplot(base)
+TSCplot(base, yrs = 2000:2011, pchSpace = 1)
 
-    base <- SS_output(dir=directory,covar=F,verbose=F)
+# Create the plot as a PNG file
+TSCplot(base, makePNG = "C:\\\\NOAA2012\\\\Assessments\\\\TSCdover.png")
+# Create the plot as a PDF file
+TSCplot(base, makePDF = "C:\\\\NOAA2012\\\\Assessment\\\\TSCdover.pdf")
 
-    #show the plot in R
-    TSCplot(base)
-    TSCplot(base,yrs=2000:2011,pchSpace = 1)
-    #Create the plot as a PNG file
-    TSCplot(base,makePNG="C:\\NOAA2012\\Assessments\\TSCdover.png")
-    #Create the plot as a PDF file
-    TSCplot(base,makePDF="C:\\NOAA2012\\Assessment\\TSCdover.pdf")
-
-    # ** Hake model with MCMC results
-    SSdir <- "C:/NOAA2012/Hake/Models"
-    base <- SS_output(dir=paste(SSdir,"81_base_MCMC",sep="/"),covar=F)
-    tmp <- SSgetMCMC(dir=paste(SSdir,"81_base_MCMC",sep="/"),writecsv=F)
-    base$mcmc <- data.frame(tmp$model1)
-    TSCplot(base,ylimDepl = c(0,1.25),pchSpace=1,MCMC=T)
-
-
-  ###############################################
-  }
+# Model with MCMC results
+directory <- "C:/Models"
+base <- SS_output(dir = directory, dir.mcmc = "mcmc")
+TSCplot(base, ylimDepl = c(0, 1.25), pchSpace = 1, MCMC = TRUE)
+}
 
 }
 \seealso{
-\code{\link{SS_output}} \code{\link{SSgetMCMC}}
+\code{\link[=SS_output]{SS_output()}} \code{\link[=SSgetMCMC]{SSgetMCMC()}}
 }
 \author{
 Allan Hicks

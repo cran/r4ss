@@ -4,12 +4,20 @@
 \alias{SS_html}
 \title{Create HTML files to view figures in browser.}
 \usage{
-SS_html(replist = NULL, plotdir = NULL, plotInfoTable = NULL,
-  title = "SS Output", width = 500, openfile = TRUE,
-  multimodel = FALSE, filenotes = NULL, verbose = TRUE)
+SS_html(
+  replist = NULL,
+  plotdir = NULL,
+  plotInfoTable = NULL,
+  title = "SS Output",
+  width = 500,
+  openfile = TRUE,
+  multimodel = FALSE,
+  filenotes = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{Object created by \code{\link{SS_output}}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{plotdir}{Directory where PNG files are located.}
 
@@ -32,7 +40,7 @@ runs. Only do this if you know what you're doing.}
 }
 \description{
 Writes a set of HTML files with tabbed navigation between them.  Depends on
-\code{\link{SS_plots}} with settings in place to write figures to PNG files.
+\code{\link[=SS_plots]{SS_plots()}} with settings in place to write figures to PNG files.
 Should open main file in default browser automatically.
 }
 \note{
@@ -43,7 +51,7 @@ directory. Please provide feedback on any bugs, annoyances, or suggestions
 for improvement.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor

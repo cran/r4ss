@@ -4,37 +4,107 @@
 \alias{SSplotComps}
 \title{Plot composition data and fits.}
 \usage{
-SSplotComps(replist, subplots = c(1:21, 24), kind = "LEN",
-  sizemethod = 1, aalyear = -1, aalbin = -1, plot = TRUE,
-  print = FALSE, fleets = "all", fleetnames = "default",
-  sexes = "all", yupper = 0.4, datonly = FALSE,
-  samplesizeplots = TRUE, compresidplots = TRUE, bub = FALSE,
-  showyears = TRUE, showsampsize = TRUE, showeffN = TRUE,
-  aggregates_by_mkt = FALSE, sampsizeline = FALSE, effNline = FALSE,
-  minnbubble = 3, pntscalar = NULL, scalebubbles = FALSE,
-  cexZ1 = 1.5, bublegend = TRUE, colvec = c(rgb(1, 0, 0, 0.7), rgb(0,
-  0, 1, 0.7), rgb(0.1, 0.1, 0.1, 0.7)), linescol = c(rgb(0, 0.5, 0, 0.7),
-  rgb(0.8, 0, 0, 0.7), rgb(0, 0, 0.8, 0.7)), axis1 = NULL,
-  axis2 = NULL, blue = rgb(0, 0, 1, 0.7), red = rgb(1, 0, 0, 0.7),
-  pwidth = 6.5, pheight = 5, punits = "in", ptsize = 10,
-  res = 300, plotdir = "default", cex.main = 1, linepos = 1,
-  fitbar = FALSE, do.sqrt = TRUE, smooth = TRUE, cohortlines = c(),
+SSplotComps(
+  replist,
+  subplots = c(1:10, 21, 24),
+  kind = "LEN",
+  sizemethod = 1,
+  aalyear = -1,
+  aalbin = -1,
+  plot = TRUE,
+  print = FALSE,
+  fleets = "all",
+  fleetnames = "default",
+  sexes = "all",
+  yupper = 0.4,
+  datonly = FALSE,
+  samplesizeplots = TRUE,
+  compresidplots = TRUE,
+  bub = FALSE,
+  showyears = TRUE,
+  showsampsize = TRUE,
+  showeffN = TRUE,
+  aggregates_by_mkt = FALSE,
+  sampsizeline = FALSE,
+  effNline = FALSE,
+  minnbubble = 3,
+  pntscalar = NULL,
+  scalebubbles = FALSE,
+  cexZ1 = 1.5,
+  bublegend = TRUE,
+  colvec = c(rgb(1, 0, 0, 0.7), rgb(0, 0, 1, 0.7), rgb(0.1, 0.1, 0.1, 0.7)),
+  linescol = c(rgb(0, 0.5, 0, 0.7), rgb(0.8, 0, 0, 0.7), rgb(0, 0, 0.8, 0.7)),
+  xlas = 0,
+  ylas = NULL,
+  axis1 = NULL,
+  axis2 = NULL,
+  axis1labs = NULL,
+  sizebinlabs = NULL,
+  blue = rgb(0, 0, 1, 0.7),
+  red = rgb(1, 0, 0, 0.7),
+  pwidth = 6.5,
+  pheight = 6.5,
+  punits = "in",
+  ptsize = 10,
+  res = 300,
+  plotdir = "default",
+  cex.main = 1,
+  linepos = 1,
+  fitbar = FALSE,
+  do.sqrt = TRUE,
+  smooth = TRUE,
+  cohortlines = c(),
   labels = c("Length (cm)", "Age (yr)", "Year", "Observed sample size",
-  "Effective sample size", "Proportion", "cm", "Frequency", "Weight",
-  "Length", "(mt)", "(numbers x1000)", "Stdev (Age) (yr)",
-  "Conditional AAL plot, "), printmkt = TRUE, printsex = TRUE,
-  maxrows = 6, maxcols = 6, maxrows2 = 2, maxcols2 = 4, rows = 1,
-  cols = 1, andre_oma = c(3, 0, 3, 0), andrerows = 3,
-  fixdims = TRUE, fixdims2 = FALSE, maxneff = 5000, verbose = TRUE,
-  scalebins = FALSE, addMeans = TRUE, mainTitle = FALSE, ...)
+    "Effective sample size", "Proportion", "cm", "Frequency", "Weight", "Length", "(mt)",
+    "(numbers x1000)", "Stdev (Age)", "Conditional AAL plot, ", "Size bin"),
+  printmkt = TRUE,
+  printsex = TRUE,
+  maxrows = 6,
+  maxcols = 4,
+  maxrows2 = 4,
+  maxcols2 = 4,
+  rows = 1,
+  cols = 1,
+  andre_oma = c(3, 0, 3, 0),
+  andrerows = 4,
+  fixdims = TRUE,
+  fixdims2 = FALSE,
+  maxneff = 5000,
+  verbose = TRUE,
+  scalebins = FALSE,
+  addMeans = TRUE,
+  mainTitle = FALSE,
+  ...
+)
 }
 \arguments{
-\item{replist}{list created by \code{SSoutput}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
-\item{subplots}{vector controlling which subplots to create}
+\item{subplots}{vector controlling which subplots to create
+Numbering of subplots is as follows, where subplots 21 to 24
+(aggregated across years) are provided first, and subplots
+1 to 10 are all repeated for each fleet
+\itemize{
+\item 1 index data by fleet
+\item 1 multi-panel composition plot
+\item 2 single panel bubble plot for numbers at length or age
+\item 3 multi-panel bubble plots for conditional age-at-length
+\item 4 multi-panel plot of fit to conditional age-at-length for specific years
+\item 5 Pearson residuals for A-L key
+\item 6 multi-panel plot of point and line fit to conditional
+age-at-length for specific length bins
+\item 7 sample size plot
+\item 8 TA1.8 Francis weighting plot
+\item 9 TA1.8 Francis weighting plot for conditional data
+\item 10 Andre's mean age and std. dev. in conditional AAL
+\item 21 composition by fleet aggregating across years
+\item 22 composition by fleet aggregating across years within each season
+\item 23 composition by fleet aggregating across seasons within a year
+\item 24 bubble plot comparison of length or age residuals
+}}
 
 \item{kind}{indicator of type of plot can be "LEN", "SIZE", "AGE", "cond",
-"GSTAGE", "L[at]A", or "W[at]A".}
+"GSTAGE", "GSTLEN", "L@A", or "W@A".}
 
 \item{sizemethod}{if kind = "SIZE" then this switch chooses which of the
 generalized size bin methods will be plotted.}
@@ -62,7 +132,7 @@ plots.}
 
 \item{yupper}{upper limit on ymax for polygon/histogram composition plots}
 
-\item{datonly}{make plots of data without fits as well as data with fits?}
+\item{datonly}{make plots of data without fits?}
 
 \item{samplesizeplots}{make sample size plots?}
 
@@ -103,9 +173,22 @@ proportion within sample? Default=FALSE.}
 
 \item{linescol}{Color for lines on top of polygons}
 
-\item{axis1}{position of bottom axis values}
+\item{xlas}{label style (las) input for x-axis. Default 0 has horizontal
+labels, input 2 would provide vertical lables.}
 
-\item{axis2}{position of left size axis values}
+\item{ylas}{label style (las) input for y-axis. Default NULL has horizontal
+labels when all labels have fewer than 6 characters and vertical otherwise.
+Input 0 would force vertical labels, and 1 would force horizontal.}
+
+\item{axis1}{optional position of bottom axis values}
+
+\item{axis2}{optional position of left size axis values}
+
+\item{axis1labs}{optional vector of labels for axis1 (either NULL or needs to
+match length of axis1)}
+
+\item{sizebinlabs}{Vector of size bin labels corresponding to the generalized
+size frequency method}
 
 \item{blue}{What color to use for males in bubble plots (default is slightly
 transparent blue)}
@@ -113,19 +196,22 @@ transparent blue)}
 \item{red}{What color to use for females in bubble plots (default is slightly
 transparent red)}
 
-\item{pwidth}{default width of plots printed to files in units of
-\code{punits}. Default=7.}
+\item{pwidth}{Default width of plots printed to files in units of
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{default height width of plots printed to files in units of
-\code{punits}. Default=7.}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
 
-\item{punits}{units for \code{pwidth} and \code{pheight}. Can be "px"
-(pixels), "in" (inches), "cm" or "mm". Default="in".}
+\item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
-\item{ptsize}{point size for plotted text in plots printed to files (see
-help("png") in R for details). Default=12.}
+\item{ptsize}{Point size for plotted text in plots printed to files (see
+\code{help("png")} in R for details).}
 
-\item{res}{resolution of plots printed to files. Default=300}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{plotdir}{directory where PNG files will be written. by default it will
 be the directory where the model was run.}
@@ -195,14 +281,15 @@ posterior distributions in which the median and mean differ.}
 
 \item{mainTitle}{Logical indicating if a title for the plot should be produced}
 
-\item{\dots}{additional arguments that will be passed to the plotting.}
+\item{\dots}{additional arguments that will be passed to
+the \code{par} command in the \code{\link[=make_multifig]{make_multifig()}} function.}
 }
 \description{
 Plot composition data and fits from Stock Synthesis output.  Multi-figure
 plots depend on \code{make_multifig}.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{make_multifig}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=make_multifig]{make_multifig()}}
 }
 \author{
 Ian Taylor

@@ -7,7 +7,7 @@
 SS_makeHTMLdiagnostictable(replist, plotdir = NULL, gradmax = 0.001)
 }
 \arguments{
-\item{replist}{List item representing stock assessment model output list (\code{SS_output})}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{plotdir}{Directory where the text files containing the tables will be written.
 By default it will be the directory where the model was run.}
@@ -21,7 +21,7 @@ a three-element vector; the first element is the name of the html table file, th
 Creates html tables that show diagnostic outputs, including status checks, gradients, and correlations.
 }
 \seealso{
-[SS_plots()], [SS_output()], [SS_html()]
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}, \code{\link[=SS_html]{SS_html()}}
 }
 \author{
 Christine Stawitz

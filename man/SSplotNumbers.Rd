@@ -4,25 +4,57 @@
 \alias{SSplotNumbers}
 \title{Plot numbers-at-age related data and fits.}
 \usage{
-SSplotNumbers(replist, subplots = 1:10, plot = TRUE, print = FALSE,
-  numbers.unit = 1000, areas = "all", areanames = "default",
-  areacols = "default", pntscalar = 2.6, bub.bg = gray(0.5, alpha =
-  0.5), bublegend = TRUE, period = c("B", "M"), add = FALSE,
+SSplotNumbers(
+  replist,
+  subplots = c(1:10),
+  plot = TRUE,
+  print = FALSE,
+  numbers.unit = 1000,
+  areas = "all",
+  areanames = "default",
+  areacols = "default",
+  pntscalar = 2.6,
+  bub.bg = gray(0.5, alpha = 0.5),
+  bublegend = TRUE,
+  period = c("B", "M"),
+  meanlines = TRUE,
+  add = FALSE,
   labels = c("Year", "Age", "True age (yr)", "SD of observed age (yr)",
-  "Mean observed age (yr)", "Mean age (yr)", "mean age in the population",
-  "Ageing imprecision", "Numbers at age at equilibrium",
-  "Equilibrium age distribution", "Fraction female in numbers at age",
-  "Length", "Mean length (cm)", "mean length (cm) in the population",
-  "expected numbers at age", "Beginning of year", "Middle of year",
-  "expected numbers at length", "Fraction female in numbers at length"),
-  pwidth = 6.5, pheight = 5, punits = "in", res = 300,
-  ptsize = 10, cex.main = 1, plotdir = "default",
-  mainTitle = FALSE, verbose = TRUE)
+    "Mean observed age (yr)", "Mean age (yr)", "mean age in the population",
+    "Ageing imprecision", "Numbers at age at equilibrium",
+    "Equilibrium age distribution", "Fraction female in numbers at age", "Length",
+    "Mean length (cm)", "mean length (cm) in the population", "expected numbers at age",
+    "Beginning of year", "Middle of year", "expected numbers at length",
+    "Fraction female in numbers at length"),
+  pwidth = 6.5,
+  pheight = 6.5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  plotdir = "default",
+  mainTitle = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SSoutput}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
-\item{subplots}{vector controlling which subplots to create}
+\item{subplots}{vector controlling which subplots to create
+Numbering of subplots is as follows,
+\itemize{
+\item 1: Expected numbers at age
+\item 2: Mean age in the population
+\item 3: Fraction female in numbers at age
+\item 4: Equilibrium age distribution
+\item 5: Ageing imprecision: SD of observed age (plot using image() formerly
+included in this group but now replaced by better distribution plots)
+\item 6: Expected numbers at length
+\item 7: Mean length in the population
+\item 8: Fraction female in numbers at length
+\item 9: no plot yet
+\item 10: Distribution of observed age at true age by ageing error type
+}}
 
 \item{plot}{plot to active plot device?}
 
@@ -51,19 +83,28 @@ Default=2.6}
 from the beginning ("B") or middle of the year ("M") (new option starting
 with SSv3.11)}
 
+\item{meanlines}{add lines for mean age or length on top of bubble plots}
+
 \item{add}{add to existing plot? (not yet implemented)}
 
 \item{labels}{vector of labels for plots (titles and axis labels)}
 
-\item{pwidth}{width of plot}
+\item{pwidth}{Default width of plots printed to files in units of
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{height of plot}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
 
-\item{punits}{units for PNG file}
+\item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
-\item{ptsize}{point size for PNG file}
+\item{ptsize}{Point size for plotted text in plots printed to files (see
+\code{help("png")} in R for details).}
 
 \item{cex.main}{character expansion for plot titles}
 
@@ -80,7 +121,7 @@ Plots include bubble plots, mean age, equilibrium age composition,
 sex-ratio, and ageing imprecision patterns.
 }
 \seealso{
-\code{\link{SS_output}}, \code{\link{SS_plots}}
+\code{\link[=SS_output]{SS_output()}}, \code{\link[=SS_plots]{SS_plots()}}
 }
 \author{
 Ian Stewart, Ian Taylor

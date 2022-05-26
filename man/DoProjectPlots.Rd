@@ -4,14 +4,30 @@
 \alias{DoProjectPlots}
 \title{Make plots from Rebuilder program}
 \usage{
-DoProjectPlots(dirn = "C:/myfiles/", fileN = c("res.csv"),
-  Titles = "", ncols = 200, Plots = list(1:25),
-  Options = list(c(1:9)), LegLoc = "bottomright", yearmax = -1,
-  Outlines = c(2, 2), OutlineMulti = c(2, 2), AllTraj = c(1, 2, 3,
-  4), AllInd = c(1, 2, 3, 4, 5, 6, 7), BioType = "Spawning biomass",
-  CatchUnit = "(mt)", BioUnit = "(mt)", BioScalar = 1,
-  ColorsUsed = "default", Labels = "default", pdf = FALSE,
-  pwidth = 6.5, pheight = 5, lwd = 2)
+DoProjectPlots(
+  dirn = "C:/myfiles/",
+  fileN = c("res.csv"),
+  Titles = "",
+  ncols = 200,
+  Plots = list(1:25),
+  Options = list(c(1:9)),
+  LegLoc = "bottomright",
+  yearmax = -1,
+  Outlines = c(2, 2),
+  OutlineMulti = c(2, 2),
+  AllTraj = c(1, 2, 3, 4),
+  AllInd = c(1, 2, 3, 4, 5, 6, 7),
+  BioType = "Spawning biomass",
+  CatchUnit = "(mt)",
+  BioUnit = "(mt)",
+  BioScalar = 1,
+  ColorsUsed = "default",
+  Labels = "default",
+  pdf = FALSE,
+  pwidth = 6.5,
+  pheight = 5,
+  lwd = 2
+)
 }
 \arguments{
 \item{dirn}{Directory (or vector of directories) where rebuilder output
@@ -75,26 +91,29 @@ Rgui. Default=FALSE.}
 Make a set of plots based on output from Andre Punt's Rebuilder program.
 }
 \examples{
-
 \dontrun{
 # example with one file
- DoProjectPlots(dirn="c:/myfiles/", Plots=1:8,
-                Options=c(1,2,3,4,5,9), LegLoc="bottomleft")
+DoProjectPlots(
+  dirn = "c:/myfiles/", Plots = 1:8,
+  Options = c(1, 2, 3, 4, 5, 9), LegLoc = "bottomleft"
+)
 
 # example with multiple files
- # Plots - set to get specific plots
- # Options - set to get specific strategies in the trajectory plots
+# Plots - set to get specific plots
+# Options - set to get specific strategies in the trajectory plots
 
- Titles <- c("Res1","Res2","Res3")
- Plots <- list(c(1:9),c(6:7))
- Options <- list(c(7:9,3),c(5,7))
- DoProjectPlots(fileN=c("res1.csv","res2.csv"),Titles=Titles,Plots=Plots,
-                Options=Options,LegLoc="bottomleft",yearmax=-1,
-                Outlines=c(2,2),OutlineMulti=c(3,3),AllTraj=c(1:4),
-                AllInd=c(1:7),BioType="Spawning numbers",BioUnit="(lb)",
-                BioScalar=1000,CatchUnit="(lb)",
-                ColorsUse=rep(c("red","blue"),5),
-                Labels=c("A","B","C","D","E","F"))
+Titles <- c("Res1", "Res2", "Res3")
+Plots <- list(c(1:9), c(6:7))
+Options <- list(c(7:9, 3), c(5, 7))
+DoProjectPlots(
+  fileN = c("res1.csv", "res2.csv"), Titles = Titles, Plots = Plots,
+  Options = Options, LegLoc = "bottomleft", yearmax = -1,
+  Outlines = c(2, 2), OutlineMulti = c(3, 3), AllTraj = c(1:4),
+  AllInd = c(1:7), BioType = "Spawning numbers", BioUnit = "(lb)",
+  BioScalar = 1000, CatchUnit = "(lb)",
+  ColorsUse = rep(c("red", "blue"), 5),
+  Labels = c("A", "B", "C", "D", "E", "F")
+)
 }
 
 }

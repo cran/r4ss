@@ -4,18 +4,59 @@
 \alias{SSplotTimeseries}
 \title{Plot timeseries data}
 \usage{
-SSplotTimeseries(replist, subplot, add = FALSE, areas = "all",
-  areacols = "default", areanames = "default", forecastplot = TRUE,
-  uncertainty = TRUE, bioscale = 1, minyr = -Inf, maxyr = Inf,
-  plot = TRUE, print = FALSE, plotdir = "default", verbose = TRUE,
-  btarg = "default", minbthresh = "default", xlab = "Year",
-  labels = NULL, pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1)
+SSplotTimeseries(
+  replist,
+  subplot,
+  add = FALSE,
+  areas = "all",
+  areacols = "default",
+  areanames = "default",
+  forecastplot = TRUE,
+  uncertainty = TRUE,
+  bioscale = 1,
+  minyr = -Inf,
+  maxyr = Inf,
+  plot = TRUE,
+  print = FALSE,
+  plotdir = "default",
+  verbose = TRUE,
+  btarg = "default",
+  minbthresh = "default",
+  xlab = "Year",
+  labels = NULL,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  mainTitle = FALSE,
+  mar = NULL
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
-\item{subplot}{number controlling which subplot to create}
+\item{subplot}{number controlling which subplot to create
+Numbering of subplots is as follows, where the spawning biomass plots
+(7 to 10) are provided first when this function is called by \code{\link[=SS_plots]{SS_plots()}}:
+\itemize{
+\item 1 Total biomass (mt) with forecast
+\item 2 Total biomass by area (spatial models only)
+\item 3 Total biomass (mt) at beginning of spawning season with forecast
+\item 4 Summary biomass (mt) with forecast
+\item 5 Summary biomass (mt) by area (spatial models only)
+\item 6 Summary biomass (mt) at beginning of season 1 with forecast
+\item 7 Spawning output with forecast with ~95\% asymptotic intervals
+\item 8 Spawning output by area (spatial models only)
+\item 9 Relative spawning output with forecast with ~95\% asymptotic intervals
+\item 10 Relative spawning output by area (spatial models only)
+\item 11 Age-0 recruits (1,000s) with forecast with ~95\% asymptotic intervals
+\item 12 Age-0 recruits by area (spatial models only)
+\item 13 Fraction of recruits by area (spatial models only)
+\item 14 Age-0 recruits (1,000s) by birth season with forecast
+\item 15 Fraction of total Age-0 recruits by birth season with forecast
+}}
 
 \item{add}{add to existing plot? (not yet implemented)}
 
@@ -32,7 +73,7 @@ Magnusson}
 available}
 
 \item{bioscale}{scaling for spawning biomass. Default = 1.
-Previously this was set to 
+Previously this was set to
 0.5 for single-sex models, and 1.0 for all others, but now single-sex
 models are assumed to use the -1 option for Nsexes in the data file so the
 scaling is done automatically by SS.}
@@ -67,18 +108,24 @@ output is 0.25 in which case minbthresh = 0.125 (U.S. west coast flatfish).}
 
 \item{punits}{units for PNG file}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
 \item{cex.main}{character expansion for plot titles}
+
+\item{mainTitle}{Logical indicating if a title should be included at the top
+(not yet implemented for all plots)}
+
+\item{mar}{Either NULL to allow the default (which depends on whether the main title is included or not) or a numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot, which is passed to \code{par()}.}
 }
 \description{
 Plot timeseries data contained in TIME_SERIES output from Stock Synthesis
 report file. Some values have optional uncertainty intervals.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor, Ian Stewart

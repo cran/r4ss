@@ -1,144 +1,190 @@
-#' read control file from SS
+#' Read control file from SS
 #'
-#' Read Stock Synthesis control file into list object in R. This function is a
-#' wrapper which calls either SS_readctl_3.24 or SS_readctl_3.30 (not yet written).
-#' This setup allows those functions to be cleaner (if somewhat redundant)
-#' than a single function that attempts to do everything.
+#' Read control file from Stock Synthesis (SS) into R as a list object.
+#' This function acts as a wrapper for version-specific SS_readctl_ functions.
+#' For example, if the control file was written using SS 3.24,
+#' then `SS_readctl` will call [SS_readctl_3.24]. Input arguments that do not
+#' pertain to the version of your control file can be left at their
+#' default values.
 #'
-#'
-#' @param file Filename either with full path or relative to working directory.
-#' @param version SS version number. Currently only "3.24" or "3.30" are supported,
-#' either as character or numeric values (noting that numeric 3.30  = 3.3).
-#' @param verbose Should there be verbose output while running the file?
-#' Default=TRUE.
-#' @param echoall Debugging tool (not fully implemented) of echoing blocks of
-#' data as it is being read.
-#' @param nseas number of season in the model. This information is not
-#'  explicitly available in control file
-#' @param N_areas number of spatial areas in the model. This information is also not
-#'  explicitly available in control file
-#' @param Nages oldest age in the model. This information is also not
-#'  explicitly available in control file
-#' @param Ngenders number of genders in the model. This information is also not
-#'  explicitly available in control file
-#' @param Npopbins number of population bins in the model. This information is
-#' also not explicitly available in control file and this information is only
-#' required if length based
-#'  maturity vector is directly supplied (Maturity option of 6), and not yet tested
-#' @param Nfleet number of fisheries in the model. This information is also not
-#'  explicitly available in control file
-#' @param Nsurveys number of survey fleets in the model. This information is also not
-#'  explicitly available in control file
-#' @param N_tag_groups number of tag release groups in the model.
-#' This information is also not explicitly available in control file.
-#' @param N_CPUE_obs number of CPUE observations.
-#' @param use_datlist LOGICAL if TRUE, use datlist to derive parameters which can not be
-#'  determined from control file
-#' @param datlist list or character. if list : produced from SS_writedat
-#'  or character : file name of dat file.
-#' @param ptype include a column in the output indicating parameter type?
-#'  (Can be useful, but causes problems for SS_writectl.) Only possible to use
-#'  for 3.24 control files.
-#' @author Ian G. Taylor, Yukio Takeuchi, Neil L Klaer
+#' @template file
+#' @template readctl_vars
+#' @template version
+#' @param N_CPUE_obs Number of CPUE observations. Used only in control file 3.24
+#'  syntax if `use_datlist = FALSE`.
+#' @param catch_mult_fleets Integer vector of fleets using the catch multiplier
+#'   option. Defaults to NULL and should be left as such if 1) the catch
+#'   multiplier option is not used for any fleet or 2) `use_datlist = TRUE` and
+#'   datlist is specified. Used only in control file 3.30 syntax if
+#'   `use_datlist = FALSE`.
+#' @param predM_fleets integer vector of fleets with predator mortality included.
+#'  Predator mortality fleets are only available in v3.30.18 and
+#'  higher. Defaults to NULL and should be left as such if 1) predation mortality
+#'  is not used for any fleets; 2) `use_datlist = TRUE` and `datlist` is specified;
+#'  or 3) if comments in the control file should be used instead to determine
+#'  the the predM_fleets. Used only in control file 3.30 syntax if
+#'  `use_datlist = FALSE`.
+#' @param Ntag_fleets The number of catch fleets in the model (fleets of )
+#'  type 1 or 2; not surveys). Used to set the number of survey parameters.
+#'  Only used in control file 3.30 reading if tagging data is in the model and
+#'  `use_datlist = FALSE`.
+#' @param N_rows_equil_catch Integer value of the number of parameter lines to
+#'  read for equilibrium catch. Defaults to NULL, which means the function will
+#'  attempt to figure out how many lines of equilibrium catch to read from the
+#'  control file comments. Used only in control file 3.30 syntax if
+#'  `use_datlist = FALSE`.
+#' @param Nfleets Number of fishing fleets and surveys, for 3.30 models.
+#' @param Nfleet Number of fishing fleets, for 3.24 and lower version models.
+#' @param Nsurveys Number of surveys, for 3.24 and lower version models.
+#' @param N_dirichlet_parms Integer value of the number of Dirichlet-Multinomial
+#'  parameters. Defaults to 0. Used only in control file 3.30 syntax if
+#'  `use_datlist = FALSE`.
+#' @param ptype LOGICAL if `TRUE`, which is the default,
+#'  a column will be included in the output indicating parameter type.
+#'  Using `TRUE` can be useful, but causes problems for [SS_writectl],
+#'  and therefore is not recommended if you intend to write the list
+#'  back out into a file.
+#'  Used only in control file 3.24 syntax.
+#' @author Ian G. Taylor, Yukio Takeuchi, Neil L. Klaer
 #' @export
-#' @seealso \code{\link{SS_readctl_3.24}}, \code{\link{SS_readdat}},
-#' \code{\link{SS_readdat_3.24}}
-
-SS_readctl <- function(file, version=NULL, verbose=TRUE,echoall=FALSE,
+#' @md
+#' @return
+#' A list structure where each element is a section of the control file.
+#' @seealso
+#' See the following for version-specific SS_readctl functions:
+#' `r ls("package:r4ss", pattern = "SS_readctl_")`.
+#' The returned list structure can be written back to the disk using
+#' [r4ss::SS_writectl].\cr
+#' See the following for other `SS_read` functions:
+#' `r ls("package:r4ss", pattern = "SS_read[a-z]+$")`.\cr
+#' @examples
+#' # Read in the 'simple' example SS model stored in r4ss
+#' # Find the directory
+#' dirsimple <- system.file("extdata", "simple_3.30.13", package = "r4ss")
+#' # Read in the dat file to define the structure of the control file so that
+#' # you don't have to specify things in the function call such as 'Nfleet'
+#' datfilename <- dir(dirsimple, pattern = "data\\.ss", full.names = TRUE)
+#' dat <- r4ss::SS_readdat(file = datfilename, verbose = FALSE)
+#' # Read in the control file using a list object for datlist
+#' ctl <- r4ss::SS_readctl(
+#'   file = dir(dirsimple, pattern = "control\\.ss", full.names = TRUE),
+#'   verbose = FALSE,
+#'   datlist = dat, use_datlist = TRUE
+#' )
+#' # Read in the control file using a file name for datlist
+#' ctl <- r4ss::SS_readctl(
+#'   file = dir(dirsimple, pattern = "control\\.ss", full.names = TRUE),
+#'   verbose = FALSE,
+#'   datlist = datfilename, use_datlist = TRUE
+#' )
+SS_readctl <- function(file,
+                       version = "3.30",
+                       verbose = FALSE,
+                       echoall = lifecycle::deprecated(),
+                       use_datlist = TRUE,
+                       datlist = "data.ss_new",
                        ## Parameters that are not defined in control file
-                       nseas=4,
-                       N_areas=1,
-                       Nages=20,
-                       Ngenders=1,
-                       Npopbins=NA,
-                       Nfleet=2,
-                       Nsurveys=2,
-                       N_tag_groups=NA,
-                       N_CPUE_obs=NA,
-                       use_datlist=FALSE,
-                       datlist=NULL,
-                       ptype=TRUE){
+                       nseas = NULL,
+                       N_areas = NULL,
+                       Nages = NULL,
+                       Ngenders = lifecycle::deprecated(),
+                       Nsexes = NULL,
+                       Npopbins = NA,
+                       Nfleets = NULL,
+                       Nfleet = NULL,
+                       Do_AgeKey = NULL,
+                       Nsurveys = NULL,
+                       N_tag_groups = NULL,
+                       N_CPUE_obs = NULL,
+                       catch_mult_fleets = NULL,
+                       predM_fleets = NULL,
+                       Ntag_fleets = NULL,
+                       N_rows_equil_catch = NULL,
+                       N_dirichlet_parms = NULL,
+                       ptype = FALSE) {
 
-  # wrapper function to call old or new version of SS_readctl
-
-  # automatic testing of version number
-  if(is.null(version)) {
-    # look for 3.24 or 3.30 at the top of the chosen file
-    version <- scan(file, what=character(), nlines=1, quiet=!verbose)
-    version <- substring(version,3,6)
-    # if that fails, look for data.ss_new file in the same directory
-    if(version %in% c("3.24", "3.30")){
-      if(verbose)cat("assuming version", version, "based on first line of control file\n")
-    }else{
-      newfile <- file.path(dirname(file), "control.ss_new")
-      if(file.exists(newfile)){
-        version <- scan(newfile, what=character(), nlines=1, quiet=!verbose)
-        version <- substring(version,3,6)
-        if(verbose)cat("assuming version", version, "based on first line of control.ss_new\n")
-      }else{
-        stop("input 'version' required due to missing value at top of", file)
-      }
-    }
+  # warn about soft deprecated arguments ----
+  # echoall warning will occur in in SS_readctl_3.24 and SS_readctl_3.30
+  if (lifecycle::is_present(Ngenders)) {
+    lifecycle::deprecate_warn(
+      when = "1.41.1",
+      what = "SS_readctl(Ngenders)",
+      details = "Please use Nsexes instead. Ability to use Ngenders will be dropped in next release."
+    )
+    Nsexes <- Ngenders
+  }
+  if (is.null(version)) {
+    lifecycle::deprecate_stop(
+      when = "1.43.2",
+      what = "SS_readctl(version = 'must be 3.24 or 3.30')"
+    )
   }
 
-  nver=as.numeric(substring(version,1,4))
+  nver <- as.numeric(substring(version, 1, 4))
 
-  if(verbose) cat("Char version is ", version, "\n")
-  if(verbose) cat("Numeric version is ", nver, "\n")
+  if (verbose) cat("Char version is ", version, "\n")
+  if (verbose) cat("Numeric version is ", nver, "\n")
 
   # call function for SS version 2.00
-  if(nver<3){
-
+  if (nver < 3) {
     stop("Function SS_readctl_2.00 has not been written yet")
-
   }
 
   # call function for SS version 3.00
-  if((nver>=3)&&(nver<3.2)){
-
+  if ((nver >= 3) && (nver < 3.2)) {
     stop("Function SS_readctl_3.00 has not been written yet")
-
   }
 
   # call function for SS version 3.24
-  if((nver>=3.2)&&(nver<3.3)){
-
-    ctllist <- SS_readctl_3.24(file         = file,
-                               version   = version,
-                               verbose      = verbose,
-                               echoall      = echoall,
-                               nseas        = nseas,
-                               N_areas      = N_areas,
-                               Nages        = Nages,
-                               Ngenders     = Ngenders,
-                               Npopbins     = Npopbins,
-                               Nfleet       = Nfleet,
-                               Nsurveys     = Nsurveys,
-                               N_tag_groups = N_tag_groups,
-                               N_CPUE_obs   = N_CPUE_obs,
-                               use_datlist  = use_datlist,
-                               datlist      = datlist,
-                               ptype        = ptype)
+  if ((nver >= 3.2) && (nver < 3.3)) {
+    if (isTRUE(!is.null(Nfleets))) {
+      stop("SS v3.24 uses Nfleet and Nsurveys but a value has been input for Nfleets instead")
+    }
+    ctllist <- SS_readctl_3.24(
+      file = file,
+      echoall = echoall,
+      verbose = verbose,
+      nseas = nseas,
+      N_areas = N_areas,
+      Nages = Nages,
+      Nsexes = Nsexes,
+      Npopbins = Npopbins,
+      Nfleet = Nfleet,
+      Nsurveys = Nsurveys,
+      Do_AgeKey = Do_AgeKey,
+      N_tag_groups = N_tag_groups,
+      N_CPUE_obs = N_CPUE_obs,
+      use_datlist = use_datlist,
+      datlist = datlist,
+      ptype = ptype
+    )
   }
 
   # call function for SS version 3.30
-  if(nver>=3.3){
-
-    ctllist <- SS_readctl_3.30(file         = file,
-                               version   = version,
-                               verbose      = verbose,
-                               echoall      = echoall,
-                               nseas        = nseas,
-                               N_areas      = N_areas,
-                               Nages        = Nages,
-                               Ngenders     = Ngenders,
-                               Npopbins     = Npopbins,
-                               Nfleet       = Nfleet,
-                               Nsurveys     = Nsurveys,
-                               N_tag_groups = N_tag_groups,
-                               N_CPUE_obs   = N_CPUE_obs,
-                               use_datlist  = use_datlist,
-                               datlist      = datlist)
+  if (nver >= 3.3) {
+    if (isTRUE(!is.null(Nfleet) | !is.null(Nsurveys))) {
+      stop("SS v3.30 uses Nfleets but values have been input for Nfleet and/or Nsurveys")
+    }
+    ctllist <- SS_readctl_3.30(
+      file = file,
+      verbose = verbose,
+      echoall = echoall,
+      nseas = nseas,
+      N_areas = N_areas,
+      Nages = Nages,
+      Nsexes = Nsexes,
+      Npopbins = Npopbins,
+      Nfleets = Nfleets,
+      Do_AgeKey = Do_AgeKey,
+      N_tag_groups = N_tag_groups,
+      catch_mult_fleets = catch_mult_fleets,
+      predM_fleets = predM_fleets,
+      Ntag_fleets = Ntag_fleets,
+      N_rows_equil_catch = N_rows_equil_catch,
+      N_dirichlet_parms = N_dirichlet_parms,
+      use_datlist = use_datlist,
+      datlist = datlist
+    )
   }
 
   # return the result

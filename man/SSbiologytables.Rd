@@ -5,31 +5,35 @@
 \title{A function to create a table of biology for assessment reporting:
 length, weight, \% mature, fecundity, and selectivity}
 \usage{
-SSbiologytables(replist = NULL, printfolder = "tables",
-  dir = "default", fleetnames = "default", selexyr = "default")
+SSbiologytables(
+  replist = NULL,
+  printfolder = "tables",
+  dir = "default",
+  fleetnames = "default",
+  selexyr = "default"
+)
 }
 \arguments{
-\item{replist}{List created by \code{SS_output}
-backslashes (or forwardslashes) and quotes necessary.}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{printfolder}{The sub-directory under 'dir' (see below) in which the
 PNG files will be located.  The default sub-directory is "plots".
-The directory will be created if it doesn\'t exist.
-If 'printfolder' is set to "", it is ignored and the PNG files will be located
-in the directory specified by 'dir'.}
+The directory will be created if it doesn not exist.
+If 'printfolder' is set to "", it is ignored and the PNG files will
+be located in the directory specified by 'dir'.}
 
 \item{dir}{The directory in which a PDF file (if requested) will be created
 and within which the printfolder sub-directory (see above) will be created
 if png=TRUE. By default it will be the same directory that the report file
 was read from by the \code{SS_output} function. Alternatives to the default
 can be either relative (to the working directory) or absolute paths.
-The function will attempt to create the directory it doesn't exist, but it
+The function will attempt to create the directory it does not exist, but it
 does not do so recursively.}
 
 \item{fleetnames}{Either the string "default", or a vector of characters
 strings to use for each fleet name. Default="default".}
 
-\item{selexyr}{The year to summarize selectivity, the default is the final 
+\item{selexyr}{The year to summarize selectivity, the default is the final
 model yr strings to use for each fleet name. Default="default".}
 }
 \value{
@@ -37,7 +41,7 @@ A csv files containing biology and selectivity tables
 }
 \description{
 Takes the object created by SS_output to create table for reporting
-for West Coast groundfish.  Works with Stock Synthesis versions 3.30.12 
+for West Coast groundfish.  Works with Stock Synthesis versions 3.30.12
 and later.
 }
 \author{

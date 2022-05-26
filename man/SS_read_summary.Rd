@@ -4,10 +4,13 @@
 \alias{SS_read_summary}
 \title{read ss_summary file}
 \usage{
-SS_read_summary(file = "ss_summary.sso")
+SS_read_summary(file = "ss_summary.sso", verbose = FALSE)
 }
 \arguments{
 \item{file}{Filename either with full path or relative to working directory.}
+
+\item{verbose}{A logical value specifying if output should be printed
+to the screen.}
 }
 \value{
 Output will be a list with four elements, \code{header},
@@ -18,15 +21,14 @@ Each is a data frame with rownames indicating the quantity shown in each row.
 read Stock Synthesis ss_summary.sso file into list object in R
 }
 \examples{
-
-  \dontrun{
-    summary <- SS_read_summary(file='c:/mymodel/ss_summary.sso')
-  }
+\dontrun{
+summary <- SS_read_summary(file = "c:/mymodel/ss_summary.sso")
+}
 
 }
 \seealso{
-\code{\link{SS_output}}, \code{\link{SS_readforecast}},
-\code{\link{SS_readdat}}, \code{\link{SS_readstarter}}
+\code{\link[=SS_output]{SS_output()}}, \code{\link[=SS_readforecast]{SS_readforecast()}},
+\code{\link[=SS_readdat]{SS_readdat()}}, \code{\link[=SS_readstarter]{SS_readstarter()}}
 }
 \author{
 Ian Taylor

@@ -4,15 +4,31 @@
 \alias{SS_profile}
 \title{Run a likelihood profile in Stock Synthesis.}
 \usage{
-SS_profile(dir = "C:/myfiles/mymodels/myrun/",
-  masterctlfile = "control.ss_new", newctlfile = "control_modified.ss",
-  linenum = NULL, string = NULL, profilevec = NULL, usepar = FALSE,
-  globalpar = FALSE, parfile = "ss.par", parlinenum = NULL,
-  parstring = NULL, dircopy = TRUE, exe.delete = FALSE,
-  model = "ss", extras = "-nox", systemcmd = FALSE,
-  saveoutput = TRUE, overwrite = TRUE, whichruns = NULL,
-  SSversion = "3.30", prior_check = TRUE, read_like = TRUE,
-  verbose = TRUE)
+SS_profile(
+  dir = "C:/myfiles/mymodels/myrun/",
+  masterctlfile = "control.ss_new",
+  newctlfile = "control_modified.ss",
+  linenum = NULL,
+  string = NULL,
+  profilevec = NULL,
+  usepar = FALSE,
+  globalpar = FALSE,
+  parfile = "ss.par",
+  parlinenum = NULL,
+  parstring = NULL,
+  dircopy = TRUE,
+  exe.delete = FALSE,
+  model = "ss",
+  extras = "-nox",
+  systemcmd = FALSE,
+  saveoutput = TRUE,
+  overwrite = TRUE,
+  whichruns = NULL,
+  version = "3.30",
+  prior_check = TRUE,
+  read_like = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dir}{Directory where input files and executable are located.}
@@ -22,13 +38,17 @@ SS_profile(dir = "C:/myfiles/mymodels/myrun/",
 \item{newctlfile}{Destination for new control files (must match entry in
 starter file). Default = "control_modified.ss".}
 
-\item{linenum}{Line number of parameter to be changed.  Can be used instead
-of \code{string} or left as NULL.}
+\item{linenum}{Line number of parameter to be changed. Can be used instead
+of \code{string} or left as NULL. Can be a vector if you are profiling multiple
+parameters at the same time.}
 
 \item{string}{String partially matching name of parameter to be changed. Can
-be used instead of \code{linenum} or left as NULL.}
+be used instead of \code{linenum} or left as NULL. Can be a vector if you are
+profiling multiple parameters at the same time.}
 
-\item{profilevec}{Vector of values to profile over.  Default = NULL.}
+\item{profilevec}{Vector of values to profile over. If you are profileing
+over multiple parameters at the same time this should be a data.frame or
+matrix with a column for each parameter.}
 
 \item{usepar}{Use PAR file from previous profile step for starting values?}
 
@@ -40,9 +60,12 @@ of the par file from each successive run}
 remain 'ss.par'). When \code{globalpar=TRUE}, the backup copy of this
 is used for all runs.}
 
-\item{parlinenum}{Line number in par file to change.}
+\item{parlinenum}{Line number in par file to change (if usepar = TRUE).
+Can be a vector if you are profiling multiple parameters at the same time.}
 
-\item{parstring}{String in par file preceding line number to change.}
+\item{parstring}{String in par file preceding line number to change as
+an alternative to parlinenum (only needed if usepar = TRUE).
+Can be a vector if you are profiling multiple parameters at the same time.}
 
 \item{dircopy}{Copy directories for each run? NOT IMPLEMENTED YET.}
 
@@ -66,9 +89,10 @@ re-run a subset of the cases in situations where the function was
 interrupted or some runs fail to converge. Must be a subset of 1:n, where n
 is the length of profilevec.}
 
-\item{SSversion}{SS version number. Currently only "3.24" or "3.30" are
-supported, either as character or numeric values
-(noting that numeric 3.30  = 3.3).}
+\item{version}{SS version number. Currently "3.24" or "3.30" are supported,
+either as character or numeric values (noting that numeric 3.30  = 3.3).
+\code{version = NULL} is no longer the default or an allowed entry.
+The default is \code{version = "3.30"}.}
 
 \item{prior_check}{Check to make sure the starter file is set to include
 the prior likelihood contribution in the total likelihood.  Default = TRUE.}
@@ -90,69 +114,128 @@ and some models are likely to require rerunning with alternate starting
 values.
 
 Also, someday this function will be improved to work directly with the
-plotting function \code{\link{SSplotProfile}}, but they don't yet work well
-together. Thus, even if \code{\link{SS_profile}} is used, the output should
-be read using \code{\link{SSgetoutput}} or by multiple calls to
-\code{\link{SS_output}} before sending to \code{\link{SSplotProfile}}.
+plotting function \code{\link[=SSplotProfile]{SSplotProfile()}}, but they don't yet work well
+together. Thus, even if \code{\link[=SS_profile]{SS_profile()}} is used, the output should
+be read using \code{\link[=SSgetoutput]{SSgetoutput()}} or by multiple calls to
+\code{\link[=SS_output]{SS_output()}} before sending to \code{\link[=SSplotProfile]{SSplotProfile()}}.
 }
 \examples{
-
-  \dontrun{
+\dontrun{
 # note: don't run this in your main directory
 # make a copy in case something goes wrong
 mydir <- "C:/ss/Simple - Copy"
 
 # the following commands related to starter.ss could be done by hand
 # read starter file
-starter <- SS_readstarter(file.path(mydir, 'starter.ss'))
+starter <- SS_readstarter(file.path(mydir, "starter.ss"))
 # change control file name in the starter file
-starter$ctlfile <- "control_modified.ss"
+starter[["ctlfile"]] <- "control_modified.ss"
 # make sure the prior likelihood is calculated
 # for non-estimated quantities
-starter$prior_like <- 1
+starter[["prior_like"]] <- 1
 # write modified starter file
-SS_writestarter(starter, dir=mydir, overwrite=TRUE)
+SS_writestarter(starter, dir = mydir, overwrite = TRUE)
 
 # vector of values to profile over
-h.vec <- seq(0.3,0.9,.1)
+h.vec <- seq(0.3, 0.9, .1)
 Nprofile <- length(h.vec)
 
 # run SS_profile command
-profile <- SS_profile(dir=mydir, # directory
-                      # "NatM" is a subset of one of the
-                      # parameter labels in control.ss_new
-                      model="ss",
-                      masterctlfile="control.ss_new",
-                      newctlfile="control_modified.ss",
-                      string="steep",
-                      profilevec=h.vec)
+profile <- SS_profile(
+  dir = mydir, # directory
+  # "NatM" is a subset of one of the
+  # parameter labels in control.ss_new
+  model = "ss",
+  masterctlfile = "control.ss_new",
+  newctlfile = "control_modified.ss",
+  string = "steep",
+  profilevec = h.vec
+)
 
 
 # read the output files (with names like Report1.sso, Report2.sso, etc.)
-profilemodels <- SSgetoutput(dirvec=mydir, keyvec=1:Nprofile)
+profilemodels <- SSgetoutput(dirvec = mydir, keyvec = 1:Nprofile)
 # summarize output
 profilesummary <- SSsummarize(profilemodels)
 
 # OPTIONAL COMMANDS TO ADD MODEL WITH PROFILE PARAMETER ESTIMATED
 MLEmodel <- SS_output("C:/ss/SSv3.24l_Dec5/Simple")
-profilemodels$MLE <- MLEmodel
+profilemodels[["MLE"]] <- MLEmodel
 profilesummary <- SSsummarize(profilemodels)
 # END OPTIONAL COMMANDS
 
 # plot profile using summary created above
-SSplotProfile(profilesummary,           # summary object
-              profile.string = "steep", # substring of profile parameter
-              profile.label="Stock-recruit steepness (h)") # axis label
+SSplotProfile(profilesummary, # summary object
+  profile.string = "steep", # substring of profile parameter
+  profile.label = "Stock-recruit steepness (h)"
+) # axis label
 
 # make timeseries plots comparing models in profile
-SSplotComparisons(profilesummary,legendlabels=paste("h =",h.vec))
+SSplotComparisons(profilesummary, legendlabels = paste("h =", h.vec))
 
+
+###########################################################################
+
+# example two-dimensional profile
+# (e.g. over 2 of the parameters in the low-fecundity stock-recruit function)
+base_dir <- "c:/mymodel"
+
+dir_profile_SR <- file.path(base_dir, "Profiles/Zfrac_and_Beta")
+
+# make a grid of values in both dimensions Zfrac and Beta
+# vector of values to profile over
+Zfrac_vec <- seq(from = 0.2, to = 0.6, by = 0.1)
+Beta_vec <- c(0.5, 0.75, 1.0, 1.5, 2.0)
+par_table <- expand.grid(Zfrac = Zfrac_vec, Beta = Beta_vec)
+nrow(par_table)
+## [1] 25
+head(par_table)
+##   Zfrac Beta
+## 1   0.2 0.50
+## 2   0.3 0.50
+## 3   0.4 0.50
+## 4   0.5 0.50
+## 5   0.6 0.50
+## 6   0.2 0.75
+
+# run SS_profile command
+# requires modified version of SS_profile available via
+# remotes::install_github("r4ss/r4ss@profile_issue_224")
+profile <- SS_profile(
+  dir = dir_profile_SR, # directory
+  masterctlfile = "control.ss_new",
+  newctlfile = "control_modified.ss",
+  string = c("Zfrac", "Beta"),
+  profilevec = par_table,
+  extras = "-nohess"
+)
+
+# get model output
+profilemodels <- SSgetoutput(
+  dirvec = dir_profile_SR,
+  keyvec = 1:nrow(par_table), getcovar = FALSE
+)
+n <- length(profilemodels)
+profilesummary <- SSsummarize(profilemodels)
+
+# add total likelihood (row 1) to table created above
+par_table[["like"]] <- as.numeric(profilesummary[["likelihoods"]][1, 1:n])
+
+# reshape data frame into a matrix for use with contour
+like_matrix <- reshape2::acast(par_table, Zfrac ~ Beta, value.var = "like")
+
+# make contour plot
+contour(
+  x = as.numeric(rownames(like_matrix)),
+  y = as.numeric(colnames(like_matrix)),
+  z = like_matrix
+)
 }
 
 }
 \seealso{
-\code{\link{SSplotProfile}}, \code{\link{SSgetoutput}},
-\code{\link{SS_changepars}}, \code{\link{SS_parlines}}
+\code{\link[=SSplotProfile]{SSplotProfile()}}, \code{\link[=SSgetoutput]{SSgetoutput()}},
+\code{\link[=SS_changepars]{SS_changepars()}}, \code{\link[=SS_parlines]{SS_parlines()}}
 }
 \author{
 Ian Taylor

@@ -4,15 +4,31 @@
 \alias{SS_fitbiasramp}
 \title{Estimate bias adjustment for recruitment deviates}
 \usage{
-SS_fitbiasramp(replist, verbose = FALSE, startvalues = NULL,
-  method = "BFGS", twoplots = TRUE, transform = FALSE, plot = TRUE,
-  print = FALSE, plotdir = "default", shownew = TRUE,
-  oldctl = NULL, newctl = NULL, altmethod = "nlminb",
-  exclude_forecast = FALSE, pwidth = 6.5, pheight = 5,
-  punits = "in", ptsize = 10, res = 300, cex.main = 1)
+SS_fitbiasramp(
+  replist,
+  verbose = FALSE,
+  startvalues = NULL,
+  method = "BFGS",
+  twoplots = TRUE,
+  transform = FALSE,
+  plot = TRUE,
+  print = FALSE,
+  plotdir = "default",
+  shownew = TRUE,
+  oldctl = NULL,
+  newctl = NULL,
+  altmethod = "nlminb",
+  exclude_forecast = FALSE,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  ptsize = 10,
+  res = 300,
+  cex.main = 1
+)
 }
 \arguments{
-\item{replist}{Object created using \code{\link{SS_output}}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{verbose}{Controls the amount of output to the screen.  Default=FALSE.}
 
@@ -52,32 +68,58 @@ or "psoptim". If not equal to either of these, then optim is used.}
 alternative bias adjustment inputs?}
 
 \item{pwidth}{Default width of plots printed to files in units of
-\code{punits}. Default=7.}
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{Default height width of plots printed to files in units of
-\code{punits}. Default=7.}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
 
 \item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
-(pixels), "in" (inches), "cm" or "mm". Default="in".}
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
 \item{ptsize}{Point size for plotted text in plots printed to files (see
-help("png") in R for details). Default=12.}
+\code{help("png")} in R for details).}
 
-\item{res}{Resolution of plots printed to files. Default=300.}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
-\item{cex.main}{Character expansion for plot titles.}
+\item{cex.main}{Character expansion for plot titles.
+The default is \code{cex.main=1}.}
 }
 \description{
 Uses standard error of estimated recruitment deviates to estimate the 5
-controls for the bias adjustment in Stock Synthesis
+controls (Methot and Taylor, 2011)
+for bias adjustment in Stock Synthesis.
+}
+\details{
+Implementation of the bias adjustment ramp within Stock Synthesis increases
+the likelihood that the estimated recruitment events, which are
+log-normally distributed, are mean unbiased and comparable to results from
+Markov chain Monte Carlo estimation routines
+(Methot and Taylor, 2011).
+Options to account for the fact that data typically do not equally represent
+all modelled time periods are as follows:
+\enumerate{
+\item{fix the bias adjustment parameters at best-guess values informed by a previous
+assessment or model run;}
+\item{fix values based on data availability, such that the start of the ramp aligns
+with the availability of composition data, the ramp down begins the last year
+those data are informative about recruitment, and the adjustment level is
+informed by life history;}
+\item{set the adjustment level to 1.0 for all years to mimic how it was handled
+it Stock Synthesis prior to 2009; or}
+\item{set the adjustment level to 0.0 for all years, but this last option is
+not recommended because it will lead to biased results.}
+}
 }
 \references{
-Methot, R.D. and Taylor, I.G., 2011. Adjusting for bias due to
-variability of estimated recruitments in fishery assessment models.  Can. J.
-Fish. Aquat. Sci., 68:1744-1760.
+Methot, R.D. and Taylor, I.G., 2011.
+Adjusting for bias due to variability of estimated recruitments in fishery assessment models.
+Can. J. Fish. Aquat. Sci., 68:1744-1760.
 }
 \seealso{
-\code{\link{SS_output}}
+\code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor

@@ -4,17 +4,33 @@
 \alias{SSplotCohortCatch}
 \title{Plot cumulative catch by cohort.}
 \usage{
-SSplotCohortCatch(replist, subplots = 1:2, add = FALSE, plot = TRUE,
-  print = FALSE, cohortcols = "default", cohortfrac = 1,
-  cohortvec = NULL, cohortlabfrac = 0.1, cohortlabvec = NULL,
-  lwd = 3, plotdir = "default", xlab = "Year", labels = c("Age",
-  "Cumulative catch by cohort (in numbers x1000)",
-  "Cumulative catch by cohort (x1000 mt)"), pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  verbose = TRUE)
+SSplotCohortCatch(
+  replist,
+  subplots = 1:2,
+  add = FALSE,
+  plot = TRUE,
+  print = FALSE,
+  cohortcols = "default",
+  cohortfrac = 1,
+  cohortvec = NULL,
+  cohortlabfrac = 0.1,
+  cohortlabvec = NULL,
+  lwd = 3,
+  plotdir = "default",
+  xlab = "Year",
+  labels = c("Age", "Cumulative catch by cohort (in numbers x1000)",
+    "Cumulative catch by cohort (x1000 mt)"),
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{List created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplots}{Vector controlling which subplots to create}
 
@@ -57,7 +73,8 @@ it will be the directory where the model was run.}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -72,7 +89,7 @@ estimated catch-at-age matrix and weight-at-age values by fleet.  Curves are
 shown in units of both numbers and biomass.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor

@@ -4,15 +4,31 @@
 \alias{SSplotDiscard}
 \title{Plot fit to discard fraction.}
 \usage{
-SSplotDiscard(replist, subplots = 1:2, plot = TRUE, print = FALSE,
-  plotdir = "default", fleets = "all", fleetnames = "default",
-  datplot = FALSE, labels = c("Year", "Discard fraction",
-  "Total discards", "for"), yhi = 1, ymax = NULL, col1 = "blue",
-  col2 = "black", pwidth = 6.5, pheight = 5, punits = "in",
-  res = 300, ptsize = 10, cex.main = 1, verbose = TRUE)
+SSplotDiscard(
+  replist,
+  subplots = 1:2,
+  plot = TRUE,
+  print = FALSE,
+  plotdir = "default",
+  fleets = "all",
+  fleetnames = "default",
+  datplot = FALSE,
+  labels = c("Year", "Discard fraction", "Total discards", "for"),
+  yhi = 1,
+  ymax = NULL,
+  col1 = "blue",
+  col2 = "black",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{List created by \code{\link{SS_output}}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplots}{Vector of which plots to make (1 = data only, 2 = with fit).
 If \code{plotdat = FALSE} then subplot 1 is not created, regardless of
@@ -52,7 +68,8 @@ discard amounts are very high)}
 
 \item{punits}{Units for PNG file}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{Point size for PNG file}
 
@@ -64,7 +81,7 @@ discard amounts are very high)}
 Plot fit to discard fraction from Stock Synthesis output file.
 }
 \seealso{
-\code{\link{SS_plots}}
+\code{\link[=SS_plots]{SS_plots()}}
 }
 \author{
 Ian G. Taylor, Ian J. Stewart, Robbie L. Emmet

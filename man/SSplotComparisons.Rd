@@ -4,30 +4,75 @@
 \alias{SSplotComparisons}
 \title{plot model comparisons}
 \usage{
-SSplotComparisons(summaryoutput, subplots = 1:20, plot = TRUE,
-  print = FALSE, png = print, pdf = FALSE, models = "all",
-  endyrvec = "default", indexfleets = NULL, indexUncertainty = FALSE,
-  indexQlabel = TRUE, indexQdigits = 4, indexSEvec = "default",
-  indexPlotEach = FALSE, labels = c("Year", "Spawning biomass (t)",
-  "Fraction of unfished", "Age-0 recruits (1,000s)",
-  "Recruitment deviations", "Index", "Log index", "1 - SPR", "Density",
-  "Management target", "Minimum stock size threshold", "Spawning output",
-  "Harvest rate"), col = NULL, shadecol = NULL, pch = NULL,
-  lty = 1, lwd = 2, spacepoints = 10, staggerpoints = 1,
-  initpoint = 0, tickEndYr = TRUE, shadeForecast = TRUE,
-  xlim = "default", ylimAdj = 1.05, xaxs = "i", yaxs = "i",
-  type = "o", uncertainty = TRUE, shadealpha = 0.1, legend = TRUE,
-  legendlabels = "default", legendloc = "topright",
-  legendorder = "default", legendncol = 1, sprtarg = NULL,
-  btarg = NULL, minbthresh = NULL, pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  plotdir = NULL, filenameprefix = "", densitynames = c("SSB_Virgin",
-  "R0"), densityxlabs = "default", rescale = TRUE, densityscalex = 1,
-  densityscaley = 1, densityadjust = 1, densitysymbols = TRUE,
-  densitytails = TRUE, densitymiddle = FALSE, densitylwd = 1,
-  fix0 = TRUE, new = TRUE, add = FALSE, par = list(mar = c(5, 4, 1,
-  1) + 0.1), verbose = TRUE, mcmcVec = FALSE,
-  show_equilibrium = TRUE)
+SSplotComparisons(
+  summaryoutput,
+  subplots = 1:20,
+  plot = TRUE,
+  print = FALSE,
+  png = print,
+  pdf = FALSE,
+  models = "all",
+  endyrvec = NULL,
+  indexfleets = NULL,
+  indexUncertainty = TRUE,
+  indexQlabel = TRUE,
+  indexQdigits = 4,
+  indexSEvec = NULL,
+  indexPlotEach = FALSE,
+  labels = c("Year", "Spawning biomass (t)", "Fraction of unfished",
+    "Age-0 recruits (1,000s)", "Recruitment deviations", "Index", "Log index",
+    "SPR-related quantity", "Density", "Management target",
+    "Minimum stock size threshold", "Spawning output", "Harvest rate"),
+  col = NULL,
+  shadecol = NULL,
+  pch = NULL,
+  lty = 1,
+  lwd = 2,
+  spacepoints = 10,
+  staggerpoints = 1,
+  initpoint = 0,
+  tickEndYr = TRUE,
+  shadeForecast = TRUE,
+  xlim = NULL,
+  ylimAdj = 1.05,
+  xaxs = "i",
+  yaxs = "i",
+  type = "o",
+  uncertainty = TRUE,
+  shadealpha = 0.1,
+  legend = TRUE,
+  legendlabels = NULL,
+  legendloc = "topright",
+  legendorder = NULL,
+  legendncol = 1,
+  sprtarg = NULL,
+  btarg = NULL,
+  minbthresh = NULL,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  plotdir = NULL,
+  filenameprefix = "",
+  densitynames = c("SSB_Virgin", "R0"),
+  densityxlabs = NULL,
+  rescale = TRUE,
+  densityscalex = 1,
+  densityscaley = 1,
+  densityadjust = 1,
+  densitysymbols = TRUE,
+  densitytails = TRUE,
+  densitymiddle = FALSE,
+  densitylwd = 1,
+  fix0 = TRUE,
+  new = TRUE,
+  add = FALSE,
+  par = list(mar = c(5, 4, 1, 1) + 0.1),
+  verbose = TRUE,
+  mcmcVec = FALSE,
+  show_equilibrium = TRUE
+)
 }
 \arguments{
 \item{summaryoutput}{List created by \code{SSsummarize}}
@@ -35,37 +80,23 @@ SSplotComparisons(summaryoutput, subplots = 1:20, plot = TRUE,
 \item{subplots}{Vector of subplots to be created
 Numbering of subplots is as follows:
 \itemize{
-  \item 1  spawning biomass
-  \item 2  spawning biomass with uncertainty intervals
-  \item 3  biomass ratio (hopefully equal to fraction of unfished)
-  \item 4  biomass ratio with uncertainty
-  \item 5  SPR ratio
-  \item 6  SPR ratio with uncertainty
-  \item 7  F value
-  \item 8  F value with uncertainty
-  \item 9  recruits
-  \item 10  recruits with uncertainty
-  \item 11  recruit devs
-  \item 12  recruit devs with uncertainty
-  \item 13  index fits
-  \item 14  index fits on a log scale
-  \item 15  phase plot
-  \item 16  densities
-  \item 17  cumulative densities
-}
-Note that this represents a revision in the numbering for 7 and higher
-from the numbering used up to r4ss version 1.36.0 which was as follows:
-\itemize{
-  \item 18  F value with uncertainty
-  \item 7  recruits
-  \item 8  recruits with uncertainty
-  \item 9  recruit devs
-  \item 10  recruit devs with uncertainty
-  \item 11  index fits
-  \item 12  index fits on a log scale
-  \item 13  phase plot
-  \item 14  densities
-  \item 15  cumulative densities
+\item 1  spawning biomass
+\item 2  spawning biomass with uncertainty intervals
+\item 3  biomass ratio (hopefully equal to fraction of unfished)
+\item 4  biomass ratio with uncertainty
+\item 5  SPR ratio
+\item 6  SPR ratio with uncertainty
+\item 7  F value
+\item 8  F value with uncertainty
+\item 9  recruits
+\item 10  recruits with uncertainty
+\item 11  recruit devs
+\item 12  recruit devs with uncertainty
+\item 13  index fits
+\item 14  index fits on a log scale
+\item 15  phase plot
+\item 16  densities
+\item 17  cumulative densities
 }}
 
 \item{plot}{Plot to active plot device?}
@@ -87,8 +118,19 @@ columns in summary tables.}
 final year of values to show for each model. By default it is set to the
 ending year specified in each model.}
 
-\item{indexfleets}{Vector of fleet numbers for each model for which to compare
-indices of abundance. Only necessary if any model has more than one index.}
+\item{indexfleets}{Fleet numbers for each model to compare
+indices of abundance. Can take different forms:
+\itemize{
+\item NULL: (default) create a separate plot for each index as long as the fleet
+numbering is the same across all models.
+\item integer: create a single comparison plot for the chosen index
+\item vector of length equal to number of models: a single fleet number
+for each model to be compared in a single plot
+\item list: list of fleet numbers associated with indices within each
+model to be compared, where the list elements are each a vector of the
+same length but the names of the list elements don't matter and can be
+absent.
+}}
 
 \item{indexUncertainty}{Show uncertainty intervals on index data?
 Default=FALSE because if models have any extra standard deviations added,
@@ -98,10 +140,10 @@ these intervals may differ across models.}
 (TRUE/FALSE)?}
 
 \item{indexQdigits}{Number of significant digits for catchability in legend
-(if \code{indexQlabel=TRUE})}
+(if \code{indexQlabel = TRUE})}
 
 \item{indexSEvec}{Optional replacement for the SE values in
-summaryoutput$indices to deal with the issue of differing uncertainty by
+\code{summaryoutput[["indices"]]} to deal with the issue of differing uncertainty by
 models described above.}
 
 \item{indexPlotEach}{TRUE plots the observed index for each model with
@@ -113,8 +155,10 @@ colors, or FALSE just plots observed once in black dots.}
 makes use of \code{rich.colors.short} function.}
 
 \item{shadecol}{Optional vector of colors to be used for shading uncertainty
-intervals. Input NULL makes use of \code{rich.colors.short} function
-with alpha transparency.}
+intervals. The default (NULL) is to use the same colors provided by
+\code{col} (either the default or a user-chosen input) and make them
+more transparent by applying the \code{shadealpha} input as an alpha
+transparency value (using the \code{adjustcolor()} function)}
 
 \item{pch}{Optional vector of plot character values}
 
@@ -163,9 +207,10 @@ values (implemented as \code{adjustcolor(col=col, alpha.f=shadealpha)})}
 \item{legendlabels}{Optional vector of labels to include in legend. Default
 is 'model1','model2',etc.}
 
-\item{legendloc}{Location of legend. Either a string like "topleft" or a vector
-of two numeric values representing the fraction of the maximum in the x and y
-dimensions, respectively. See ?legend for more info on the string options.}
+\item{legendloc}{Location of legend. Either a string like "topleft" or a
+vector of two numeric values representing the fraction of the maximum in
+the x and y dimensions, respectively. See \code{help("legend")} for more info on
+the string options.}
 
 \item{legendorder}{Optional vector of model numbers that can be used to have
 the legend display the model names in an order that is different than that
@@ -182,17 +227,22 @@ remove)}
 \item{minbthresh}{Minimum biomass threshold at which to show a line (set to
 0 to remove)}
 
-\item{pwidth}{Width of plot}
+\item{pwidth}{Default width of plots printed to files in units of
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{Height of plot}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
 
-\item{punits}{Units for PNG file}
+\item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
-\item{res}{Resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
-\item{ptsize}{Point size for PNG file}
-
-\item{cex.main}{Character expansion for plot titles}
+\item{ptsize}{Point size for plotted text in plots printed to files (see
+\code{help("png")} in R for details).}
 
 \item{plotdir}{Directory where PNG or PDF files will be written. By default
 it will be the directory where the model was run.}
@@ -201,8 +251,8 @@ it will be the directory where the model was run.}
 It will be separated from default name by an underscore.}
 
 \item{densitynames}{Vector of names (or subset of names) of parameters or
-derived quantities contained in summaryoutput$pars$Label or
-summaryoutput$quants$Label for which to make density plots}
+derived quantities contained in \code{summaryoutput[["pars"]][["Label"]]} or
+\code{summaryoutput[["quants"]][["Label"]]} for which to make density plots}
 
 \item{densityxlabs}{Optional vector of x-axis labels to use in the density
 plots (must be equal in length to the printed vector of quantities that
@@ -225,9 +275,11 @@ used for smoothing MCMC posteriors. See 'adjust' in ?density for details.}
 \item{densitysymbols}{Add symbols along lines in density plots. Quantiles
 are \code{c(0.025,0.1,0.25,0.5,0.75,0.9,0.975)}.}
 
-\item{densitytails}{Shade tails outside of 95\% interval darker in density plots?}
+\item{densitytails}{Shade tails outside of 95\% interval darker in
+density plots?}
 
-\item{densitymiddle}{Shade middle inside of 95\% interval darker in density plots?}
+\item{densitymiddle}{Shade middle inside of 95\% interval darker in
+density plots?}
 
 \item{densitylwd}{Line width for density plots}
 
@@ -258,35 +310,37 @@ multiple models, where the collection was created using the
 \code{SSsummarize} function.
 }
 \examples{
-
-  \dontrun{
+\dontrun{
 # directories where models were run need to be defined
-dir1 <- 'c:/SS/mod1'
-dir2 <- 'c:/SS/mod2'
+dir1 <- "c:/SS/mod1"
+dir2 <- "c:/SS/mod2"
 
 # read two models
-mod1 <- SS_output(dir=dir1)
-mod2 <- SS_output(dir=dir2)
+mod1 <- SS_output(dir = dir1)
+mod2 <- SS_output(dir = dir2)
 
 # create list summarizing model results
 mod.sum <- SSsummarize(list(mod1, mod2))
 
 # plot comparisons
-SSplotComparisons(mod.sum, legendlabels=c("First model", "Second model"))
+SSplotComparisons(mod.sum, legendlabels = c("First model", "Second model"))
 
 # Example showing comparison of MLE to MCMC results where the mcmc would have
 # been run in the subdirectory 'c:/SS/mod1/mcmc'
-mod1 <- SS_output(dir='c:/SS/mod1', dir.mcmc='mcmc')
-# pass the same model twice to SSsummarize in order to plot it twice 
+mod1 <- SS_output(dir = "c:/SS/mod1", dir.mcmc = "mcmc")
+# pass the same model twice to SSsummarize in order to plot it twice
 mod.sum <- SSsummarize(list(mod1, mod1))
 # compare MLE to MCMC
-SSplotComparisons(mod.sum, legendlabels=c("MCMC", "MLE"), mcmcVec=c(TRUE,FALSE))
+SSplotComparisons(mod.sum,
+  legendlabels = c("MCMC", "MLE"),
+  mcmcVec = c(TRUE, FALSE)
+)
+}
 
 }
-}
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SSsummarize}},
-\code{\link{SS_output}}, \code{\link{SSgetoutput}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SSsummarize]{SSsummarize()}},
+\code{\link[=SS_output]{SS_output()}}, \code{\link[=SSgetoutput]{SSgetoutput()}}
 }
 \author{
 Ian G. Taylor, John R. Wallace

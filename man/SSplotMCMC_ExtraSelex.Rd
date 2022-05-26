@@ -4,13 +4,19 @@
 \alias{SSplotMCMC_ExtraSelex}
 \title{Plot uncertainty around chosen selectivity ogive from MCMC.}
 \usage{
-SSplotMCMC_ExtraSelex(post, add = FALSE, nsexes = 1, shift = 0,
-  fleetname = "default", col = "blue")
+SSplotMCMC_ExtraSelex(
+  post,
+  add = FALSE,
+  nsexes = 1,
+  shift = 0,
+  fleetname = "default",
+  col = "blue"
+)
 }
 \arguments{
 \item{post}{A data frame containing either derived_posteriors.sso or a good
 subset of it. This can be an element of the list created by the the
-\code{\link{SSgetMCMC}} function.}
+\code{\link[=SSgetMCMC]{SSgetMCMC()}} function.}
 
 \item{add}{TRUE/FALSE option to add results to an existing plot.}
 

@@ -4,11 +4,21 @@
 \alias{NegLogInt_Fn}
 \title{Perform SS implementation of Laplace Approximation}
 \usage{
-NegLogInt_Fn(File = NA, Input_SD_Group_Vec, CTL_linenum_List,
-  ESTPAR_num_List, PAR_num_Vec, Int_Group_List = list(1),
-  StartFromPar = TRUE, Intern = TRUE, ReDoBiasRamp = FALSE,
-  BiasRamp_linenum_Vec = NULL, CTL_linenum_Type = NULL,
-  systemcmd = FALSE, exe = "ss")
+NegLogInt_Fn(
+  File = NA,
+  Input_SD_Group_Vec,
+  CTL_linenum_List,
+  ESTPAR_num_List,
+  PAR_num_Vec,
+  Int_Group_List = list(1),
+  StartFromPar = TRUE,
+  Intern = TRUE,
+  ReDoBiasRamp = FALSE,
+  BiasRamp_linenum_Vec = NULL,
+  CTL_linenum_Type = NULL,
+  systemcmd = FALSE,
+  exe = "ss"
+)
 }
 \arguments{
 \item{File}{Directory containing Stock Synthesis files
@@ -46,7 +56,7 @@ round of optimization from a ".par" file (I recommend TRUE)}
 in the R terminal}
 
 \item{ReDoBiasRamp}{Logical flag saying whether to re-do the bias ramp
-(using \code{\link{SS_fitbiasramp}}) each time Stock Synthesis is run.}
+(using \code{\link[=SS_fitbiasramp]{SS_fitbiasramp()}}) each time Stock Synthesis is run.}
 
 \item{BiasRamp_linenum_Vec}{Vector giving the line numbers from the CTL file
 that contain the information about the bias ramp.}
@@ -71,23 +81,26 @@ output file names are hardwired in the TPL code.}
 from Thorson, Hicks and Methot (2014) ICES J. Mar. Sci.
 }
 \examples{
+\dontrun{
+# need the full path because wd is changed in function
+direc <- "C:/Models/LaplaceApprox/base"
+if ("Optimization_record.txt" \%in\% list.files(direc)) {
+  file.remove(file.path(direc, "Optimization_record.txt"))
+}
+Opt <- optimize(
+  f = NegLogInt_Fn,
+  interval = c(0.001, 0.12),
+  maximum = FALSE,
+  File = direc,
+  Input_SD_Group_Vec = 1,
+  CTL_linenum_List = list(127:131),
+  ESTPAR_num_List = list(86:205),
+  Int_Group_List = 1,
+  PAR_num_Vec = NA,
+  Intern = TRUE
+)
+}
 
-  \dontrun{
-    direc <- "C:/Models/LaplaceApprox/base"  #need the full path because wd is changed in function
-    if("Optimization_record.txt" \%in\% list.files(direc)) {
-         file.remove(file.path(direc,"Optimization_record.txt"))
-    }
-    Opt <- optimize(f=NegLogInt_Fn,
-                   interval=c(0.001, 0.12),
-                   maximum=FALSE,
-                   File=direc,
-                   Input_SD_Group_Vec=1,
-                   CTL_linenum_List=list(127:131),
-                   ESTPAR_num_List=list(86:205),
-                   Int_Group_List=1,
-                   PAR_num_Vec=NA,
-                   Intern=TRUE)
-  }
 }
 \references{
 Thorson, J.T., Hicks, A.C., and Methot, R.D. 2014. Random
@@ -95,7 +108,7 @@ effect estimation of time-varying factors in Stock Synthesis. ICES J. Mar.
 Sci.
 }
 \seealso{
-\code{\link{read.admbFit}}, \code{\link{getADMBHessian}}
+\code{\link[=read.admbFit]{read.admbFit()}}, \code{\link[=getADMBHessian]{getADMBHessian()}}
 }
 \author{
 James Thorson

@@ -4,11 +4,20 @@
 \alias{SS_readforecast}
 \title{read forecast file}
 \usage{
-SS_readforecast(file = "forecast.ss", Nfleets, Nareas, nseas,
-  version = "3.30", readAll = FALSE, verbose = TRUE)
+SS_readforecast(
+  file = "forecast.ss",
+  Nfleets = NULL,
+  Nareas = NULL,
+  nseas = NULL,
+  version = "3.30",
+  readAll = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{file}{Filename either with full path or relative to working directory.}
+\item{file}{Filename either with full path or relative to working directory.
+
+See the formal arguments for a possible default filename.}
 
 \item{Nfleets}{Number of fleets (not required in 3.30).}
 
@@ -16,11 +25,13 @@ SS_readforecast(file = "forecast.ss", Nfleets, Nareas, nseas,
 
 \item{nseas}{number of seasons (not required in 3.30).}
 
-\item{version}{SS version number. Currently only "3.24" or "3.30" are supported,
-either as character or numeric values (noting that numeric 3.30  = 3.3).}
+\item{version}{SS version number. Currently "3.24" or "3.30" are supported,
+either as character or numeric values (noting that numeric 3.30  = 3.3).
+\code{version = NULL} is no longer the default or an allowed entry.
+The default is \code{version = "3.30"}.}
 
-\item{readAll}{Should the function continue even if Forecast=0
-(at which point SS stops reading)}
+\item{readAll}{Should the function continue even if Forecast = 0 or -1
+(at which point SS stops reading)?}
 
 \item{verbose}{Should there be verbose output while running the file?}
 }
@@ -28,10 +39,10 @@ either as character or numeric values (noting that numeric 3.30  = 3.3).}
 read Stock Synthesis forecast file into list object in R
 }
 \seealso{
-\code{\link{SS_readstarter}}, \code{\link{SS_readdat}},
-\code{\link{SS_writestarter}},
-\code{\link{SS_writeforecast}}, \code{\link{SS_writedat}},
+\code{\link[=SS_readstarter]{SS_readstarter()}}, \code{\link[=SS_readdat]{SS_readdat()}},
+\code{\link[=SS_writestarter]{SS_writestarter()}},
+\code{\link[=SS_writeforecast]{SS_writeforecast()}}, \code{\link[=SS_writedat]{SS_writedat()}},
 }
 \author{
-Ian Taylor
+Ian Taylor + Nathan Vaughan
 }

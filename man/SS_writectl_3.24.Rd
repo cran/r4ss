@@ -4,34 +4,42 @@
 \alias{SS_writectl_3.24}
 \title{write control file}
 \usage{
-SS_writectl_3.24(ctllist, outfile, overwrite = FALSE, verbose = TRUE,
-  nseas = 1, N_areas = 1, Do_AgeKey = FALSE)
+SS_writectl_3.24(
+  ctllist,
+  outfile,
+  overwrite = FALSE,
+  verbose = FALSE,
+  nseas = lifecycle::deprecated(),
+  N_areas = lifecycle::deprecated(),
+  Do_AgeKey = lifecycle::deprecated()
+)
 }
 \arguments{
-\item{ctllist}{List object created by \code{\link{SS_readctl}}.}
+\item{ctllist}{List object created by \code{\link[=SS_readctl]{SS_readctl()}}.}
 
 \item{outfile}{Filename for where to write new data file.}
 
 \item{overwrite}{Should existing files be overwritten? Default=FALSE.}
 
-\item{verbose}{Should there be verbose output while running the file?}
+\item{verbose}{Should there be verbose output while running the file?
+Defaults to FALSE.}
 
-\item{nseas}{number of season in the model. This information is not
+\item{nseas}{Deprecated. number of season in the model. This information is not
 explicitly available in control file}
 
-\item{N_areas}{number of spatial areas in the model. This information is also not
+\item{N_areas}{Deprecated. number of spatial areas in the model. This information is also not
 explicitly available in control file}
 
-\item{Do_AgeKey}{Flag to indicate if 7 additional ageing error parameters to be read
+\item{Do_AgeKey}{Deprecated. Flag to indicate if 7 additional ageing error parameters to be read
 set 1 (but in fact any non zero numeric in R) or TRUE to enable to read them 0 or FALSE (default)
 to disable them. This information is not explicitly available in control file, too.}
 }
 \description{
 write Stock Synthesis control file from list object in R which was probably
-created using \code{\link{SS_readctl}}
+created using \code{\link[=SS_readctl]{SS_readctl()}}
 }
 \seealso{
-\code{\link{SS_readctl}}, \code{\link{SS_readctl_3.24}},\code{\link{SS_readstarter}},
+\code{\link[=SS_readctl]{SS_readctl()}}, \code{\link[=SS_readctl_3.24]{SS_readctl_3.24()}},\code{\link[=SS_readstarter]{SS_readstarter()}},
 }
 \author{
 Yukio Takeuchi

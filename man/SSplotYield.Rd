@@ -4,23 +4,38 @@
 \alias{SSplotYield}
 \title{Plot yield and surplus production.}
 \usage{
-SSplotYield(replist, subplots = 1:3, refpoints = c("MSY", "Btgt",
-  "SPR", "Current"), add = FALSE, plot = TRUE, print = FALSE,
-  labels = c("Fraction unfished", "Equilibrium yield (mt)",
-  "Total biomass (mt)", "Surplus production (mt)"), col = "blue",
-  col2 = "black", lty = 1, lwd = 2, cex.main = 1, pwidth = 6.5,
-  pheight = 5, punits = "in", res = 300, ptsize = 10,
-  plotdir = "default", verbose = TRUE)
+SSplotYield(
+  replist,
+  subplots = 1:4,
+  refpoints = c("MSY", "Btgt", "SPR", "Current"),
+  add = FALSE,
+  plot = TRUE,
+  print = FALSE,
+  labels = c("Fraction unfished", "Equilibrium yield (mt)", "Total biomass (mt)",
+    "Surplus production (mt)", "Yield per recruit (kg)"),
+  col = "blue",
+  col2 = "black",
+  lty = 1,
+  lwd = 2,
+  cex.main = 1,
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  plotdir = "default",
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplots}{vector controlling which subplots to create
 Numbering of subplots is as follows:
 \itemize{
-  \item 1 yield curve
-  \item 2 yield curve with reference points
-  \item 3 surplus production vs. biomass plots (Walters et al. 2008) 
+\item 1 yield curve
+\item 2 yield curve with reference points
+\item 3 surplus production vs. biomass plots (Walters et al. 2008)
 }}
 
 \item{refpoints}{character vector of which reference points to display in
@@ -38,9 +53,9 @@ subplot 2, from the options 'MSY', 'Btgt', and 'SPR'.}
 
 \item{col2}{line color for dynamic surplus production plot}
 
-\item{lty}{line type (only applied to equilbrium yield plot at this time)}
+\item{lty}{line type (only applied to equilibrium yield plot at this time)}
 
-\item{lwd}{line width (only applied to equilbrium yield plot at this time)}
+\item{lwd}{line width (only applied to equilibrium yield plot at this time)}
 
 \item{cex.main}{character expansion for plot titles}
 
@@ -50,7 +65,8 @@ subplot 2, from the options 'MSY', 'Btgt', and 'SPR'.}
 
 \item{punits}{units for PNG file}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -69,7 +85,7 @@ dynamics in declining and recovering fish populations.  Can. J. Fish. Aquat.
 Sci. 65: 2536-2551
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Stewart, Ian Taylor

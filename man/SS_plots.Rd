@@ -4,32 +4,98 @@
 \alias{SS_plots}
 \title{plot many quantities related to output from Stock Synthesis}
 \usage{
-SS_plots(replist = NULL, plot = 1:25, print = NULL, pdf = FALSE,
-  png = TRUE, html = png, printfolder = "plots", dir = "default",
-  fleets = "all", areas = "all", fleetnames = "default",
-  fleetcols = "default", fleetlty = 1, fleetpch = 1, lwd = 1,
-  areacols = "default", areanames = "default", verbose = TRUE,
-  uncertainty = TRUE, forecastplot = TRUE, datplot = TRUE,
-  Natageplot = TRUE, samplesizeplots = TRUE, compresidplots = TRUE,
-  comp.yupper = 0.4, sprtarg = "default", btarg = "default",
-  minbthresh = "default", pntscalar = NULL, bub.scale.pearson = 1.5,
-  bub.scale.dat = 3, pntscalar.nums = 2.6, pntscalar.tags = 2.6,
-  minnbubble = 8, aalyear = -1, aalbin = -1, aalresids = TRUE,
-  maxneff = 5000, cohortlines = c(), smooth = TRUE,
-  showsampsize = TRUE, showeffN = TRUE, sampsizeline = FALSE,
-  effNline = FALSE, showlegend = TRUE, pwidth = 6.5, pheight = 5,
-  punits = "in", ptsize = 10, res = 300, mainTitle = FALSE,
-  cex.main = 1, selexlines = 1:6, rows = 1, cols = 1,
-  maxrows = 4, maxcols = 4, maxrows2 = 2, maxcols2 = 4,
-  andrerows = 3, tagrows = 3, tagcols = 3, fixdims = TRUE,
-  new = TRUE, SSplotDatMargin = 8, filenotes = NULL,
-  catchasnumbers = NULL, catchbars = TRUE, legendloc = "topleft",
-  minyr = -Inf, maxyr = Inf, sexes = "all", scalebins = FALSE,
-  scalebubbles = FALSE, tslabels = NULL, catlabels = NULL,
-  maxsize = 1, ...)
+SS_plots(
+  replist = NULL,
+  plot = 1:26,
+  print = NULL,
+  pdf = FALSE,
+  png = TRUE,
+  html = png,
+  printfolder = "plots",
+  dir = "default",
+  fleets = "all",
+  areas = "all",
+  fleetnames = "default",
+  fleetcols = "default",
+  fleetlty = 1,
+  fleetpch = 1,
+  lwd = 1,
+  areacols = "default",
+  areanames = "default",
+  verbose = TRUE,
+  uncertainty = TRUE,
+  forecastplot = FALSE,
+  datplot = TRUE,
+  Natageplot = TRUE,
+  samplesizeplots = TRUE,
+  compresidplots = TRUE,
+  comp.yupper = 0.4,
+  sprtarg = "default",
+  btarg = "default",
+  minbthresh = "default",
+  pntscalar = NULL,
+  bub.scale.pearson = 1.5,
+  bub.scale.dat = 3,
+  pntscalar.nums = 2.6,
+  pntscalar.tags = 2.6,
+  minnbubble = 8,
+  aalyear = -1,
+  aalbin = -1,
+  aalresids = TRUE,
+  maxneff = 5000,
+  cohortlines = c(),
+  smooth = TRUE,
+  showsampsize = TRUE,
+  showeffN = TRUE,
+  sampsizeline = FALSE,
+  effNline = FALSE,
+  showlegend = TRUE,
+  pwidth = 6.5,
+  pheight = 4,
+  pheight_tall = 6.5,
+  punits = "in",
+  ptsize = 10,
+  res = 300,
+  mainTitle = FALSE,
+  cex.main = 1,
+  selexlines = 1:6,
+  rows = 1,
+  cols = 1,
+  maxrows = 6,
+  maxcols = 4,
+  maxrows2 = 4,
+  maxcols2 = 4,
+  andrerows = 4,
+  tagrows = 3,
+  tagcols = 3,
+  parrows = 4,
+  parcols = 2,
+  fixdims = TRUE,
+  new = TRUE,
+  SSplotDatMargin = 8,
+  filenotes = NULL,
+  catchasnumbers = NULL,
+  catchbars = TRUE,
+  legendloc = "topleft",
+  minyr = -Inf,
+  maxyr = Inf,
+  sexes = "all",
+  scalebins = FALSE,
+  scalebubbles = FALSE,
+  tslabels = NULL,
+  catlabels = NULL,
+  maxsize = 1,
+  showmle = TRUE,
+  showpost = TRUE,
+  showprior = TRUE,
+  showinit = TRUE,
+  showdev = FALSE,
+  fitrange = FALSE,
+  ...
+)
 }
 \arguments{
-\item{replist}{List created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{plot}{Plot sets to be created, see list of plots below.  Use to
 specify only those plot sets of interest, e.g., c(1,2,5,10). Plots for data
@@ -37,31 +103,32 @@ not available in the model run will automatically be skipped, whether called
 or not.
 Current grouping of plots is as follows:
 \enumerate{
-  \item Biology
-  \item Selectivity and retention
-  \item Timeseries
-  \item Recruitment deviations
-  \item Recruitment bias adjustment
-  \item Spawner-recruit
-  \item Catch
-  \item SPR
-  \item Discards
-  \item Mean weight
-  \item Indices
-  \item Numbers at age
-  \item Length comp data
-  \item Age comp data
-  \item Conditional age-at-length data
-  \item Length comp fits
-  \item Age comp fits
-  \item Conditional age-at-length fits
-  \item Francis and Punt conditional age-at-length comp fits
-  \item Mean length-at-age and mean weight-at-age
-  \item Tags
-  \item Yield
-  \item Movement
-  \item Data range
-  \item Diagnostic tables
+\item Biology
+\item Selectivity and retention
+\item Timeseries
+\item Recruitment deviations
+\item Recruitment bias adjustment
+\item Spawner-recruit
+\item Catch
+\item SPR
+\item Discards
+\item Mean weight
+\item Indices
+\item Numbers at age
+\item Length comp data
+\item Age comp data
+\item Conditional age-at-length data
+\item Length comp fits
+\item Age comp fits
+\item Conditional age-at-length fits
+\item Francis and Punt conditional age-at-length comp fits
+\item Mean length-at-age and mean weight-at-age
+\item Tags
+\item Yield
+\item Movement
+\item Data range
+\item Parameter distributions
+\item Diagnostic tables
 }}
 
 \item{print}{Deprecated input for backward compatibility, now replaced by
@@ -71,7 +138,7 @@ Current grouping of plots is as follows:
 
 \item{png}{Send plots to PNG files instead of R GUI?}
 
-\item{html}{Run \code{\link{SS_html}} on completion? By default has same
+\item{html}{Run \code{\link[=SS_html]{SS_html()}} on completion? By default has same
 value as \code{png}.}
 
 \item{printfolder}{The sub-directory under 'dir' (see below) in which the
@@ -117,13 +184,14 @@ for each area. Default="default".}
 \item{areanames}{Optional vector of names for each area used in titles.
 Default="default".}
 
-\item{verbose}{Return updates of function progress to the R GUI?  Default=T.}
+\item{verbose}{Return updates of function progress to the R GUI?
+Default=TRUE.}
 
 \item{uncertainty}{Include values in plots showing estimates of uncertainty
 (requires positive definite hessian in model?  Default=TRUE.}
 
 \item{forecastplot}{Include forecast years in the timeseries plots and
-plots of time-varying quantities? Default=TRUE.}
+plots of time-varying quantities?}
 
 \item{datplot}{Plot the data by itself? This is useful in document
 preparation, but doesn't change across alternative model runs with the same
@@ -132,9 +200,9 @@ Setting datplot=FALSE is equivalent to leaving off plots 15 and 16.
 Default=TRUE.}
 
 \item{Natageplot}{Plot the expected numbers at age bubble plots and mean-age
-time series?  Default=T.}
+time series?  Default=TRUE.}
 
-\item{samplesizeplots}{Show sample size plots?  Default=T.}
+\item{samplesizeplots}{Show sample size plots?  Default=TRUE.}
 
 \item{compresidplots}{Show residuals for composition plots?}
 
@@ -144,7 +212,7 @@ with only a single observed fish in it. Default=0.4.}
 
 \item{sprtarg}{Specify the F/SPR proxy target. Default=0.4.}
 
-\item{btarg}{Target %unfished to be used in plots showing %unfished. May be
+\item{btarg}{Target \%unfished to be used in plots showing \%unfished. May be
 omitted by setting to NA.}
 
 \item{minbthresh}{Threshold depletion to be used in plots showing depletion.
@@ -192,12 +260,12 @@ data. Default=5000.}
 add growth curves to numbers at length bubble plots.  Default=c().}
 
 \item{smooth}{Add loess smoother to observed vs. expected index plots and
-input vs. effective sample size? Default=T.}
+input vs. effective sample size? Default=TRUE.}
 
-\item{showsampsize}{Display sample sizes on composition plots?  Default=T.}
+\item{showsampsize}{Display sample sizes on composition plots?  Default=TRUE.}
 
 \item{showeffN}{Display effective sample sizes on composition plots?
-Default=T.}
+Default=TRUE.}
 
 \item{sampsizeline}{show line for input sample sizes on top of conditional
 age-at-length plots (TRUE/FALSE, still in development)}
@@ -205,23 +273,31 @@ age-at-length plots (TRUE/FALSE, still in development)}
 \item{effNline}{show line for effective sample sizes on top of conditional
 age-at-length plots (TRUE/FALSE, still in development)}
 
-\item{showlegend}{Display legends in various plots? Default=T.}
+\item{showlegend}{Display legends in various plots?}
 
-\item{pwidth}{Width of plots printed to files in units of
-\code{punits}. Default recently changed from 7 to 6.5.}
+\item{pwidth}{Default width of plots printed to files in units of
+\code{punits}. The default is \code{pwidth=6.5}.}
 
-\item{pheight}{Height width of plots printed to files in units of
-\code{punits}. Default recently changed from 7 to 5.0}
+\item{pheight}{Height of plots printed to png files in units of \code{punits}.
+Default is designed to allow two plots per page, with \code{pheight_tall} used
+for plots that work best with a taller format and a single plot per page.}
+
+\item{pheight_tall}{Height of tall plots printed to png files in units of
+\code{punits}, where the tall plots are a subset of the plots which typically
+work best in a taller format.}
 
 \item{punits}{Units for \code{pwidth} and \code{pheight}. Can be "px"
-(pixels), "in" (inches), "cm" or "mm". Default="in".}
+(pixels), "in" (inches), "cm" (centimeters), or "mm" (millimeters).
+The default is \code{punits="in"}.}
 
 \item{ptsize}{Point size for plotted text in plots printed to files (see
-help("png") in R for details). Default recently changed from 12 to 10.}
+\code{help("png")} in R for details).}
 
-\item{res}{Resolution of plots printed to files. Default=300.}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
-\item{mainTitle}{Logical indicating if a title should be included at the top}
+\item{mainTitle}{Logical indicating if a title should be included at the top
+(not yet implemented for all plots)}
 
 \item{cex.main}{Character expansion parameter for plot titles (not yet
 implemented for all plots). Default=1.}
@@ -233,28 +309,32 @@ selectivity plots if the model includes retention. Default=1:5.}
 
 \item{cols}{Number of columns to use for single panel plots. Default=1.}
 
-\item{maxrows}{Maximum number of rows to for multi-panel plots.  Default=4.}
+\item{maxrows}{Maximum number of rows to for multi-panel plots.}
 
-\item{maxcols}{Maximum number of columns for multi-panel plots.  Default=4.}
+\item{maxcols}{Maximum number of columns for multi-panel plots.}
 
 \item{maxrows2}{Maximum number of rows for conditional age-at-length
-multi-panel plots. Default=2.}
+multi-panel plots.}
 
 \item{maxcols2}{Maximum number of rows for conditional age-at-length
-multi-panel plots. Default=4.}
+multi-panel plots.}
 
 \item{andrerows}{Number of rows of Andre's conditional age-at-length plots
-within each page. Default=3.}
+within each page.}
 
-\item{tagrows}{Number of rows for tagging-related plots. Default=3.}
+\item{tagrows}{Number of rows for tagging-related plots.}
 
-\item{tagcols}{Number of columns for tagging-related plots.  Default=3.}
+\item{tagcols}{Number of columns for tagging-related plots.}
+
+\item{parrows}{Number of rows for parameter distribution plots.}
+
+\item{parcols}{Number of columns for parameter distribution plots.}
 
 \item{fixdims}{Control whether multi-panel plots all have dimensions equal
 to maxrows by maxcols, or resized within those limits to fit number of
-plots. Default=T.}
+plots. Default=TRUE.}
 
-\item{new}{Open a new window or add to existing plot windows.  Default=T.}
+\item{new}{Open a new window or add to existing plot windows.  Default=TRUE.}
 
 \item{SSplotDatMargin}{Size of right-hand margin in data plot (may be too
 small if fleet names are long)}
@@ -293,6 +373,23 @@ a vector of appropriate length (currently 10) with labels for each figure}
 \item{maxsize}{The size of the largest bubble in the datasize
 plot. Default is 1.0.}
 
+\item{showmle}{Show MLE estimate and asymptotic variance estimate with blue
+lines in the parameter distribution plots?}
+
+\item{showpost}{Show posterior distribution as bar graph in parameter
+distribution plots (requires MCMC results to be available in \code{replist})?}
+
+\item{showprior}{Show prior distribution as black line in the parameter
+distribution plots?}
+
+\item{showinit}{Show initial value as red triangle in the parameter
+distribution plots?}
+
+\item{showdev}{Include devs in the parameter distribution plots?}
+
+\item{fitrange}{Fit range in parameter distribution plots tightly around MLE
+and posterior distributions instead of full parameter range?}
+
 \item{\dots}{Additional arguments that will be passed to some subfunctions.}
 }
 \description{
@@ -307,14 +404,14 @@ dynamics in declining and recovering fish populations. Can. J. Fish. Aquat.
 Sci. 65: 2536-2551.
 }
 \seealso{
-\code{\link{SS_output}}, \code{\link{SSplotBiology}},
-\code{\link{SSplotCatch}}, \code{\link{SSplotComps}},
-\code{\link{SSplotDiscard}}, \code{\link{SSplotIndices}},
-\code{\link{SSplotMnwt}}, \code{\link{SSplotNumbers}},
-\code{\link{SSplotRecdevs}}, \code{\link{SSplotSelex}},
-\code{\link{SSplotSpawnrecruit}}, \code{\link{SSplotSPR}},
-\code{\link{SSplotTags}}, \code{\link{SSplotTimeseries}},
-\code{\link{SSplotYield}}
+\code{\link[=SS_output]{SS_output()}}, \code{\link[=SSplotBiology]{SSplotBiology()}},
+\code{\link[=SSplotCatch]{SSplotCatch()}}, \code{\link[=SSplotComps]{SSplotComps()}},
+\code{\link[=SSplotDiscard]{SSplotDiscard()}}, \code{\link[=SSplotIndices]{SSplotIndices()}},
+\code{\link[=SSplotMnwt]{SSplotMnwt()}}, \code{\link[=SSplotNumbers]{SSplotNumbers()}},
+\code{\link[=SSplotRecdevs]{SSplotRecdevs()}}, \code{\link[=SSplotSelex]{SSplotSelex()}},
+\code{\link[=SSplotSpawnrecruit]{SSplotSpawnrecruit()}}, \code{\link[=SSplotSPR]{SSplotSPR()}},
+\code{\link[=SSplotTags]{SSplotTags()}}, \code{\link[=SSplotTimeseries]{SSplotTimeseries()}},
+\code{\link[=SSplotYield]{SSplotYield()}}
 }
 \author{
 Ian Stewart, Ian Taylor

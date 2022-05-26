@@ -4,16 +4,31 @@
 \alias{SSplotMnwt}
 \title{Plot mean weight data and fits.}
 \usage{
-SSplotMnwt(replist, subplots = 1:2, ymax = NULL, plot = TRUE,
-  print = FALSE, fleets = "all", fleetnames = "default",
-  datplot = FALSE, labels = c("Year", "discard", "retained catch",
-  "whole catch", "Mean individual body weight (kg)", "Mean weight in",
-  "for"), col1 = "blue", col2 = "black", pwidth = 6.5, pheight = 5,
-  punits = "in", res = 300, ptsize = 10, cex.main = 1,
-  plotdir = "default", verbose = TRUE)
+SSplotMnwt(
+  replist,
+  subplots = 1:2,
+  ymax = NULL,
+  plot = TRUE,
+  print = FALSE,
+  fleets = "all",
+  fleetnames = "default",
+  datplot = FALSE,
+  labels = c("Year", "discard", "retained catch", "whole catch",
+    "Mean individual body weight (kg)", "Mean weight in", "for"),
+  col1 = "blue",
+  col2 = "black",
+  pwidth = 6.5,
+  pheight = 5,
+  punits = "in",
+  res = 300,
+  ptsize = 10,
+  cex.main = 1,
+  plotdir = "default",
+  verbose = TRUE
+)
 }
 \arguments{
-\item{replist}{list created by \code{SS_output}}
+\item{replist}{A list object created by \code{\link{SS_output}()}.}
 
 \item{subplots}{Vector of which plots to make (1 = data only, 2 = with fit).
 If \code{plotdat = FALSE} then subplot 1 is not created, regardless of
@@ -44,7 +59,8 @@ of \code{subplots}.}
 
 \item{punits}{units for PNG file}
 
-\item{res}{resolution for PNG file}
+\item{res}{Resolution of plots printed to files.
+The default is \code{res = 300}.}
 
 \item{ptsize}{point size for PNG file}
 
@@ -60,7 +76,7 @@ Plot mean weight data and fits from Stock Synthesis output. Intervals are
 based on T-distributions as specified in model.
 }
 \seealso{
-\code{\link{SS_plots}}, \code{\link{SS_output}}
+\code{\link[=SS_plots]{SS_plots()}}, \code{\link[=SS_output]{SS_output()}}
 }
 \author{
 Ian Taylor, Ian Stewart

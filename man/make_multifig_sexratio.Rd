@@ -4,20 +4,50 @@
 \alias{make_multifig_sexratio}
 \title{Create multi-figure sex ratio plots.}
 \usage{
-make_multifig_sexratio(dbase, sexratio.option = 2, CI = 0.75,
-  sampsizeround = 1, maxrows = 6, maxcols = 6, rows = 1,
-  cols = 1, fixdims = TRUE, main = "", cex.main = 1, xlab = "",
-  ylab = "Fraction female", horiz_lab = "default", xbuffer = c(0.1,
-  0.1), ybuffer = "default", yupper = NULL, axis1 = NULL,
-  axis2 = NULL, ptscex = 1, ptscol = gray(0.5), linescol = 4,
-  lty = 1, lwd = 2, nlegends = 3, legtext = list("yr", "sampsize",
-  "effN"), legx = "default", legy = "default", legadjx = "default",
-  legadjy = "default", legsize = c(1.2, 1), legfont = c(2, 1),
-  ipage = 0, multifig_oma = c(5, 5, 5, 2) + 0.1, ...)
+make_multifig_sexratio(
+  dbase,
+  sexratio.option = 2,
+  CI = 0.75,
+  sampsizeround = 1,
+  maxrows = 6,
+  maxcols = 6,
+  rows = 1,
+  cols = 1,
+  fixdims = TRUE,
+  main = "",
+  cex.main = 1,
+  xlab = "",
+  ylab = "Fraction female",
+  horiz_lab = "default",
+  xbuffer = c(0.1, 0.1),
+  ybuffer = "default",
+  yupper = NULL,
+  datonly = FALSE,
+  showsampsize = TRUE,
+  showeffN = TRUE,
+  axis1 = NULL,
+  axis2 = NULL,
+  ptscex = 1,
+  ptscol = gray(0.5),
+  linescol = 4,
+  lty = 1,
+  lwd = 2,
+  nlegends = 3,
+  legtext = list("yr", "sampsize", "effN"),
+  legx = "default",
+  legy = "default",
+  legadjx = "default",
+  legadjy = "default",
+  legsize = c(1.2, 1),
+  legfont = c(2, 1),
+  ipage = 0,
+  multifig_oma = c(5, 5, 5, 2) + 0.1,
+  ...
+)
 }
 \arguments{
-\item{dbase}{element of list created by \code{\link{SS_output}} passed from
-\code{\link{SSplotSexRatio}}}
+\item{dbase}{element of list created by \code{\link[=SS_output]{SS_output()}} passed from
+\code{\link[=SSplotSexRatio]{SSplotSexRatio()}}}
 
 \item{sexratio.option}{code to choose among (1) female:male ratio or
 (2) fraction females out of the total (the default)}
@@ -58,6 +88,12 @@ of total height of plot. "default" will cause c(0,.15) for sexratio.option=1
 and c(.15, .3) for sexratio.option=2.}
 
 \item{yupper}{upper limit on ymax (applied before addition of ybuffer)}
+
+\item{datonly}{make plots of data without fits?}
+
+\item{showsampsize}{add sample sizes to plot}
+
+\item{showeffN}{add effective sample sizes to plot}
 
 \item{axis1}{position of bottom axis values}
 
@@ -102,7 +138,7 @@ passed to this function via the ... argument.}
 \item{\dots}{additional arguments (NOT YET IMPLEMENTED).}
 }
 \description{
-Modified version of \code{\link{make_multifig}} for multi-figure
+Modified version of \code{\link[=make_multifig]{make_multifig()}} for multi-figure
 plots of sex ratio data with crude confidence intervals (+/i 1 se) and
 fits from Stock Synthesis output.
 }
@@ -111,8 +147,7 @@ The SE of the sex ratio is crude and calculated as
 follows. First, assume a multinomial which as MLEs of proportions. Then
 use the delta method of the ratio F/M, using the MLE as the expected
 values and analytical variances and covariance between F and M. After
-some algebra this calculation reduces to: SE(F/M)= sqrt((f/m)^2*(
-(1-f)/(f*N) + (1-m)/(m*N) +2/N )). Confidence intervals created from
+some algebra this calculation reduces to: \code{SE(F/M)= sqrt((f/m)^2*( (1-f)/(f*N) + (1-m)/(m*N) +2/N ))}. Confidence intervals created from
 these should be considered very crude and would not necessarily be
 appropriate for future alternative compositional likelihoods.
 
@@ -120,8 +155,8 @@ This function was derived from make_multifig and hence has a lot of
 overlap in functionality and arguments.
 }
 \seealso{
-\code{\link{SS_plots}},\code{\link{SSplotSexRatio}}
+\code{\link[=SS_plots]{SS_plots()}},\code{\link[=SSplotSexRatio]{SSplotSexRatio()}}
 }
 \author{
-Cole Monnahan. Adapted from \code{\link{make_multifig}}.
+Cole Monnahan. Adapted from \code{\link[=make_multifig]{make_multifig()}}.
 }
